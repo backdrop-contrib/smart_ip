@@ -12,7 +12,10 @@
  * This will download/extract CSV from maxmind.com and
  * update the Smart IP database.
  */
-function smart_ip_update_db_batch($src = smart_ip_get_csv_source_filename()) {
+function smart_ip_update_db_batch($src = NULL) {
+  if (empty($src)) {
+    $src = smart_ip_get_csv_source_filename();
+  }
   $operations = array();
   $operations[] = array('smart_ip_get_zip', array($src));
   $operations[] = array('smart_ip_extract_zip', array());
