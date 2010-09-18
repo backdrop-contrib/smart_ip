@@ -1,0 +1,99 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_schema().
+ */
+function smart_ip_schema() {
+  $schema['smart_ip'] = array(
+    'description' => 'Association between IP range and Geo location',
+    'fields' => array(
+      'geoip_id' => array(
+        'description' => 'ID assigned by maxmind',
+        'type'        => 'int',
+        'size'        => 'big',
+        'not null'    => TRUE,
+      ),
+      'ip_ref' => array(
+        'description' => 'Lowest IP Address in Range',
+        'type'        => 'int',
+        'size'        => 'big',
+        'not null'    => TRUE,
+      ),
+      'country' => array(
+        'description' => 'ISO 3166 2-Character Country Code',
+        'type'        => 'char',
+        'length'      => 3,
+        'not null'    => TRUE,
+      ),
+      'region' => array(
+        'description' => '2-Character Region Code',
+        'type'        => 'char',
+        'length'      => 3,
+        'not null'    => FALSE,
+      ),
+      'city' => array(
+        'description' => 'Name of city targeted by the coordinates',
+        'type'        => 'varchar',
+        'length' 			=> 128,
+        'not null'    => FALSE,
+      ),      
+      'zip' => array(
+        'description' => 'Postal code of targeted by the coordinates',
+        'type'        => 'varchar',
+        'length' 			=> 8,
+        'not null'    => FALSE,
+      ),
+      'latitude' => array(
+        'description' => 'Latitude',
+        'type'        => 'float',
+        'size'        => 'big',
+        'not null'    => TRUE,
+      ),
+      'longitude' => array(
+        'description' => 'Longitude',
+        'type'        => 'float',
+        'size'        => 'big',
+        'not null'    => TRUE,
+      ),
+    ),
+    'primary key' => array('ip_ref'),
+    'indexes' => array(
+      'geoip_id' => array('geoip_id'),
+    ),
+  );
+  $schema['cache_smart_ip'] = drupal_get_schema_unprocessed('system', 'cache');
+  $schema['cache_smart_ip']['description'] = 'Cache table for storing temporary data during Smart IP database update.';
+  return $schema;
+}
+
+
+/**
+ * Implementation of hook_install().
+ *
+ * Creates database tables needed by this module.
+ */
+function smart_ip_install() {
+  variable_set('smart_ip_get_zip_done', FALSE);
+  variable_set('smart_ip_extract_zip_done', FALSE);
+  variable_set('smart_ip_store_location_csv_done', FALSE);
+}
+
+
+/**
+ * Implementation of hook_uninstall().
+ *
+ * Removes all tables and variables inserted into the
+ * database by this module.
+ */
+function smart_ip_uninstall() {
+  variable_del('smart_ip_get_zip_done');
+  variable_del('smart_ip_extract_zip_done');
+  variable_del('smart_ip_store_location_csv_done');
+  variable_del('smart_ip_indicator_last_ip');
+  variable_del('smart_ip_auto_update');
+  variable_del('smart_ip_last_update');
+  variable_del('smart_ip_debug');
+  variable_del('smart_ip_test_ip_address');
+  variable_del('smart_ip_save_user_location');
+}

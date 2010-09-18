@@ -1,0 +1,216 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Admin interface callbacks/handlers to configure Smart IP.
+ */
+
+/**
+ * Smart IP administration settings.
+ *
+ * @return
+ *   Forms for store administrator to set configuration options.
+ */
+function smart_ip_admin_settings($form, &$form_state) {
+  // Define submit handler function
+  $form['#submit'][] = 'smart_ip_admin_settings_submit';
+  
+  $recover = variable_get('smart_ip_get_zip_done', FALSE) | variable_get('smart_ip_extract_zip_done', FALSE) | variable_get('smart_ip_store_location_csv_done', FALSE);
+  // Container for database update preference forms 
+  $form['smart_ip_database_update'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Manual database update'),
+    '#collapsible' => FALSE,
+    '#collapsed'   => FALSE,
+  );
+  $update_time = variable_get('smart_ip_last_update', 0);
+  // Form for message markup
+  $form['smart_ip_database_update']['smart_ip_update_message'] = array(
+    '#type'   => 'item',
+    '#markup' => '<div>'. t('The Smart IP database may be updated manually by pressing the "Update database now" button below. Note, this may take several minutes or even hours (depends on the speed of the server). This process can recover from where it stopped or failed.') . '</div>',
+    '#suffix' => isset($form_state['storage']['smart_ip_db_message']) ? '<div id="database-update" class="messages">' . $form_state['storage']['smart_ip_db_message'] . '</div>' : '<div id="database-update" class="messages">'. t('Database last updated on ') . format_date($update_time, 'custom', 'n/j/Y') . t(' at ') . format_date($update_time, 'custom', 'H:i:s T') . '</div>',
+  );
+  $form['smart_ip_database_update']['smart_ip_csv_source'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('CSV URL source'),
+    '#default_value' => smart_ip_get_csv_source_filename(),
+    '#description'   => t("Enter the Maxmind's CSV URL, source for updating the Smart IP database"),
+    '#size'          => 120,
+  );
+  // Form for manual updating of the Smart IP database
+  $form['smart_ip_database_update']['smart_ip_update_database'] = array(
+    '#type'   => 'submit',
+    '#value'  => $recover ? t('Recover database update') : t('Update database now'),
+    '#submit' => array('_smart_ip_database_update_submit'),
+    '#suffix' => $recover ? '<div class="messages error">' . t('The previous attempt of updating Smart IP database has failed. Press the button above to continue the unfinished task.') . '</div>' : '',
+  );
+
+  // Container for manual lookup
+  $form['smart_ip_manual_lookup'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Manual lookup'),
+    '#description' => t('Examine database values'),
+    '#collapsible' => FALSE,
+    '#collapsed'   => FALSE,
+  );
+
+  // Form for manual lookups
+  $form['smart_ip_manual_lookup']['smart_ip_lookup'] = array(
+    '#type'        => 'textfield',
+    '#title'       => t('IP address'),
+    '#description' => t('An IP address may be looked up in the database by entering the address above then pressing the %lookup button below.', array('%lookup' => t('Lookup'))),
+  );
+
+  // Form for manual updating of the IP-Country database
+  $form['smart_ip_manual_lookup']['smart_ip_lookup_button'] = array(
+    '#type'   => 'submit',
+    '#value'  => t('Lookup'),
+    '#submit' => array('_smart_ip_lookup_submit'),
+    '#ajax'   => array(
+      'callback' => '_smart_ip_lookup_js',
+    ),
+    '#suffix' => isset($form_state['storage']['smart_ip_message']) ? '<div id="lookup-message" class="messages">' . $form_state['storage']['smart_ip_message'] . '</div>' : '',
+  );
+
+  // Container for preference forms
+  $form['smart_ip_preferences'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Smart IP settings'),
+    '#collapsible' => FALSE,
+    '#collapsed'   => FALSE,
+  );
+
+  
+  // Form to enable automatic Smart IP database update every one month
+  $form['smart_ip_preferences']['smart_ip_auto_update'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t('Automatic Smart IP database update'),
+    '#description'   => t('Database will be automatically updated via cron.php every one month (Maxmind updates every first day of a month). !cron must be enabled for this to work.', array('!cron' => l(t('Cron'), 'admin/config/system/cron'))),
+    '#default_value' => variable_get('smart_ip_auto_update', TRUE),
+  );
+  
+  // Form to turn on save user location in $user object upon login
+  $form['smart_ip_preferences']['smart_ip_save_user_location'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t("Save user's country code"),
+    '#default_value' => variable_get('smart_ip_save_user_location', TRUE),
+    '#description'   => t("Save the user's country code upon login."),
+  );
+  
+  // Form to turn on debugging
+  $form['smart_ip_preferences']['smart_ip_debug'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t('Admin debug'),
+    '#default_value' => variable_get('smart_ip_debug', FALSE),
+    '#description'   => t('Enables administrator to spoof an IP Address for debugging purposes.'),
+  );
+
+  $form['smart_ip_preferences']['smart_ip_test_ip_address'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('IP address to use for testing'),
+    '#default_value' => variable_get('smart_ip_test_ip_address', ip_address()),
+  );
+  return system_settings_form($form);
+}
+
+/**
+ * Submit handler to update the Smart IP database.
+ */
+function _smart_ip_database_update_submit($form, &$form_state) {
+  // Utility functions for loading database from external sources
+  module_load_include('inc', 'smart_ip', 'includes/smart_ip.utility');
+
+  batch_set(smart_ip_update_db_batch(check_url($form_state['values']['smart_ip_csv_source'])));
+  watchdog('smart_ip', 'The Smart IP database has been manually updated.');
+  $form_state['storage']['smart_ip_db_message'] = t('The Smart IP database has been updated. @rows rows affected.', array('@rows' => smart_ip_get_count()));
+  $form_state['rebuild'] = TRUE;
+}
+
+/**
+ * Submit handler to lookup an IP address in the database.
+ *
+ * @see _smart_ip_lookup_js()
+ */
+function _smart_ip_lookup_submit($form, &$form_state) {
+  include_once DRUPAL_ROOT . '/includes/locale.inc';
+  $countries = country_get_list();
+  $lookup    = $form_state['values']['smart_ip_lookup'];
+  // Return results of manual lookup
+  $location = smart_ip_get_location($lookup);
+  if ($location) {
+    $message = '<p>' . t('IP Address @ip is assigned to the following location details:', array('@ip' => $lookup)) . '</p><dl>' .
+      '<dt>' . t('Country:') . '</dt>' .
+      '<dd>' . t('%country', array('%country' => $countries[$location['country']]))  . '</dd>' .
+      '<dt>' . t('Region code:') . '</dt>' .
+      '<dd>' . t('%region', array('%region' => $location['region']))  . '</dd>' .
+      '<dt>' . t('City:') . '</dt>' .
+      '<dd>' . t('%city', array('%city' => $location['city']))  . '</dd>' .
+      '<dt>' . t('Postal code:') . '</dt>' .
+      '<dd>' . t('%zip', array('%zip' => $location['zip']))  . '</dd>' .
+      '<dt>' . t('Latitude:') . '</dt>' .
+      '<dd>' . t('%latitude', array('%latitude' => $location['latitude']))  . '</dd>' .
+      '<dt>' . t('Longitude:') . '</dt>' .
+      '<dd>' . t('%longitude', array('%longitude' => $location['longitude']))  . '</dd>' .
+    '</dl>';
+  }
+  else {
+    $message = t('IP Address @ip is not assigned to any location.', array('@ip' => $lookup));
+  }
+  $form_state['storage']['smart_ip_message'] = $message;
+  $form_state['rebuild'] = TRUE;
+}
+
+/**
+ * AJAX callback to lookup an IP address in the database.
+ *
+ * @see _smart_ip_lookup_submit()
+ */
+function _smart_ip_lookup_js($form, $form_state) {
+  $commands = array();
+  $commands[] = ajax_command_remove('#lookup-message');
+  $commands[] = ajax_command_after('#edit-smart-ip-lookup-button', '<div id="lookup-message" class="messages"></div>');
+  $commands[] = ajax_command_html('#lookup-message', $form_state['storage']['smart_ip_message']);
+  return array('#type' => 'ajax', '#commands' => $commands);  
+}
+
+/**
+ * Process Forms submitted by IP to Country administration page
+ */
+function smart_ip_admin_settings_submit($form, &$form_state) {
+  include_once DRUPAL_ROOT . '/includes/locale.inc';
+  global $user;
+
+  // Exclude unnecessary elements from being saved in variable table
+  unset($form_state['values']['smart_ip_lookup'], $form_state['values']['smart_ip_csv_source']);
+
+  $countries = country_get_list();
+  // Check to see if debug set
+  if ($form_state['values']['smart_ip_debug']) {
+    // Debug on
+    $ip = $form_state['values']['smart_ip_test_ip_address'];
+  }
+  else {
+    // Debug off - make sure we set/reset to their real values
+    $ip = ip_address();
+  }
+  $location = smart_ip_get_location($ip);
+  if ($location) {
+    drupal_set_message(t('Using @type IP: %ip / Country: %country / Region code: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat', array(
+      '@type'    => $form_state['values']['smart_ip_debug'] ? 'debug' : 'actual',
+      '%ip'      => $ip, 
+      '%country' => $countries[$location['country']],
+      '%region'  => $location['region'],
+      '%city'    => $location['city'],
+      '%zip'     => $location['zip'],
+      '%long'    => $location['longitude'],
+      '%lat'     => $location['latitude'],
+    )));
+    // Finally if it has been determined, store the location in the $user object
+    user_save($user, array('data' => array('geoip_location' => $location)));
+    $_SESSION['smart_ip']['location'] = $location;
+  }
+  else {
+    drupal_set_message(t('IP Address @ip is not assigned to any location.', array('@ip' => $ip)));
+  }
+}

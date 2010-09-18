@@ -1,0 +1,177 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Determines country, geo location (longitude/latitude), region, city and 
+ * postal code of the user, based on IP address
+ *
+ * This module uses the IP address that a user is connected from to extract
+ * the location information where the user is located.  This method is not 
+ * foolproof, because a user may connect through an anonymizing proxy, or may 
+ * be in an unusual case, such as getting service from a neighboring country,
+ * or using an IP block leased from a company in another country.
+ * Additionaly, users accessing a server on a local network may be using
+ * an IP that is not assigned to any country (e.g. 192.168.x.x).
+ *
+ * @author Roland Michael dela Peña.
+ * @version $Id$
+ */
+define('SMART_IP_LOCATION_CSV', 'GeoLiteCity-Location.csv');
+define('SMART_IP_BLOCKS_CSV', 'GeoLiteCity-Blocks.csv');
+
+/******************************************************************************
+ * Drupal Hooks                                                               *
+ ******************************************************************************/
+ /**
+ * Implementation of hook_help().
+ */
+function smart_ip_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#smart_ip':
+      return '<p>' . t("Smart IP identify visitor's geographical location (longitude/latitude), 
+        country, region, city and postal code based on the IP address of the visitor. It provides 
+        a feature for you to perform your own IP lookup, admin spoofing of an arbitrary IP for 
+        testing purposes and configure/update Smart IP database.") . '</p>';
+      break;
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function smart_ip_permission() {
+  return array(
+    'administer smart_ip' => array(
+      'title' => t('Administer Smart IP'),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_cron().
+ *
+ * Updates the IP to Country database automatically on one month periodic
+ * basis.
+ */
+function smart_ip_cron() {
+  // Utility functions for loading database from external sources
+  module_load_include('inc', 'smart_ip', 'includes/smart_ip.utility');
+
+  if (variable_get('smart_ip_auto_update', TRUE)) {
+    // One month interval. Maxmind updates every first day of a month.
+    if (variable_get('smart_ip_last_update', 0) <= (time() - 2419200)) {
+      variable_set('smart_ip_last_update', time());
+      batch_set(smart_ip_update_db_batch());
+      watchdog('smart_ip', 'Smart IP Database successfuly updated from maxmind.com.');
+    }
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ *
+ * Called when Drupal is building menus.  Cache parameter lets module know
+ * if Drupal intends to cache menu or not - different results may be
+ * returned for either case.
+ *
+ * @return
+ *   An array with the menu path, callback, and parameters.
+ */
+function smart_ip_menu() {
+  $items = array();
+
+  $items['admin/config/people/smart_ip'] = array(
+    'title'            => 'Administer Smart IP',
+    'description'      => 'Configure the Smart IP settings',
+    'access arguments' => array('administer smart_ip'),
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('smart_ip_admin_settings'),
+    'file' 						 => 'includes/smart_ip.admin.inc',
+    'weight'					 => 2,
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_user_login().
+ *
+ * Detects IP and geo location upon user login.
+ */
+function smart_ip_user_login(&$edit, $account) {
+  // Now check to see if this user has "administer smart_ip" permission
+  // and if debug mode set.  If both are TRUE, use debug information
+  // instead of real information
+  $location = FALSE;
+  if (user_access('administer smart_ip') && variable_get('smart_ip_debug', FALSE)) {
+    include_once DRUPAL_ROOT . '/includes/locale.inc';
+    $countries = country_get_list();
+    $ip = variable_get('smart_ip_test_ip_address', ip_address());
+    $location = smart_ip_get_location($ip);
+    if ($location) {
+      drupal_set_message(t('Using debug IP: %ip / Country: %country / Region code: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat', array(
+        '%ip'      => $ip, 
+        '%country' => $countries[$location['country']],
+        '%region'  => $location['region'],
+        '%city'    => $location['city'],
+        '%zip'     => $location['zip'],
+        '%long'    => $location['longitude'],
+        '%lat'     => $location['latitude'],
+      )));
+    }
+  }
+  
+  if (variable_get('smart_ip_save_user_location', TRUE)) {
+    // Successful login. First determine user's location based on IP
+    if (!$location) {
+      $ip = ip_address();
+      $location = smart_ip_get_location($ip);
+    }
+    // Store the location information in the $user object
+    user_save($account, array('data' => array('geoip_location' => $location)));
+    $_SESSION['smart_ip']['location'] = $location;
+  }
+}
+
+/******************************************************************************
+ * Module API                                                          *
+ ******************************************************************************/
+/**
+ * Get the geo location from the IP address
+ *
+ * @return
+ *   FALSE if the lookup failed to find a location for this IP
+ */
+function smart_ip_get_location($ip_address) {
+  $ip = explode('.', $ip_address);
+  $result = FALSE;
+  if (count($ip) == 4) {
+    $ipl = (($ip[0] * 256 + $ip[1]) * 256 + $ip[2]) * 256 + $ip[3];
+    $query = db_query('SELECT * FROM {smart_ip} WHERE ip_ref <= :ip ORDER BY ip_ref DESC LIMIT 1', array(':ip' => $ipl));
+    $result = $query->fetchAssoc();
+  }
+  // Allow other modules to modify result via hook_smart_ip_get_location_alter()
+  drupal_alter('smart_ip_get_location', $result);
+  return $result;
+}
+
+/**
+ * Get the total count of IP ranges in database
+ */
+function smart_ip_get_count() {
+  $sql   = 'SELECT COUNT(*) FROM {smart_ip}';
+  $count = db_query($sql);
+  return (int) $count->fetchField(0);
+}
+
+/**
+ * Helper function for grabbing Maxmind's CSV archive filename.
+ */
+function smart_ip_get_csv_source_filename() {
+	$maxmind_csv = &drupal_static(__FUNCTION__);
+  
+	if (!isset($maxmind_csv)) {
+    $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/GeoLiteCity_' . format_date(time(), 'custom', 'Ym') . '01.zip');
+	}
+	return $maxmind_csv;
+}
