@@ -77,6 +77,9 @@ function smart_ip_install() {
   variable_set('smart_ip_get_zip_done', FALSE);
   variable_set('smart_ip_extract_zip_done', FALSE);
   variable_set('smart_ip_store_location_csv_done', FALSE);
+  variable_set('smart_ip_db_update_busy', FALSE);
+  variable_set('smart_ip_location_csv_pointer', FALSE);
+  variable_set('smart_ip_blocks_csv_pointer', FALSE);
 }
 
 
@@ -90,7 +93,11 @@ function smart_ip_uninstall() {
   variable_del('smart_ip_get_zip_done');
   variable_del('smart_ip_extract_zip_done');
   variable_del('smart_ip_store_location_csv_done');
+  variable_del('smart_ip_db_update_busy');
+  variable_del('smart_ip_db_update_busy_timeout');
   variable_del('smart_ip_indicator_last_ip');
+  variable_del('smart_ip_location_csv_pointer');
+  variable_del('smart_ip_blocks_csv_pointer');
   variable_del('smart_ip_auto_update');
   variable_del('smart_ip_last_update');
   variable_del('smart_ip_debug');

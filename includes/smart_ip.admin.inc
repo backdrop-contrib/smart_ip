@@ -15,8 +15,7 @@
 function smart_ip_admin_settings($form, &$form_state) {
   // Define submit handler function
   $form['#submit'][] = 'smart_ip_admin_settings_submit';
-  
-  $recover = variable_get('smart_ip_get_zip_done', FALSE) | variable_get('smart_ip_extract_zip_done', FALSE) | variable_get('smart_ip_store_location_csv_done', FALSE);
+  $recover = !variable_get('smart_ip_db_update_busy', FALSE) & (variable_get('smart_ip_get_zip_done', FALSE) | variable_get('smart_ip_extract_zip_done', FALSE) | variable_get('smart_ip_store_location_csv_done', FALSE));
   // Container for database update preference forms 
   $form['smart_ip_database_update'] = array(
     '#type'        => 'fieldset',
@@ -28,7 +27,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   // Form for message markup
   $form['smart_ip_database_update']['smart_ip_update_message'] = array(
     '#type'   => 'item',
-    '#markup' => '<div>'. t('The Smart IP database may be updated manually by pressing the "Update database now" button below. Note, this may take several minutes or even hours (depends on the speed of the server). This process can recover from where it stopped or failed.') . '</div>',
+    '#markup' => '<div>'. t('The Smart IP database may be updated manually by pressing the "Update database now" button below. Note, this may take more or less five hours (it depends on the speed of the server). This process can recover from where it stopped or failed.') . '</div>',
     '#suffix' => isset($form_state['storage']['smart_ip_db_message']) ? '<div id="database-update" class="messages">' . $form_state['storage']['smart_ip_db_message'] . '</div>' : '<div id="database-update" class="messages">'. t('Database last updated on ') . format_date($update_time, 'custom', 'n/j/Y') . t(' at ') . format_date($update_time, 'custom', 'H:i:s T') . '</div>',
   );
   $form['smart_ip_database_update']['smart_ip_csv_source'] = array(
@@ -40,10 +39,11 @@ function smart_ip_admin_settings($form, &$form_state) {
   );
   // Form for manual updating of the Smart IP database
   $form['smart_ip_database_update']['smart_ip_update_database'] = array(
-    '#type'   => 'submit',
-    '#value'  => $recover ? t('Recover database update') : t('Update database now'),
-    '#submit' => array('_smart_ip_database_update_submit'),
-    '#suffix' => $recover ? '<div class="messages error">' . t('The previous attempt of updating Smart IP database has failed. Press the button above to continue the unfinished task.') . '</div>' : '',
+    '#type'     => 'submit',
+    '#value'    => $recover ? t('Recover database update') : t('Update database now'),
+    '#submit'   => array('_smart_ip_database_update_submit'),
+    '#validate' => array('_smart_ip_database_update_validate'),
+    '#suffix'   => $recover ? '<div class="messages error">' . t('The previous attempt of updating Smart IP database has failed. Press the button above to continue the unfinished task.') . '</div>' : '',
   );
 
   // Container for manual lookup
@@ -115,13 +115,23 @@ function smart_ip_admin_settings($form, &$form_state) {
 }
 
 /**
+ * Validation handler to update the Smart IP database.
+ */
+function _smart_ip_database_update_validate($form, &$form_state) {
+  global $_smart_ip_db_update_access;
+  if (variable_get('smart_ip_db_update_busy', FALSE) && !$_smart_ip_db_update_access) {
+    form_set_error('smart_ip_update_database', t('Smart IP database update has already been initiated by cron'));
+  }
+}
+
+/**
  * Submit handler to update the Smart IP database.
  */
 function _smart_ip_database_update_submit($form, &$form_state) {
   // Utility functions for loading database from external sources
   module_load_include('inc', 'smart_ip', 'includes/smart_ip.utility');
-
-  batch_set(smart_ip_update_db_batch(check_url($form_state['values']['smart_ip_csv_source'])));
+  
+  batch_set(smart_ip_update_db_batch(check_url($form_state['values']['smart_ip_csv_source'])));  
   watchdog('smart_ip', 'The Smart IP database has been manually updated.');
   $form_state['storage']['smart_ip_db_message'] = t('The Smart IP database has been updated. @rows rows affected.', array('@rows' => smart_ip_get_count()));
   $form_state['rebuild'] = TRUE;

@@ -24,15 +24,44 @@ define('SMART_IP_BLOCKS_CSV', 'GeoLiteCity-Blocks.csv');
  * Drupal Hooks                                                               *
  ******************************************************************************/
  /**
- * Implementation of hook_help().
+ * Implements hook_help().
  */
 function smart_ip_help($path, $arg) {
   switch ($path) {
     case 'admin/help#smart_ip':
-      return '<p>' . t("Smart IP identify visitor's geographical location (longitude/latitude), 
-        country, region, city and postal code based on the IP address of the visitor. It provides 
-        a feature for you to perform your own IP lookup, admin spoofing of an arbitrary IP for 
-        testing purposes and configure/update Smart IP database.") . '</p>';
+      return 
+      '<p>' . 
+      t("Smart IP identify visitor's geographical location (longitude/latitude), country, 
+      region, city and postal code based on the IP address of the user. These information 
+      will be stored at Drupal &#36;user->data object with array key 'geoip_location' upon login 
+      of the user but optionally it can be disabled at Smart IP admin page. Other modules can 
+      use the function smart_ip_get_location(&#36;ip_address) that returns an array containing 
+      the visitor's ISO 3166 2-character country code, longitude, latitude, region code (FIPS), 
+      city and postal code. It provides a feature for you to perform your own IP lookup and admin 
+      spoofing of an arbitrary IP for testing purposes.") . '</p><p>' .       
+      t("Maxmind's database is the source of Smart IP database that makes the association between IP 
+      address and geographical location (longitude/latitude), region, city and postal code. It can 
+      be found at !maxmind it has two versions: a very accurate 
+      and up to date payable version and a not quite accurate free lite version. Smart IP downloads 
+      and process the CSV files (GeoLiteCity-Location.csv and GeoLiteCity-Blocks.csv) to store to 
+      Smart IP database. An optional once a month (Maxmind updates its database every first day of 
+      a month) automatic update of the Smart IP database is provided or it can be manually updated 
+      at Smart IP admin page. The database of Maxmind is very huge, the two CSV files size is about 
+      150MB and the size when stored to SQL database is about 320MB with almost 5 million rows. The 
+      process of downloading the archived CSV files from Maxmind's server, extracting the downloaded 
+      zip file, parsing the CSV files and storing to the database will took more or less five hours. 
+      It uses the batch system process. If interrupted by an unexpected error, it can recover from 
+      where it stopped or the administrator can manually continue the broken process at Smart IP 
+      admin page.", array(
+        '!maxmind' => l('http://www.maxmind.com/app/geolitecountry', 'http://www.maxmind.com/app/geolitecountry'),
+      )) . '</p><div class="messages"><p>' . 
+      t('Note: The Smart IP database is empty upon initial installation of this module. This module will 
+      do nothing if Smart IP database is empty. Either manually update the Smart IP database at admin 
+      page or wait for the cron to run and update Smart IP database automatically for you. It is very 
+      important to set your private file system path at !filesystem, this will be the working path 
+      of Smart IP while updating the database.', array(
+        '!filesystem' => l(t('File system'), 'admin/config/media/file-system'),
+      )) . '</p></div>';
       break;
   }
 }
@@ -49,27 +78,75 @@ function smart_ip_permission() {
 }
 
 /**
- * Implementation of hook_cron().
+ * Implements hook_cron().
  *
  * Updates the IP to Country database automatically on one month periodic
  * basis.
  */
 function smart_ip_cron() {
-  // Utility functions for loading database from external sources
-  module_load_include('inc', 'smart_ip', 'includes/smart_ip.utility');
-
-  if (variable_get('smart_ip_auto_update', TRUE)) {
-    // One month interval. Maxmind updates every first day of a month.
-    if (variable_get('smart_ip_last_update', 0) <= (time() - 2419200)) {
-      variable_set('smart_ip_last_update', time());
-      batch_set(smart_ip_update_db_batch());
-      watchdog('smart_ip', 'Smart IP Database successfuly updated from maxmind.com.');
+  $time = time();
+  if ((variable_get('smart_ip_db_update_busy_timeout', 0) <= ($time - 3600)) && variable_get('smart_ip_db_update_busy', FALSE)) {
+    // Reset busy flag after 1 hour
+    variable_set('smart_ip_db_update_busy', FALSE);
+  }
+  if (variable_get('smart_ip_auto_update', TRUE) && !variable_get('smart_ip_db_update_busy', FALSE)) {
+    // One month and interval. Maxmind updates every first day of a month.
+    if (variable_get('smart_ip_last_update', 0) <= ($time - 2678400)) {
+      global $base_root;
+      if (!variable_get('smart_ip_extract_zip_done', FALSE) && !variable_get('smart_ip_get_zip_done', FALSE)) {
+        // Set an indicator that Smart IP database update has been started by cron
+        variable_set('smart_ip_db_update_busy', TRUE);
+        variable_set('smart_ip_db_update_busy_timeout', $time);
+      }
+      $options = array(
+        'headers' => array('Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8'),
+        'method'  => 'POST',
+        'data'    => 'smart_ip_cron_key=' . rawurlencode(trim(variable_get('cron_key', 'drupal'))),
+        'timeout' => 30,
+      );
+      drupal_http_request($base_root . '/?q=smart_ip_batch', $options);
     }
   }
 }
 
 /**
- * Implementation of hook_menu().
+ * Page callback for Smart IP batch operations.
+ */
+function smart_ip_run_batch() {
+  if (isset($_POST['smart_ip_cron_key']) && $_POST['smart_ip_cron_key'] == variable_get('cron_key', 'drupal')) {
+    global $_smart_ip_db_update_access;
+    $recover = !variable_get('smart_ip_db_update_busy', FALSE) & (variable_get('smart_ip_get_zip_done', FALSE) | variable_get('smart_ip_extract_zip_done', FALSE) | variable_get('smart_ip_store_location_csv_done', FALSE));
+    $submit  = $recover ? t('Recover database update') : t('Update database now');
+    $form_state = array(
+      'values' => array(
+        'smart_ip_csv_source'      => smart_ip_get_csv_source_filename(),
+        'smart_ip_update_database' => $submit,
+        'op' => $submit,
+      ),
+    );
+    // Set the db update access flag to allow cron to execute db update
+    $_smart_ip_db_update_access = TRUE; 
+    drupal_form_submit('smart_ip_cron_db_update', $form_state);
+  }
+  else {
+    drupal_access_denied();
+  }
+}
+
+/**
+ * Implement hook_forms().
+ */
+function smart_ip_forms($form_id, $args) {
+  $forms = array();
+  if ($form_id == 'smart_ip_cron_db_update') {
+    module_load_include('inc', 'smart_ip', 'includes/smart_ip.admin');
+    $forms[$form_id]['callback'] = 'smart_ip_admin_settings';
+  }
+  return $forms;
+}
+
+/**
+ * Implements hook_menu().
  *
  * Called when Drupal is building menus.  Cache parameter lets module know
  * if Drupal intends to cache menu or not - different results may be
@@ -90,11 +167,17 @@ function smart_ip_menu() {
     'file' 						 => 'includes/smart_ip.admin.inc',
     'weight'					 => 2,
   );
+  // Default page for Smart IP batch operations.
+  $items['smart_ip_batch'] = array(
+    'page callback' => 'smart_ip_run_batch',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
 /**
- * Implementation of hook_user_login().
+ * Implements hook_user_login().
  *
  * Detects IP and geo location upon user login.
  */

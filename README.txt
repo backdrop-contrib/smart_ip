@@ -21,8 +21,9 @@ at Smart IP admin page. The database of Maxmind is very huge, the two CSV files 
 150MB and the size when stored to SQL database is about 320MB with almost 5 million rows. The 
 process of downloading the archived CSV files from Maxmind's server, extracting the downloaded 
 zip file, parsing the CSV files and storing to the database will took more or less five hours. 
-It uses the batch system process. If interrupted by an unexpected error, the administrator can 
-manually continue and recover from where it stopped at Smart IP admin page.
+It uses the batch system process. If interrupted by an unexpected error, it can recover from 
+where it stopped or the administrator can manually continue the broken process at Smart IP 
+admin page.
 
 Note: The Smart IP database is empty upon initial installation of this module. This module will 
 do nothing if Smart IP database is empty. Either manually update the Smart IP database at admin 
@@ -33,9 +34,10 @@ Drupal 7.x
 
 Installation:
 1. Copy the extracted smart_ip directory to your Drupal sites/all/modules directory.
-2. Login as an administrator. Enable the module at http://www.example.com/admin/modules
-3. Configure/update Smart IP database/lookup an IP at 
-http://www.example.com/admin/config/people/smart_ip.
+2. Login as an administrator. Enable the module at http://www.example.com/?q=admin/modules
+3. Set your private file system path at http://www.example.com/?q=admin/config/media/file-system
+4. Configure/update Smart IP database/lookup an IP at 
+http://www.example.com/?q=admin/config/people/smart_ip.
 
 Support:
 Please use the issue queue for filing bugs with this module at

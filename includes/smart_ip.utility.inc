@@ -36,6 +36,10 @@ function smart_ip_update_db_batch($src = NULL) {
 }
 
 function smart_ip_get_zip($src = NULL, &$context) {
+  if (variable_get('smart_ip_store_location_csv_done', FALSE) || variable_get('smart_ip_extract_zip_done', FALSE)) {
+    // We are in recovery mode.
+    return;
+  }
   $path = file_stream_wrapper_uri_normalize('private://smart_ip');
   if (!file_prepare_directory($path, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS)) {
     // Private file system path not defined then stop the process
@@ -72,7 +76,7 @@ function smart_ip_get_zip($src = NULL, &$context) {
       $context['finished'] = TRUE; 
       $context['message']  = t('Download done');
       // An indicator that is to be used in recovery mode
-      variable_set('smart_ip_get_zip_done', TRUE); 
+      variable_set('smart_ip_get_zip_done', TRUE);
     }
     else {
       // Error occured then stop the process
@@ -84,6 +88,10 @@ function smart_ip_get_zip($src = NULL, &$context) {
 }
 
 function smart_ip_extract_zip(&$context) {
+  if (variable_get('smart_ip_store_location_csv_done', FALSE)) {
+    // We are in recovery mode. We will use previous stored locations.
+    return;
+  }
   $path = file_stream_wrapper_uri_normalize('private://smart_ip');
   if (variable_get('smart_ip_extract_zip_done', FALSE)) {
     // We are in recovery mode. Using previous extracted csv files.
@@ -135,6 +143,8 @@ function smart_ip_extract_zip(&$context) {
     // Update our progress information.
     $context['finished'] = TRUE;
     $context['message']  = t('geoip_db.zip extraction done');
+    // The succeeding process can now be interrupted
+    variable_set('smart_ip_db_update_busy', FALSE);
     // An indicator that is to be used in recovery mode
     variable_set('smart_ip_extract_zip_done', TRUE); 
   }
@@ -143,6 +153,11 @@ function smart_ip_extract_zip(&$context) {
     $message = t('Unzip failed (error code: %code).',	array('%code' => $stat));
     $context['results']['#abort'] = $message;
     $context['message'] = $message;
+    // Delete the corrupted zip file
+    file_unmanaged_delete($zip_file);
+    unset($context['results']['#zip_file']);
+    // Set download process flag as undone to re-download the database from maxmind
+    variable_set('smart_ip_get_zip_done', FALSE);
   }
 }
 
@@ -173,7 +188,13 @@ function smart_ip_store_location_csv(&$context) {
   }
   else {
     if (!isset($context['sandbox']['#location_csv_pointer'])) {
-      cache_clear_all('smart_ip:', 'cache_smart_ip', TRUE);      
+      $location_csv_pointer = variable_get('smart_ip_location_csv_pointer', FALSE);
+      if ($location_csv_pointer) {
+        @fseek($fp, $location_csv_pointer);
+      }
+      else {
+        cache_clear_all('smart_ip:', 'cache_smart_ip', TRUE);
+      }
     }
     else {
       @fseek($fp, $context['sandbox']['#location_csv_pointer']);
@@ -190,6 +211,7 @@ function smart_ip_store_location_csv(&$context) {
       variable_set('smart_ip_store_location_csv_done', variable_get('smart_ip_indicator_last_ip'));
       // Reset our last IP indicator
       variable_set('smart_ip_indicator_last_ip', FALSE);
+      variable_set('smart_ip_location_csv_pointer', FALSE);
     }
     else {
       // Update our progress information.
@@ -203,8 +225,9 @@ function smart_ip_store_location_csv(&$context) {
         'city'      => $data[3], 
         'zip'       => $data[4], 
         'latitude'  => $data[5], 
-        'longitude' => $data[6]
+        'longitude' => $data[6],
       );
+      variable_set('smart_ip_location_csv_pointer', $context['sandbox']['#location_csv_pointer']);
       variable_set('smart_ip_indicator_last_ip', $data[0]);
       cache_set('smart_ip:' . $data[0], $data_location, 'cache_smart_ip');
     }
@@ -231,8 +254,14 @@ function smart_ip_update_database(&$context) {
   }
   else {
     if (!isset($context['sandbox']['#blocks_csv_pointer'])) {
-      //db_query('TRUNCATE TABLE {smart_ip}');
-      db_truncate('smart_ip')->execute();
+      $blocks_csv_pointer = variable_get('smart_ip_blocks_csv_pointer', FALSE);
+      if ($blocks_csv_pointer) {
+        @fseek($fp, $block_csv_pointer);
+      }
+      else {
+        //db_query('TRUNCATE TABLE {smart_ip}');
+        db_truncate('smart_ip')->execute();
+      }
     }
     else {
       @fseek($fp, $context['sandbox']['#blocks_csv_pointer']);
@@ -245,6 +274,7 @@ function smart_ip_update_database(&$context) {
       // Update our progress information.
       $context['finished'] = TRUE;
       $context['message']  = t('Processing %blocks done', array('%blocks' => SMART_IP_BLOCKS_CSV));
+      variable_set('smart_ip_blocks_csv_pointer', FALSE);
       // Tasks completed. Reset the recovery mode indicators.
       variable_set('smart_ip_get_zip_done', FALSE);
       variable_set('smart_ip_extract_zip_done', FALSE);
@@ -296,12 +326,14 @@ function smart_ip_update_database(&$context) {
           ->condition('ip_ref', min($data[0], $data[1]))
           ->execute();
       }
+      variable_set('smart_ip_blocks_csv_pointer', $context['sandbox']['#blocks_csv_pointer']);
     }
     // This lines of code should be here to ensure cache_get()
     // above will return non-empty value
     if ($context['finished'] === TRUE) {
       cache_clear_all('smart_ip:', 'cache_smart_ip', TRUE);
       variable_set('smart_ip_last_update', time());
+      watchdog('smart_ip', 'Smart IP Database successfuly updated from maxmind.com.');
     }
   }
 }
@@ -312,6 +344,9 @@ function smart_ip_update_database(&$context) {
 function smart_ip_update_db_batch_finished($success, $results, $operations, $elapsed) {
   if ($success) {
     if (isset($results['#abort'])) {
+      // Set busy indicator to FALSE so that it can continue the 
+      // process for the next try
+      variable_set('smart_ip_db_update_busy', FALSE);
       drupal_set_message($results['#abort'], 'error');
     }
     else {
