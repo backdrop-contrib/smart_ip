@@ -190,10 +190,16 @@ function smart_ip_store_location_csv(&$context) {
     if (!isset($context['sandbox']['#location_csv_pointer'])) {
       $location_csv_pointer = variable_get('smart_ip_location_csv_pointer', FALSE);
       if ($location_csv_pointer) {
+        // Recover from the last interrupted pointer
         @fseek($fp, $location_csv_pointer);
       }
       else {
+        // New update, clear the cache
         cache_clear_all('smart_ip:', 'cache_smart_ip', TRUE);
+        // Record the last pointer
+        $fp_check = @fopen($context['results']['#location_csv_file'], 'r');
+        @fseek($fp_check, -1, SEEK_END);
+        variable_set('smart_ip_location_csv_last_pointer', @ftell($fp_check));
       }
     }
     else {
@@ -216,7 +222,11 @@ function smart_ip_store_location_csv(&$context) {
     else {
       // Update our progress information.
       $context['finished'] = 10 / 100;
-      $context['message']  = t('Processing %location...', array('%location' => SMART_IP_LOCATION_CSV));
+      $context['message']  = t('Parsing %location at line number: @value of @end', array(
+        '%location' => SMART_IP_LOCATION_CSV, 
+        '@value'    => $context['sandbox']['#location_csv_pointer'],
+        '@end'      => variable_get('smart_ip_location_csv_last_pointer', 0),
+      ));
     }
     if (count($data) > 1 && is_numeric($data[0])) {
       $data_location = array(
@@ -261,6 +271,10 @@ function smart_ip_update_database(&$context) {
       else {
         //db_query('TRUNCATE TABLE {smart_ip}');
         db_truncate('smart_ip')->execute();
+        // Record the last pointer
+        $fp_check = @fopen($context['results']['#blocks_csv_file'], 'r');
+        @fseek($fp_check, -1, SEEK_END);
+        variable_set('smart_ip_blocks_csv_last_pointer', @ftell($fp_check));
       }
     }
     else {
@@ -283,7 +297,11 @@ function smart_ip_update_database(&$context) {
     else {
       // Update our progress information.
       $context['finished'] = 50 / 100;
-      $context['message']  = t('Processing %blocks...', array('%blocks' => SMART_IP_BLOCKS_CSV));
+      $context['message']  = t('Parsing %blocks at line number: @value of @end', array(
+        '%blocks' => SMART_IP_BLOCKS_CSV,
+        '@value'  => $context['sandbox']['#location_csv_pointer'],
+        '@end'    => variable_get('smart_ip_blocks_csv_last_pointer', 0),
+      ));
     }
     if (count($data) > 1 && is_numeric($data[0])) {
       try {

@@ -128,11 +128,18 @@ function _smart_ip_database_update_validate($form, &$form_state) {
  * Submit handler to update the Smart IP database.
  */
 function _smart_ip_database_update_submit($form, &$form_state) {
+  global $_smart_ip_db_update_access;
   // Utility functions for loading database from external sources
   module_load_include('inc', 'smart_ip', 'includes/smart_ip.utility');
-  
-  batch_set(smart_ip_update_db_batch(check_url($form_state['values']['smart_ip_csv_source'])));  
-  watchdog('smart_ip', 'The Smart IP database has been manually updated.');
+  if ($_smart_ip_db_update_access) {
+   $watchdog_msg = 'The Smart IP database has been updated via cron.';
+    $_smart_ip_db_update_access = FALSE;
+  }
+  else {
+    $watchdog_msg = 'The Smart IP database has been manually updated.';
+  }
+  batch_set(smart_ip_update_db_batch(check_url($form_state['values']['smart_ip_csv_source'])));
+  watchdog('smart_ip', $watchdog_msg);
   $form_state['storage']['smart_ip_db_message'] = t('The Smart IP database has been updated. @rows rows affected.', array('@rows' => smart_ip_get_count()));
   $form_state['rebuild'] = TRUE;
 }
