@@ -88,12 +88,8 @@ function smart_ip_get_zip($src = NULL, &$context) {
 }
 
 function smart_ip_extract_zip(&$context) {
-  if (variable_get('smart_ip_store_location_csv_done', FALSE)) {
-    // We are in recovery mode. We will use previous stored locations.
-    return;
-  }
   $path = file_stream_wrapper_uri_normalize('private://smart_ip');
-  if (variable_get('smart_ip_extract_zip_done', FALSE)) {
+  if (variable_get('smart_ip_extract_zip_done', FALSE) || variable_get('smart_ip_store_location_csv_done', FALSE)) {
     // We are in recovery mode. Using previous extracted csv files.
     $context['finished'] = TRUE;
     $context['message']  = t('Using previous extracted csv files (recovery mode)');
@@ -299,7 +295,7 @@ function smart_ip_update_database(&$context) {
       $context['finished'] = 50 / 100;
       $context['message']  = t('Parsing %blocks at line number: @value of @end', array(
         '%blocks' => SMART_IP_BLOCKS_CSV,
-        '@value'  => $context['sandbox']['#location_csv_pointer'],
+        '@value'  => $context['sandbox']['#blocks_csv_pointer'],
         '@end'    => variable_get('smart_ip_blocks_csv_last_pointer', 0),
       ));
     }
