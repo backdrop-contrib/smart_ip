@@ -70,7 +70,7 @@ function smart_ip_get_zip($src = NULL, &$context) {
   }
   else {
     $context['results']['#zip_file'] = drupal_realpath($path . '/geoip_db.zip');
-    $context['finished'] = 2 / 100; 
+    $context['finished'] = 50 / 100; 
     if (@copy($src, $context['results']['#zip_file'])) {
       // Update our progress information.
       $context['finished'] = TRUE; 
@@ -114,7 +114,7 @@ function smart_ip_extract_zip(&$context) {
   $zip_file = $context['results']['#zip_file'];
   $zip      = new ZipArchive;
   $stat     = $zip->open($zip_file);
-  $context['finished'] = 5 / 100; 
+  $context['finished'] = 50 / 100; 
   if ($stat === TRUE) {
     // Delete existing csv files
     $csv_files = file_scan_directory($path, '/\.csv$/');
@@ -184,7 +184,7 @@ function smart_ip_store_location_csv(&$context) {
   }
   else {
     if (!isset($context['sandbox']['#location_csv_pointer'])) {
-      $location_csv_pointer = variable_get('smart_ip_location_csv_pointer', FALSE);
+      $location_csv_pointer = variable_get('smart_ip_location_csv_pointer', 0);
       if ($location_csv_pointer) {
         // Recover from the last interrupted pointer
         @fseek($fp, $location_csv_pointer);
@@ -213,15 +213,18 @@ function smart_ip_store_location_csv(&$context) {
       variable_set('smart_ip_store_location_csv_done', variable_get('smart_ip_indicator_last_ip'));
       // Reset our last IP indicator
       variable_set('smart_ip_indicator_last_ip', FALSE);
-      variable_set('smart_ip_location_csv_pointer', FALSE);
+      variable_set('smart_ip_location_csv_pointer', 0);
     }
     else {
+      $current_pointer    = $context['sandbox']['#location_csv_pointer'];
+      $last_pointer       = variable_get('smart_ip_location_csv_last_pointer', 0);
+      $estimated_progress = 100 * ($current_pointer/$last_pointer);
       // Update our progress information.
-      $context['finished'] = 10 / 100;
+      $context['finished'] = $estimated_progress / 100; // 63%
       $context['message']  = t('Parsing %location at line number: @value of @end', array(
         '%location' => SMART_IP_LOCATION_CSV, 
-        '@value'    => $context['sandbox']['#location_csv_pointer'],
-        '@end'      => variable_get('smart_ip_location_csv_last_pointer', 0),
+        '@value'    => $current_pointer,
+        '@end'      => $last_pointer,
       ));
     }
     if (count($data) > 1 && is_numeric($data[0])) {
@@ -260,9 +263,9 @@ function smart_ip_update_database(&$context) {
   }
   else {
     if (!isset($context['sandbox']['#blocks_csv_pointer'])) {
-      $blocks_csv_pointer = variable_get('smart_ip_blocks_csv_pointer', FALSE);
+      $blocks_csv_pointer = variable_get('smart_ip_blocks_csv_pointer', 0);
       if ($blocks_csv_pointer) {
-        @fseek($fp, $block_csv_pointer);
+        @fseek($fp, $blocks_csv_pointer);
       }
       else {
         //db_query('TRUNCATE TABLE {smart_ip}');
@@ -284,22 +287,26 @@ function smart_ip_update_database(&$context) {
       // Update our progress information.
       $context['finished'] = TRUE;
       $context['message']  = t('Processing %blocks done', array('%blocks' => SMART_IP_BLOCKS_CSV));
-      variable_set('smart_ip_blocks_csv_pointer', FALSE);
+      variable_set('smart_ip_blocks_csv_pointer', 0);
       // Tasks completed. Reset the recovery mode indicators.
       variable_set('smart_ip_get_zip_done', FALSE);
       variable_set('smart_ip_extract_zip_done', FALSE);
       variable_set('smart_ip_store_location_csv_done', FALSE);
     }
     else {
+      $current_pointer    = $context['sandbox']['#blocks_csv_pointer'];
+      $last_pointer       = variable_get('smart_ip_blocks_csv_last_pointer', 0);
+      $estimated_progress = 100 * ($current_pointer/$last_pointer);
       // Update our progress information.
-      $context['finished'] = 50 / 100;
+      $context['finished'] = $estimated_progress / 100;
       $context['message']  = t('Parsing %blocks at line number: @value of @end', array(
         '%blocks' => SMART_IP_BLOCKS_CSV,
-        '@value'  => $context['sandbox']['#blocks_csv_pointer'],
-        '@end'    => variable_get('smart_ip_blocks_csv_last_pointer', 0),
+        '@value'  => $current_pointer,
+        '@end'    => $last_pointer,
       ));
     }
     if (count($data) > 1 && is_numeric($data[0])) {
+      variable_set('smart_ip_blocks_csv_pointer', $context['sandbox']['#blocks_csv_pointer']);
       try {
         $location = cache_get('smart_ip:' . $data[2], 'cache_smart_ip');
         // Insert GeoIP into the database
@@ -340,7 +347,6 @@ function smart_ip_update_database(&$context) {
           ->condition('ip_ref', min($data[0], $data[1]))
           ->execute();
       }
-      variable_set('smart_ip_blocks_csv_pointer', $context['sandbox']['#blocks_csv_pointer']);
     }
     // This lines of code should be here to ensure cache_get()
     // above will return non-empty value
