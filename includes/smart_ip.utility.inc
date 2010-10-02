@@ -210,17 +210,18 @@ function smart_ip_store_location_csv(&$context) {
       $context['message']  = t('Processing %location done', array('%location' => SMART_IP_LOCATION_CSV));   
       unset($context['results']['#location_csv_file']);
       // An indicator that is to be used in recovery mode
-      variable_set('smart_ip_store_location_csv_done', variable_get('smart_ip_indicator_last_ip'));
+      variable_set('smart_ip_store_location_csv_done', (int) variable_get('smart_ip_indicator_last_ip'));
       // Reset our last IP indicator
       variable_set('smart_ip_indicator_last_ip', FALSE);
       variable_set('smart_ip_location_csv_pointer', 0);
+      return;
     }
     else {
       $current_pointer    = $context['sandbox']['#location_csv_pointer'];
       $last_pointer       = variable_get('smart_ip_location_csv_last_pointer', 0);
-      $estimated_progress = 100 * ($current_pointer/$last_pointer);
+      $estimated_progress = floor(100 * ($current_pointer / $last_pointer));
       // Update our progress information.
-      $context['finished'] = $estimated_progress / 100; // 63%
+      $context['finished'] = $estimated_progress / 100;
       $context['message']  = t('Parsing %location at line number: @value of @end', array(
         '%location' => SMART_IP_LOCATION_CSV, 
         '@value'    => $current_pointer,
@@ -296,7 +297,7 @@ function smart_ip_update_database(&$context) {
     else {
       $current_pointer    = $context['sandbox']['#blocks_csv_pointer'];
       $last_pointer       = variable_get('smart_ip_blocks_csv_last_pointer', 0);
-      $estimated_progress = 100 * ($current_pointer/$last_pointer);
+      $estimated_progress = floor(100 * ($current_pointer / $last_pointer));
       // Update our progress information.
       $context['finished'] = $estimated_progress / 100;
       $context['message']  = t('Parsing %blocks at line number: @value of @end', array(
