@@ -2,10 +2,13 @@
 // $Id$
 
 /**
- * Implementation of hook_schema().
+ * Smart IP schema definition array.
+ *
+ * @return
+ *   A Schema API table definition array.
  */
-function smart_ip_schema() {
-  $schema['smart_ip'] = array(
+function smart_ip_schema_definition_array() {
+  return array(
     'description' => 'Association between IP range and Geo location',
     'fields' => array(
       'geoip_id' => array(
@@ -62,6 +65,14 @@ function smart_ip_schema() {
       'geoip_id' => array('geoip_id'),
     ),
   );
+}
+
+/**
+ * Implements hook_schema().
+ */
+function smart_ip_schema() {
+  $schema['smart_ip'] = smart_ip_schema_definition_array();
+  $schema['smart_ip_update_table']  = $schema['smart_ip'];
   $schema['cache_smart_ip'] = drupal_get_schema_unprocessed('system', 'cache');
   $schema['cache_smart_ip']['description'] = 'Cache table for storing temporary data during Smart IP database update.';
   return $schema;
@@ -69,7 +80,7 @@ function smart_ip_schema() {
 
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  *
  * Creates database tables needed by this module.
  */
@@ -86,7 +97,7 @@ function smart_ip_install() {
 
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  *
  * Removes all tables and variables inserted into the
  * database by this module.

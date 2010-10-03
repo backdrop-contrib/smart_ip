@@ -269,8 +269,9 @@ function smart_ip_update_database(&$context) {
         @fseek($fp, $blocks_csv_pointer);
       }
       else {
-        //db_query('TRUNCATE TABLE {smart_ip}');
-        db_truncate('smart_ip')->execute();
+        module_load_install('smart_ip');
+        // Add temporary working table for updating Smart IP database.
+        db_create_table('smart_ip_update_table', smart_ip_schema_definition_array());
         // Record the last pointer
         $fp_check = @fopen($context['results']['#blocks_csv_file'], 'r');
         @fseek($fp_check, -1, SEEK_END);
@@ -285,6 +286,12 @@ function smart_ip_update_database(&$context) {
     if (@feof($fp)) {
       @fclose($fp);
       unset($context['results']['#blocks_csv_file']);
+      // Clear the Smart IP production table
+      db_drop_table('smart_ip');
+      //db_query('TRUNCATE TABLE {smart_ip}');
+      //db_truncate('smart_ip')->execute();
+      // Rename temporary working Smart IP database table to production table name {smart_ip}
+      db_rename_table('smart_ip_update_table', 'smart_ip'); // 'RENAME TABLE {smart_ip_update_table} TO {smart_ip}'
       // Update our progress information.
       $context['finished'] = TRUE;
       $context['message']  = t('Processing %blocks done', array('%blocks' => SMART_IP_BLOCKS_CSV));
@@ -310,8 +317,8 @@ function smart_ip_update_database(&$context) {
       variable_set('smart_ip_blocks_csv_pointer', $context['sandbox']['#blocks_csv_pointer']);
       try {
         $location = cache_get('smart_ip:' . $data[2], 'cache_smart_ip');
-        // Insert GeoIP into the database
-        db_insert('smart_ip')
+        // Insert GeoIP into the temporary working Smart IP database table
+        db_insert('smart_ip_update_table')
           ->fields(array(
             'geoip_id',
             'ip_ref',
@@ -335,7 +342,7 @@ function smart_ip_update_database(&$context) {
           ->execute();
       }
       catch(Exception $error) {
-        db_update('smart_ip')
+        db_update('smart_ip_update_table')
           ->fields(array(
             'geoip_id'  => $data[2],
             'country'   => strtoupper($location->data['country']),
