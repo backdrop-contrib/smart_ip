@@ -72,7 +72,6 @@ function smart_ip_schema_definition_array() {
  */
 function smart_ip_schema() {
   $schema['smart_ip'] = smart_ip_schema_definition_array();
-  $schema['smart_ip_update_table']  = $schema['smart_ip'];
   $schema['cache_smart_ip'] = drupal_get_schema_unprocessed('system', 'cache');
   $schema['cache_smart_ip']['description'] = 'Cache table for storing temporary data during Smart IP database update.';
   return $schema;
