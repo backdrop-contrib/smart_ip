@@ -18,16 +18,22 @@ and process the CSV files (GeoLiteCity-Location.csv and GeoLiteCity-Blocks.csv) 
 Smart IP database. An optional once a month (Maxmind updates its database every first day of 
 a month) automatic update of the Smart IP database is provided or it can be manually updated 
 at Smart IP admin page. The database of Maxmind is very huge, the two CSV files size is about 
-150MB and the size when stored to SQL database is about 320MB with almost 5 million rows. The 
-process of downloading the archived CSV files from Maxmind's server, extracting the downloaded 
-zip file, parsing the CSV files and storing to the database will took more or less five hours. 
-It uses the batch system process. If interrupted by an unexpected error, it can recover from 
-where it stopped or the administrator can manually continue the broken process at Smart IP 
-admin page.
+150MB and the size when stored to SQL database is about 450MB with almost 5 million rows and 
+about 600MB additional database space for temporary working table for Smart IP database 
+update. The process of downloading the archived CSV files from Maxmind's server, extracting 
+the downloaded zip file, parsing the CSV files and storing to the database will took more or 
+less eight hours (depends on server's speed). It uses the batch system process. If interrupted 
+by an unexpected error, it can recover from where it stopped or the administrator can manually 
+continue the broken process at Smart IP admin page.
 
-Note: The Smart IP database is empty upon initial installation of this module. This module will 
-do nothing if Smart IP database is empty. Either manually update the Smart IP database at admin 
-page or wait for the cron to run and update Smart IP database automatically for you.
+Another source of Smart IP is the IPInfoDB.com service which also uses Maxmind's database, in 
+this case IPInfoDB.com will handle database resource load instead of your server's database. 
+By default the use of IPInfoDB.com service as source is disabled. If IPInfoDB.com is desired to  
+handle database resource load, it can be configured at Smart IP admin page settings.
+
+Note: The Smart IP database is empty upon initial installation of this module. Either manually 
+update the Smart IP database at admin page or wait for the cron to run and update Smart IP 
+database automatically for you.
 
 Requirements:
 Drupal 7.x

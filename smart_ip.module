@@ -47,19 +47,24 @@ function smart_ip_help($path, $arg) {
       Smart IP database. An optional once a month (Maxmind updates its database every first day of 
       a month) automatic update of the Smart IP database is provided or it can be manually updated 
       at Smart IP admin page. The database of Maxmind is very huge, the two CSV files size is about 
-      150MB and the size when stored to SQL database is about 320MB with almost 5 million rows. The 
-      process of downloading the archived CSV files from Maxmind's server, extracting the downloaded 
-      zip file, parsing the CSV files and storing to the database will took more or less five hours. 
-      It uses the batch system process. If interrupted by an unexpected error, it can recover from 
-      where it stopped or the administrator can manually continue the broken process at Smart IP 
-      admin page.", array(
+      150MB and the size when stored to SQL database is about 450MB with almost 5 million rows and 
+      about 600MB additional database space for temporary working table for Smart IP database 
+      update. The process of downloading the archived CSV files from Maxmind's server, extracting 
+      the downloaded zip file, parsing the CSV files and storing to the database will took more or 
+      less eight hours (depends on server's speed). It uses the batch system process. If interrupted 
+      by an unexpected error, it can recover from where it stopped or the administrator can manually 
+      continue the broken process at Smart IP admin page.", array(
         '!maxmind' => l('http://www.maxmind.com/app/geolitecountry', 'http://www.maxmind.com/app/geolitecountry'),
-      )) . '</p><div class="messages"><p>' . 
-      t('Note: The Smart IP database is empty upon initial installation of this module. This module will 
-      do nothing if Smart IP database is empty. Either manually update the Smart IP database at admin 
-      page or wait for the cron to run and update Smart IP database automatically for you. It is very 
-      important to set your private file system path at !filesystem, this will be the working path 
-      of Smart IP while updating the database.', array(
+      )) . '</p><p>' . 
+      t("Another source of Smart IP is the IPInfoDB.com service which also uses Maxmind's database, in 
+      this case IPInfoDB.com will handle database resource load instead of your server's database. 
+      By default the use of IPInfoDB.com service as source is disabled. If IPInfoDB.com is desired to  
+      handle database resource load, it can be configured at Smart IP admin page settings..")
+      . '</p><div class="messages"><p>' . 
+      t('Note: The Smart IP database is empty upon initial installation of this module. Either manually 
+      update the Smart IP database at admin page or wait for the cron to run and update Smart IP 
+      database automatically for you. It is very important to set your private file system path at 
+      !filesystem, this will be the working path of Smart IP while updating the database.', array(
         '!filesystem' => l(t('File system'), 'admin/config/media/file-system'),
       )) . '</p></div>';
       break;
@@ -192,9 +197,10 @@ function smart_ip_user_login(&$edit, $account) {
     $ip = variable_get('smart_ip_test_ip_address', ip_address());
     $location = smart_ip_get_location($ip);
     if ($location) {
+      $country = isset($countries[$location['country']]) ? $countries[$location['country']] : '';
       drupal_set_message(t('Using debug IP: %ip / Country: %country / Region code: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat', array(
         '%ip'      => $ip, 
-        '%country' => $countries[$location['country']],
+        '%country' => $country,
         '%region'  => $location['region'],
         '%city'    => $location['city'],
         '%zip'     => $location['zip'],
@@ -226,12 +232,25 @@ function smart_ip_user_login(&$edit, $account) {
  *   FALSE if the lookup failed to find a location for this IP
  */
 function smart_ip_get_location($ip_address) {
-  $ip = explode('.', $ip_address);
-  $result = FALSE;
-  if (count($ip) == 4) {
-    $ipl = (($ip[0] * 256 + $ip[1]) * 256 + $ip[2]) * 256 + $ip[3];
-    $query = db_query('SELECT * FROM {smart_ip} WHERE ip_ref <= :ip ORDER BY ip_ref DESC LIMIT 1', array(':ip' => $ipl));
-    $result = $query->fetchAssoc();
+  $use_ipinfodb_service = variable_get('smart_ip_use_ipinfodb_service', FALSE);
+  if (!$use_ipinfodb_service) {
+    $ip = explode('.', $ip_address);
+    $result = FALSE;
+    if (count($ip) == 4) {
+      $ipl = (($ip[0] * 256 + $ip[1]) * 256 + $ip[2]) * 256 + $ip[3];
+      $query = db_query('SELECT * FROM {smart_ip} WHERE ip_ref <= :ip ORDER BY ip_ref DESC LIMIT 1', array(':ip' => $ipl));
+      $result = $query->fetchAssoc();
+    }
+  }
+  if ($use_ipinfodb_service || empty($result)) {
+    $request = drupal_http_request("http://ipinfodb.com/ip_query.php?ip=$ip_address&output=json&timezone=false");
+    $request_data = drupal_json_decode($request->data);
+    $result['country']   = isset($request_data['CountryCode']) ? $request_data['CountryCode'] : '';
+    $result['region']    = isset($request_data['RegionCode']) ? $request_data['RegionCode'] : '';
+    $result['city']      = isset($request_data['City']) ? $request_data['City'] : '';
+    $result['zip']       = isset($request_data['ZipPostalCode']) ? $request_data['ZipPostalCode'] : '';
+    $result['latitude']  = isset($request_data['Latitude']) ? $request_data['Latitude'] : '';
+    $result['longitude'] = isset($request_data['Longitude']) ? $request_data['Longitude'] : '';
   }
   // Allow other modules to modify result via hook_smart_ip_get_location_alter()
   drupal_alter('smart_ip_get_location', $result);

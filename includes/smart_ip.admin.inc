@@ -80,7 +80,14 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#collapsible' => FALSE,
     '#collapsed'   => FALSE,
   );
-
+  
+  // Form to enable the use of IPInfoDB service
+  $form['smart_ip_preferences']['smart_ip_use_ipinfodb_service'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t('Use IPInfoDB service'),
+    '#description'   => t('IPInfoDB.com service will be used to query Geo IP information instead of Smart IP database.'),
+    '#default_value' => variable_get('smart_ip_use_ipinfodb_service', FALSE),
+  );
   
   // Form to enable automatic Smart IP database update every one month
   $form['smart_ip_preferences']['smart_ip_auto_update'] = array(
@@ -88,14 +95,19 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#title'         => t('Automatic Smart IP database update'),
     '#description'   => t('Database will be automatically updated via cron.php every one month (Maxmind updates every first day of a month). !cron must be enabled for this to work.', array('!cron' => l(t('Cron'), 'admin/config/system/cron'))),
     '#default_value' => variable_get('smart_ip_auto_update', TRUE),
+    '#states'        => array(
+      'unchecked' => array(
+        ':input[name="smart_ip_use_ipinfodb_service"]' => array('checked' => TRUE),
+      ),
+    ),
   );
   
   // Form to turn on save user location in $user object upon login
   $form['smart_ip_preferences']['smart_ip_save_user_location'] = array(
     '#type'          => 'checkbox',
-    '#title'         => t("Save user's country code"),
+    '#title'         => t("Save user's location details"),
     '#default_value' => variable_get('smart_ip_save_user_location', TRUE),
-    '#description'   => t("Save the user's country code upon login."),
+    '#description'   => t("Save the user's location details upon login."),
   );
   
   // Form to turn on debugging
@@ -156,19 +168,20 @@ function _smart_ip_lookup_submit($form, &$form_state) {
   // Return results of manual lookup
   $location = smart_ip_get_location($lookup);
   if ($location) {
+    $country = isset($countries[$location['country']]) ? $countries[$location['country']] : '';
     $message = '<p>' . t('IP Address @ip is assigned to the following location details:', array('@ip' => $lookup)) . '</p><dl>' .
       '<dt>' . t('Country:') . '</dt>' .
-      '<dd>' . t('%country', array('%country' => $countries[$location['country']]))  . '</dd>' .
+      '<dd>' . t('%country', array('%country' => $country)) . '</dd>' .
       '<dt>' . t('Region code:') . '</dt>' .
-      '<dd>' . t('%region', array('%region' => $location['region']))  . '</dd>' .
+      '<dd>' . t('%region', array('%region' => $location['region'])) . '</dd>' .
       '<dt>' . t('City:') . '</dt>' .
-      '<dd>' . t('%city', array('%city' => $location['city']))  . '</dd>' .
+      '<dd>' . t('%city', array('%city' => $location['city'])) . '</dd>' .
       '<dt>' . t('Postal code:') . '</dt>' .
-      '<dd>' . t('%zip', array('%zip' => $location['zip']))  . '</dd>' .
+      '<dd>' . t('%zip', array('%zip' => $location['zip'])) . '</dd>' .
       '<dt>' . t('Latitude:') . '</dt>' .
-      '<dd>' . t('%latitude', array('%latitude' => $location['latitude']))  . '</dd>' .
+      '<dd>' . t('%latitude', array('%latitude' => $location['latitude'])) . '</dd>' .
       '<dt>' . t('Longitude:') . '</dt>' .
-      '<dd>' . t('%longitude', array('%longitude' => $location['longitude']))  . '</dd>' .
+      '<dd>' . t('%longitude', array('%longitude' => $location['longitude'])) . '</dd>' .
     '</dl>';
   }
   else {
@@ -213,10 +226,11 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
   }
   $location = smart_ip_get_location($ip);
   if ($location) {
+    $country = isset($countries[$location['country']]) ? $countries[$location['country']] : '';
     drupal_set_message(t('Using @type IP: %ip / Country: %country / Region code: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat', array(
       '@type'    => $form_state['values']['smart_ip_debug'] ? 'debug' : 'actual',
       '%ip'      => $ip, 
-      '%country' => $countries[$location['country']],
+      '%country' => $country,
       '%region'  => $location['region'],
       '%city'    => $location['city'],
       '%zip'     => $location['zip'],

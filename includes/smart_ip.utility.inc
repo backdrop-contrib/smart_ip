@@ -74,7 +74,7 @@ function smart_ip_get_zip($src = NULL, &$context) {
     if (@copy($src, $context['results']['#zip_file'])) {
       // Update our progress information.
       $context['finished'] = TRUE; 
-      $context['message']  = t('Download done');
+      $context['message']  = t('Download done. Extracting zip file...');
       // An indicator that is to be used in recovery mode
       variable_set('smart_ip_get_zip_done', TRUE);
     }
@@ -138,7 +138,7 @@ function smart_ip_extract_zip(&$context) {
     file_unmanaged_delete_recursive(str_replace($csv_file->filename, '', $csv_file->uri));
     // Update our progress information.
     $context['finished'] = TRUE;
-    $context['message']  = t('geoip_db.zip extraction done');
+    $context['message']  = t('geoip_db.zip extraction done. Starting the process of parsing extracted CSV files...');
     // The succeeding process can now be interrupted
     variable_set('smart_ip_db_update_busy', FALSE);
     // An indicator that is to be used in recovery mode
@@ -286,12 +286,6 @@ function smart_ip_update_database(&$context) {
     if (@feof($fp)) {
       @fclose($fp);
       unset($context['results']['#blocks_csv_file']);
-      // Clear the Smart IP production table
-      db_drop_table('smart_ip');
-      //db_query('TRUNCATE TABLE {smart_ip}');
-      //db_truncate('smart_ip')->execute();
-      // Rename temporary working Smart IP database table to production table name {smart_ip}
-      db_rename_table('smart_ip_update_table', 'smart_ip'); // 'RENAME TABLE {smart_ip_update_table} TO {smart_ip}'
       // Update our progress information.
       $context['finished'] = TRUE;
       $context['message']  = t('Processing %blocks done', array('%blocks' => SMART_IP_BLOCKS_CSV));
@@ -304,7 +298,7 @@ function smart_ip_update_database(&$context) {
     else {
       $current_pointer    = $context['sandbox']['#blocks_csv_pointer'];
       $last_pointer       = variable_get('smart_ip_blocks_csv_last_pointer', 0);
-      $estimated_progress = floor(100 * ($current_pointer / $last_pointer));
+      $estimated_progress = floor(100 * ($current_pointer / $last_pointer)) - 2;
       // Update our progress information.
       $context['finished'] = $estimated_progress / 100;
       $context['message']  = t('Parsing %blocks at line number: @value of @end', array(
@@ -359,6 +353,12 @@ function smart_ip_update_database(&$context) {
     // This lines of code should be here to ensure cache_get()
     // above will return non-empty value
     if ($context['finished'] === TRUE) {
+      // Clear the Smart IP production table
+      db_drop_table('smart_ip');
+      //db_query('TRUNCATE TABLE {smart_ip}');
+      //db_truncate('smart_ip')->execute();
+      // Rename temporary working Smart IP database table to production table name {smart_ip}
+      db_rename_table('smart_ip_update_table', 'smart_ip'); // 'RENAME TABLE {smart_ip_update_table} TO {smart_ip}'
       cache_clear_all('smart_ip:', 'cache_smart_ip', TRUE);
       variable_set('smart_ip_last_update', time());
       watchdog('smart_ip', 'Smart IP Database successfuly updated from maxmind.com.');

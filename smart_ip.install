@@ -84,6 +84,7 @@ function smart_ip_schema() {
  * Creates database tables needed by this module.
  */
 function smart_ip_install() {
+  variable_set('smart_ip_use_ipinfodb_service', FALSE);
   variable_set('smart_ip_get_zip_done', FALSE);
   variable_set('smart_ip_extract_zip_done', FALSE);
   variable_set('smart_ip_store_location_csv_done', FALSE);
@@ -102,6 +103,7 @@ function smart_ip_install() {
  * database by this module.
  */
 function smart_ip_uninstall() {
+  variable_del('smart_ip_use_ipinfodb_service');
   variable_del('smart_ip_get_zip_done');
   variable_del('smart_ip_extract_zip_done');
   variable_del('smart_ip_store_location_csv_done');
