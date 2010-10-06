@@ -162,16 +162,13 @@ function _smart_ip_database_update_submit($form, &$form_state) {
  * @see _smart_ip_lookup_js()
  */
 function _smart_ip_lookup_submit($form, &$form_state) {
-  include_once DRUPAL_ROOT . '/includes/locale.inc';
-  $countries = country_get_list();
   $lookup    = $form_state['values']['smart_ip_lookup'];
   // Return results of manual lookup
   $location = smart_ip_get_location($lookup);
   if ($location) {
-    $country = isset($countries[$location['country']]) ? $countries[$location['country']] : '';
     $message = '<p>' . t('IP Address @ip is assigned to the following location details:', array('@ip' => $lookup)) . '</p><dl>' .
       '<dt>' . t('Country:') . '</dt>' .
-      '<dd>' . t('%country', array('%country' => $country)) . '</dd>' .
+      '<dd>' . t('%country', array('%country' => $location['country'])) . '</dd>' .
       '<dt>' . t('Region code:') . '</dt>' .
       '<dd>' . t('%region', array('%region' => $location['region'])) . '</dd>' .
       '<dt>' . t('City:') . '</dt>' .
@@ -208,13 +205,11 @@ function _smart_ip_lookup_js($form, $form_state) {
  * Process Forms submitted by IP to Country administration page
  */
 function smart_ip_admin_settings_submit($form, &$form_state) {
-  include_once DRUPAL_ROOT . '/includes/locale.inc';
   global $user;
 
   // Exclude unnecessary elements from being saved in variable table
   unset($form_state['values']['smart_ip_lookup'], $form_state['values']['smart_ip_csv_source']);
 
-  $countries = country_get_list();
   // Check to see if debug set
   if ($form_state['values']['smart_ip_debug']) {
     // Debug on
@@ -226,11 +221,10 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
   }
   $location = smart_ip_get_location($ip);
   if ($location) {
-    $country = isset($countries[$location['country']]) ? $countries[$location['country']] : '';
     drupal_set_message(t('Using @type IP: %ip / Country: %country / Region code: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat', array(
       '@type'    => $form_state['values']['smart_ip_debug'] ? 'debug' : 'actual',
       '%ip'      => $ip, 
-      '%country' => $country,
+      '%country' => $location['country'],
       '%region'  => $location['region'],
       '%city'    => $location['city'],
       '%zip'     => $location['zip'],

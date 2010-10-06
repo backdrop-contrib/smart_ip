@@ -230,12 +230,12 @@ function smart_ip_store_location_csv(&$context) {
     }
     if (count($data) > 1 && is_numeric($data[0])) {
       $data_location = array(
-        'country'   => $data[1], 
-        'region'    => $data[2], 
-        'city'      => $data[3], 
-        'zip'       => $data[4], 
-        'latitude'  => $data[5], 
-        'longitude' => $data[6],
+        'country_code' => $data[1], 
+        'region'       => $data[2], 
+        'city'         => $data[3], 
+        'zip'          => $data[4], 
+        'latitude'     => $data[5], 
+        'longitude'    => $data[6],
       );
       variable_set('smart_ip_location_csv_pointer', $context['sandbox']['#location_csv_pointer']);
       variable_set('smart_ip_indicator_last_ip', $data[0]);
@@ -316,7 +316,7 @@ function smart_ip_update_database(&$context) {
           ->fields(array(
             'geoip_id',
             'ip_ref',
-            'country',
+            'country_code',
             'region',
             'city',
             'zip',
@@ -324,27 +324,27 @@ function smart_ip_update_database(&$context) {
             'longitude',
           ))
           ->values(array(
-            'geoip_id'  => $data[2],
-            'ip_ref'    => min($data[0], $data[1]),
-            'country'   => strtoupper($location->data['country']),
-            'region'    => strtoupper($location->data['region']),
-            'city'      => $location->data['city'],
-            'zip'       => $location->data['zip'],
-            'latitude'  => $location->data['latitude'],
-            'longitude' => $location->data['longitude'],
+            'geoip_id'     => $data[2],
+            'ip_ref'       => min($data[0], $data[1]),
+            'country_code' => strtoupper($location->data['country_code']),
+            'region'       => strtoupper($location->data['region']),
+            'city'         => $location->data['city'],
+            'zip'          => $location->data['zip'],
+            'latitude'     => $location->data['latitude'],
+            'longitude'    => $location->data['longitude'],
           ))
           ->execute();
       }
       catch(Exception $error) {
         db_update('smart_ip_update_table')
           ->fields(array(
-            'geoip_id'  => $data[2],
-            'country'   => strtoupper($location->data['country']),
-            'region'    => strtoupper($location->data['region']),
-            'city'      => $location->data['city'],
-            'zip'       => $location->data['zip'],
-            'latitude'  => $location->data['latitude'],
-            'longitude' => $location->data['longitude'],
+            'geoip_id'     => $data[2],
+            'country_code' => strtoupper($location->data['country_code']),
+            'region'       => strtoupper($location->data['region']),
+            'city'         => $location->data['city'],
+            'zip'          => $location->data['zip'],
+            'latitude'     => $location->data['latitude'],
+            'longitude'    => $location->data['longitude'],
           ))
           ->condition('ip_ref', min($data[0], $data[1]))
           ->execute();

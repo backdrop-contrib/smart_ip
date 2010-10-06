@@ -192,15 +192,12 @@ function smart_ip_user_login(&$edit, $account) {
   // instead of real information
   $location = FALSE;
   if (user_access('administer smart_ip') && variable_get('smart_ip_debug', FALSE)) {
-    include_once DRUPAL_ROOT . '/includes/locale.inc';
-    $countries = country_get_list();
     $ip = variable_get('smart_ip_test_ip_address', ip_address());
     $location = smart_ip_get_location($ip);
     if ($location) {
-      $country = isset($countries[$location['country']]) ? $countries[$location['country']] : '';
       drupal_set_message(t('Using debug IP: %ip / Country: %country / Region code: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat', array(
         '%ip'      => $ip, 
-        '%country' => $country,
+        '%country' => $location['country'],
         '%region'  => $location['region'],
         '%city'    => $location['city'],
         '%zip'     => $location['zip'],
@@ -240,17 +237,23 @@ function smart_ip_get_location($ip_address) {
       $ipl = (($ip[0] * 256 + $ip[1]) * 256 + $ip[2]) * 256 + $ip[3];
       $query = db_query('SELECT * FROM {smart_ip} WHERE ip_ref <= :ip ORDER BY ip_ref DESC LIMIT 1', array(':ip' => $ipl));
       $result = $query->fetchAssoc();
+      if (!empty($result)) {
+        include_once DRUPAL_ROOT . '/includes/locale.inc';
+        $countries = country_get_list();
+        $result['country'] = $countries[$result['country_code']];
+      }
     }
   }
   if ($use_ipinfodb_service || empty($result)) {
     $request = drupal_http_request("http://ipinfodb.com/ip_query.php?ip=$ip_address&output=json&timezone=false");
     $request_data = drupal_json_decode($request->data);
-    $result['country']   = isset($request_data['CountryCode']) ? $request_data['CountryCode'] : '';
-    $result['region']    = isset($request_data['RegionCode']) ? $request_data['RegionCode'] : '';
-    $result['city']      = isset($request_data['City']) ? $request_data['City'] : '';
-    $result['zip']       = isset($request_data['ZipPostalCode']) ? $request_data['ZipPostalCode'] : '';
-    $result['latitude']  = isset($request_data['Latitude']) ? $request_data['Latitude'] : '';
-    $result['longitude'] = isset($request_data['Longitude']) ? $request_data['Longitude'] : '';
+    $result['country']      = isset($request_data['CountryName']) ? $request_data['CountryName'] : '';
+    $result['country_code'] = isset($request_data['CountryCode']) ? $request_data['CountryCode'] : '';
+    $result['region']       = isset($request_data['RegionCode']) ? $request_data['RegionCode'] : '';
+    $result['city']         = isset($request_data['City']) ? $request_data['City'] : '';
+    $result['zip']          = isset($request_data['ZipPostalCode']) ? $request_data['ZipPostalCode'] : '';
+    $result['latitude']     = isset($request_data['Latitude']) ? $request_data['Latitude'] : '';
+    $result['longitude']    = isset($request_data['Longitude']) ? $request_data['Longitude'] : '';
   }
   // Allow other modules to modify result via hook_smart_ip_get_location_alter()
   drupal_alter('smart_ip_get_location', $result);
