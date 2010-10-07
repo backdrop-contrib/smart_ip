@@ -25,13 +25,13 @@ function smart_ip_schema_definition_array() {
       ),
       'country_code' => array(
         'description' => 'ISO 3166 2-Character Country Code',
-        'type'        => 'char',
+        'type'        => 'varchar',
         'length'      => 3,
         'not null'    => TRUE,
       ),
       'region' => array(
         'description' => '2-Character Region Code',
-        'type'        => 'char',
+        'type'        => 'varchar',
         'length'      => 3,
         'not null'    => FALSE,
       ),

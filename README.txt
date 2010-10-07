@@ -6,8 +6,8 @@ region, city and postal code based on the IP address of the user. These informat
 will be stored at Drupal $user->data object with array key 'geoip_location' upon login 
 of the user but optionally it can be disabled at Smart IP admin page. Other modules can 
 use the function smart_ip_get_location($ip_address) that returns an array containing 
-the visitor's ISO 3166 2-character country code, longitude, latitude, region code (FIPS), 
-city and postal code. It provides a feature for you to perform your own IP lookup and admin 
+the visitor's ISO 3166 2-character country code, longitude, latitude, region, city and 
+postal code. It provides a feature for you to perform your own IP lookup and admin 
 spoofing of an arbitrary IP for testing purposes.
 
 Maxmind's database is the source of Smart IP database that makes the association between IP 

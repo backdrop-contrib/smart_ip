@@ -36,9 +36,9 @@ function smart_ip_help($path, $arg) {
       will be stored at Drupal &#36;user->data object with array key 'geoip_location' upon login 
       of the user but optionally it can be disabled at Smart IP admin page. Other modules can 
       use the function smart_ip_get_location(&#36;ip_address) that returns an array containing 
-      the visitor's ISO 3166 2-character country code, longitude, latitude, region code (FIPS), 
-      city and postal code. It provides a feature for you to perform your own IP lookup and admin 
-      spoofing of an arbitrary IP for testing purposes.") . '</p><p>' .       
+      the visitor's ISO 3166 2-character country code, longitude, latitude, region, city and postal 
+      code. It provides a feature for you to perform your own IP lookup and admin spoofing of an 
+      arbitrary IP for testing purposes.") . '</p><p>' .       
       t("Maxmind's database is the source of Smart IP database that makes the association between IP 
       address and geographical location (longitude/latitude), region, city and postal code. It can 
       be found at !maxmind it has two versions: a very accurate 
@@ -241,6 +241,8 @@ function smart_ip_get_location($ip_address) {
         include_once DRUPAL_ROOT . '/includes/locale.inc';
         $countries = country_get_list();
         $result['country'] = $countries[$result['country_code']];
+        module_load_include('inc', 'smart_ip', 'includes/smart_ip.region_lookup');
+        $result['region'] = smart_ip_get_region($result['country_code'], $result['region']);
       }
     }
   }
@@ -249,7 +251,7 @@ function smart_ip_get_location($ip_address) {
     $request_data = isset($request->data) ? drupal_json_decode($request->data) : '';
     $result['country']      = isset($request_data['CountryName']) ? $request_data['CountryName'] : '';
     $result['country_code'] = isset($request_data['CountryCode']) ? $request_data['CountryCode'] : '';
-    $result['region']       = isset($request_data['RegionCode']) ? $request_data['RegionCode'] : '';
+    $result['region']       = isset($request_data['RegionName']) ? $request_data['RegionName'] : '';
     $result['city']         = isset($request_data['City']) ? $request_data['City'] : '';
     $result['zip']          = isset($request_data['ZipPostalCode']) ? $request_data['ZipPostalCode'] : '';
     $result['latitude']     = isset($request_data['Latitude']) ? $request_data['Latitude'] : '';
