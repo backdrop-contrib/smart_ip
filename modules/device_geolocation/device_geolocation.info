@@ -1,0 +1,8 @@
+; $Id$
+name = Device Geolocation
+description = Provides visitor's geographical location using client device location source that implements W3C Geolocation API (with Google Gears as fallback) and Google Geocoding service.
+package = Location
+core = 7.x
+files[] = device_geolocation.module
+dependencies[] = smart_ip
+configure = admin/structure/block
