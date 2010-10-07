@@ -246,7 +246,7 @@ function smart_ip_get_location($ip_address) {
   }
   if ($use_ipinfodb_service || empty($result)) {
     $request = drupal_http_request("http://ipinfodb.com/ip_query.php?ip=$ip_address&output=json&timezone=false");
-    $request_data = drupal_json_decode($request->data);
+    $request_data = isset($request->data) ? drupal_json_decode($request->data) : '';
     $result['country']      = isset($request_data['CountryName']) ? $request_data['CountryName'] : '';
     $result['country_code'] = isset($request_data['CountryCode']) ? $request_data['CountryCode'] : '';
     $result['region']       = isset($request_data['RegionCode']) ? $request_data['RegionCode'] : '';

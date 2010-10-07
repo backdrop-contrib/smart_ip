@@ -15,37 +15,44 @@
 function smart_ip_admin_settings($form, &$form_state) {
   // Define submit handler function
   $form['#submit'][] = 'smart_ip_admin_settings_submit';
-  $recover = !variable_get('smart_ip_db_update_busy', FALSE) & (variable_get('smart_ip_get_zip_done', FALSE) | variable_get('smart_ip_extract_zip_done', FALSE) | variable_get('smart_ip_store_location_csv_done', FALSE));
-  // Container for database update preference forms 
-  $form['smart_ip_database_update'] = array(
-    '#type'        => 'fieldset',
-    '#title'       => t('Manual database update'),
-    '#collapsible' => FALSE,
-    '#collapsed'   => FALSE,
-  );
-  $update_time = variable_get('smart_ip_last_update', 0);
-  // Form for message markup
-  $form['smart_ip_database_update']['smart_ip_update_message'] = array(
-    '#type'   => 'item',
-    '#markup' => '<div>'. t('The Smart IP database may be updated manually by pressing the "Update database now" button below. Note, this may take more or less five hours (it depends on the speed of the server). This process can recover from where it stopped or failed.') . '</div>',
-    '#suffix' => isset($form_state['storage']['smart_ip_db_message']) ? '<div id="database-update" class="messages">' . $form_state['storage']['smart_ip_db_message'] . '</div>' : '<div id="database-update" class="messages">'. t('Database last updated on ') . format_date($update_time, 'custom', 'n/j/Y') . t(' at ') . format_date($update_time, 'custom', 'H:i:s T') . '</div>',
-  );
-  $form['smart_ip_database_update']['smart_ip_csv_source'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('CSV URL source'),
-    '#default_value' => smart_ip_get_csv_source_filename(),
-    '#description'   => t("Enter the Maxmind's CSV URL, source for updating the Smart IP database"),
-    '#size'          => 120,
-  );
-  // Form for manual updating of the Smart IP database
-  $form['smart_ip_database_update']['smart_ip_update_database'] = array(
-    '#type'     => 'submit',
-    '#value'    => $recover ? t('Recover database update') : t('Update database now'),
-    '#submit'   => array('_smart_ip_database_update_submit'),
-    '#validate' => array('_smart_ip_database_update_validate'),
-    '#suffix'   => $recover ? '<div class="messages error">' . t('The previous attempt of updating Smart IP database has failed. Press the button above to continue the unfinished task.') . '</div>' : '',
-  );
-
+  if (!variable_get('smart_ip_use_ipinfodb_service', FALSE)) {
+    $recover = !variable_get('smart_ip_db_update_busy', FALSE) & (variable_get('smart_ip_get_zip_done', FALSE) | variable_get('smart_ip_extract_zip_done', FALSE) | variable_get('smart_ip_store_location_csv_done', FALSE));
+    // Container for database update preference forms 
+    $form['smart_ip_database_update'] = array(
+      '#type'        => 'fieldset',
+      '#title'       => t('Manual database update'),
+      '#collapsible' => FALSE,
+      '#collapsed'   => FALSE,
+      '#states'        => array(
+        'invisible' => array(
+          ':input[name="smart_ip_use_ipinfodb_service"]' => array('checked' => TRUE),
+        ),
+      ),
+    );
+    $update_time = variable_get('smart_ip_last_update', 0);
+    // Form for message markup
+    $form['smart_ip_database_update']['smart_ip_update_message'] = array(
+      '#type'   => 'item',
+      '#markup' => '<div>'. t('The Smart IP database may be updated manually by pressing the "Update database now" button below. Note, this may take more or less five hours (it depends on the speed of the server). This process can recover from where it stopped or failed.') . '</div>',
+      '#suffix' => isset($form_state['storage']['smart_ip_db_message']) ? '<div id="database-update" class="messages">' . $form_state['storage']['smart_ip_db_message'] . '</div>' : '<div id="database-update" class="messages">'. t('Database last updated on ') . format_date($update_time, 'custom', 'n/j/Y') . t(' at ') . format_date($update_time, 'custom', 'H:i:s T') . '</div>',
+    );
+    $form['smart_ip_database_update']['smart_ip_csv_source'] = array(
+      '#type'          => 'textfield',
+      '#title'         => t('CSV URL source'),
+      '#default_value' => smart_ip_get_csv_source_filename(),
+      '#description'   => t("Enter the Maxmind's CSV URL, source for updating the Smart IP database"),
+      '#size'          => 120,
+    );
+    // Form for manual updating of the Smart IP database
+    $form['smart_ip_database_update']['smart_ip_update_database'] = array(
+      '#type'     => 'submit',
+      '#value'    => $recover ? t('Recover database update') : t('Update database now'),
+      '#submit'   => array('_smart_ip_database_update_submit'),
+      '#validate' => array('_smart_ip_database_update_validate'),
+      '#suffix'   => $recover ? '<div class="messages error">' . t('The previous attempt of updating Smart IP database has failed. Press the button above to continue the unfinished task.') . '</div>' : '',
+    );
+  }
+  
   // Container for manual lookup
   $form['smart_ip_manual_lookup'] = array(
     '#type'        => 'fieldset',
