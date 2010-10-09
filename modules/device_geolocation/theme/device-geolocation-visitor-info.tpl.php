@@ -21,13 +21,14 @@
  * -- country_code: May came from Smart IP or Google Geocoder service
  * -- zip: Smart IP specific item
  * -- region: Smart IP specific item
+ * -- region_code: Smart IP specific item
  *
  * @ingroup themeable
  */
 ?>
 <dl>
   <?php foreach ($location as $item => $value): ?>
-    <?php if (!empty($value)): ?>
+    <?php if (!empty($value) && $item != 'region_code'): ?>
       <?php
         $item = str_replace('_', ' ', $item);
         $item[0] = strtoupper($item[0]);

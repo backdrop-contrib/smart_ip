@@ -176,7 +176,7 @@ function _smart_ip_lookup_submit($form, &$form_state) {
     $message = '<p>' . t('IP Address @ip is assigned to the following location details:', array('@ip' => $lookup)) . '</p><dl>' .
       '<dt>' . t('Country:') . '</dt>' .
       '<dd>' . t('%country', array('%country' => $location['country'])) . '</dd>' .
-      '<dt>' . t('Region code:') . '</dt>' .
+      '<dt>' . t('Region:') . '</dt>' .
       '<dd>' . t('%region', array('%region' => $location['region'])) . '</dd>' .
       '<dt>' . t('City:') . '</dt>' .
       '<dd>' . t('%city', array('%city' => $location['city'])) . '</dd>' .
@@ -228,7 +228,7 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
   }
   $location = smart_ip_get_location($ip);
   if ($location) {
-    drupal_set_message(t('Using @type IP: %ip / Country: %country / Region code: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat', array(
+    drupal_set_message(t('Using @type IP: %ip / Country: %country / Region: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat', array(
       '@type'    => $form_state['values']['smart_ip_debug'] ? 'debug' : 'actual',
       '%ip'      => $ip, 
       '%country' => $location['country'],
