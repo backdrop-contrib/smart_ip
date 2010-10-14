@@ -15,7 +15,7 @@
         latitude = 13;
       }
       // Try W3C Geolocation (Preferred) to detect user's location
-      if (navigator.geolocation) {
+      if (navigator.geolocation && !settings.device_geolocation.debug_mode) {
         navigator.geolocation.getCurrentPosition(function(position) {
           geocoder_send_address(position.coords.latitude, position.coords.longitude);
         }, function() {
@@ -24,7 +24,7 @@
         });
       }
       // Try Google Gears Geolocation
-      else if (google.gears) {
+      else if (google.gears && !settings.device_geolocation.debug_mode) {
         var geo = google.gears.factory.create('beta.geolocation');
         geo.getCurrentPosition(function(position) {
           geocoder_send_address(position.latitude, position.longitude);
@@ -33,7 +33,7 @@
           geocoder_send_address(latitude, longitude);
         });     
       }
-      // Smart IP (Maxmind) fallback
+      // Smart IP (Maxmind) fallback or using debug mode coordinates
       else {
         geocoder_send_address(latitude, longitude);
       }

@@ -215,8 +215,8 @@ function smart_ip_user_login(&$edit, $account) {
       $location = smart_ip_get_location($ip);
     }
     // Store the location information in the $user object
-    user_save($account, array('data' => array('geoip_location' => $location)));
-    $_SESSION['smart_ip']['location'] = $location;
+    $_SESSION['smart_ip']['location'] = array_merge($location, $_SESSION['smart_ip']['location']);
+    user_save($account, array('data' => array('geoip_location' => $_SESSION['smart_ip']['location'])));
   }
 }
 

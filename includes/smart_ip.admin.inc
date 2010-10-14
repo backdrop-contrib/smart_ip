@@ -102,12 +102,17 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#title'         => t('Automatic Smart IP database update'),
     '#description'   => t('Database will be automatically updated via cron.php every one month (Maxmind updates every first day of a month). !cron must be enabled for this to work.', array('!cron' => l(t('Cron'), 'admin/config/system/cron'))),
     '#default_value' => variable_get('smart_ip_auto_update', TRUE),
-    '#states'        => array(
+  );
+  if (variable_get('smart_ip_auto_update', TRUE)) {
+    $form['smart_ip_preferences']['smart_ip_auto_update']['#states'] = array(
       'unchecked' => array(
         ':input[name="smart_ip_use_ipinfodb_service"]' => array('checked' => TRUE),
       ),
-    ),
-  );
+      'disabled' => array(
+        ':input[name="smart_ip_use_ipinfodb_service"]' => array('checked' => TRUE),
+      ),
+    );
+  }
   
   // Form to turn on save user location in $user object upon login
   $form['smart_ip_preferences']['smart_ip_save_user_location'] = array(
@@ -221,6 +226,7 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
   if ($form_state['values']['smart_ip_debug']) {
     // Debug on
     $ip = $form_state['values']['smart_ip_test_ip_address'];
+    $_SESSION['smart_ip']['debug_mode'] = TRUE;
   }
   else {
     // Debug off - make sure we set/reset to their real values
@@ -239,8 +245,29 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
       '%lat'     => $location['latitude'],
     )));
     // Finally if it has been determined, store the location in the $user object
-    user_save($user, array('data' => array('geoip_location' => $location)));
-    $_SESSION['smart_ip']['location'] = $location;
+    if ($form_state['values']['smart_ip_debug']) {
+      user_save($user, array('data' => array('geoip_location' => $location)));
+      $_SESSION['smart_ip']['location'] = $location;
+      unset($_SESSION['device_geolocation']);
+      device_geolocation_get_coordinates();
+    }
+    else {
+      if (isset($_SESSION['smart_ip']['debug_mode'])) {
+        unset(
+          $user->data['geoip_location'],
+          $_SESSION['smart_ip']['location'], 
+          $_SESSION['smart_ip']['debug_mode'], 
+          $_SESSION['device_geolocation']
+        );
+        $_SESSION['smart_ip']['location'] = $location;
+        user_save($user, array('data' => array('geoip_location' => $location)));
+        device_geolocation_get_coordinates();
+      }
+      else {
+        $_SESSION['smart_ip']['location'] = array_merge($location, $_SESSION['smart_ip']['location']);
+        user_save($user, array('data' => array('geoip_location' => $_SESSION['smart_ip']['location'])));
+      }
+    }
   }
   else {
     drupal_set_message(t('IP Address @ip is not assigned to any location.', array('@ip' => $ip)));

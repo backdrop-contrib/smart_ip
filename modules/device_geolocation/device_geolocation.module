@@ -137,6 +137,7 @@ function device_geolocation_detector_ajax() {
     if (isset($_SESSION['smart_ip']['location']) && $user->uid) {
       user_save($user, array('data' => array('geoip_location' => $_SESSION['smart_ip']['location'])));
     }
+    $_SESSION['smart_ip']['qws']=$_SESSION['smart_ip']['location'];
   }
 }
 
@@ -176,6 +177,7 @@ function device_geolocation_get_coordinates() {
   $coordinates = array(
     'latitude'   => $latitude,
     'longitude'  => $longitude,
+    'debug_mode' => isset($_SESSION['smart_ip']['debug_mode']) ? TRUE : FALSE,
   );
   // Send also to javascript
   drupal_add_js(array('device_geolocation' => $coordinates), 'setting');
