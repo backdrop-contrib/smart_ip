@@ -86,8 +86,7 @@ function smart_ip_permission() {
 /**
  * Implements hook_cron().
  *
- * Updates the IP to Country database automatically on one month periodic
- * basis.
+ * Updates the Smart IP database automatically on one month periodic basis.
  */
 function smart_ip_cron() {
   $time = time();
@@ -116,7 +115,7 @@ function smart_ip_cron() {
 }
 
 /**
- * Page callback for Smart IP batch operations.
+ * Menu page callback for Smart IP batch operations.
  */
 function smart_ip_run_batch() {
   if (isset($_POST['smart_ip_cron_key']) && $_POST['smart_ip_cron_key'] == variable_get('cron_key', 'drupal')) {
@@ -173,11 +172,11 @@ function smart_ip_menu() {
     'file' 						 => 'includes/smart_ip.admin.inc',
     'weight'					 => 2,
   );
-  // Default page for Smart IP batch operations.
+  // Default page for Smart IP batch operations during cron run.
   $items['smart_ip_batch'] = array(
-    'page callback' => 'smart_ip_run_batch',
+    'page callback'   => 'smart_ip_run_batch',
     'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
+    'type'            => MENU_CALLBACK,
   );
   return $items;
 }

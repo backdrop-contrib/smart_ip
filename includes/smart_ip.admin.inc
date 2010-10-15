@@ -248,8 +248,10 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
     if ($form_state['values']['smart_ip_debug']) {
       user_save($user, array('data' => array('geoip_location' => $location)));
       $_SESSION['smart_ip']['location'] = $location;
-      unset($_SESSION['device_geolocation']);
-      device_geolocation_get_coordinates();
+      if (module_exists('device_geolocation')) {
+        unset($_SESSION['device_geolocation']);
+        device_geolocation_get_coordinates();
+      }
     }
     else {
       if (isset($_SESSION['smart_ip']['debug_mode'])) {
@@ -261,7 +263,9 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
         );
         $_SESSION['smart_ip']['location'] = $location;
         user_save($user, array('data' => array('geoip_location' => $location)));
-        device_geolocation_get_coordinates();
+        if (module_exists('device_geolocation')) {
+          device_geolocation_get_coordinates();
+        }
       }
       else {
         $_SESSION['smart_ip']['location'] = array_merge($location, $_SESSION['smart_ip']['location']);
