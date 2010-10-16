@@ -289,7 +289,6 @@ function smart_ip_update_database(&$context) {
       // Update our progress information.
       $context['finished'] = TRUE;
       $context['message']  = t('Processing %blocks done', array('%blocks' => SMART_IP_BLOCKS_CSV));
-      variable_set('smart_ip_blocks_csv_pointer', 0);
       // Tasks completed. Reset the recovery mode indicators.
       variable_set('smart_ip_get_zip_done', FALSE);
       variable_set('smart_ip_extract_zip_done', FALSE);
@@ -360,6 +359,7 @@ function smart_ip_update_database(&$context) {
       // Rename temporary working Smart IP database table to production table name {smart_ip}
       db_rename_table('smart_ip_update_table', 'smart_ip'); // 'RENAME TABLE {smart_ip_update_table} TO {smart_ip}'
       cache_clear_all('smart_ip:', 'cache_smart_ip', TRUE);
+      variable_set('smart_ip_blocks_csv_pointer', 0);
       variable_set('smart_ip_last_update', time());
       watchdog('smart_ip', 'Smart IP Database successfuly updated from maxmind.com.');
     }

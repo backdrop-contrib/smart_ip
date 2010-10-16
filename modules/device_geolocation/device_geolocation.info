@@ -4,5 +4,6 @@ description = Provides visitor's geographical location using client device locat
 package = Location
 core = 7.x
 files[] = device_geolocation.module
+files[] = theme/device-geolocation-visitor-info.tpl.php
 dependencies[] = smart_ip
 configure = admin/structure/block
