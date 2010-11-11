@@ -38,13 +38,13 @@ function smart_ip_schema_definition_array() {
       'city' => array(
         'description' => 'Name of city targeted by the coordinates',
         'type'        => 'varchar',
-        'length' 			=> 128,
+        'length'      => 128,
         'not null'    => FALSE,
       ),      
       'zip' => array(
         'description' => 'Postal code of targeted by the coordinates',
         'type'        => 'varchar',
-        'length' 			=> 8,
+        'length'      => 8,
         'not null'    => FALSE,
       ),
       'latitude' => array(
@@ -107,7 +107,7 @@ function smart_ip_update_7000() {
   );
   db_change_field('smart_ip', 'country', 'country_code', $spec);
 }
-
+  
 /**
  * Implements hook_uninstall().
  *
@@ -131,4 +131,5 @@ function smart_ip_uninstall() {
   variable_del('smart_ip_debug');
   variable_del('smart_ip_test_ip_address');
   variable_del('smart_ip_save_user_location');
+  variable_del('smart_ip_save_user_location_creation');
 }

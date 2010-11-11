@@ -43,7 +43,7 @@ function smart_ip_get_zip($src = NULL, &$context) {
   $path = file_stream_wrapper_uri_normalize('private://smart_ip');
   if (!file_prepare_directory($path, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS)) {
     // Private file system path not defined then stop the process
-    $message = t('Private file system path not defined. Please define the private file system path !here.',	array('!here' => l('here', 'admin/config/media/file-system')));
+    $message = t('Private file system path not defined. Please define the private file system path !here.',  array('!here' => l('here', 'admin/config/media/file-system')));
     $context['results']['#abort'] = $message;
     $context['message'] = $message;
     return;
@@ -80,7 +80,7 @@ function smart_ip_get_zip($src = NULL, &$context) {
     }
     else {
       // Error occured then stop the process
-      $message = t('Download %src file failed. Be sure %src exists.',	array('%src' => $src));
+      $message = t('Download %src file failed. Be sure %src exists.',  array('%src' => $src));
       $context['results']['#abort'] = $message;
       $context['message'] = $message;
     }
@@ -146,7 +146,7 @@ function smart_ip_extract_zip(&$context) {
   }
   else {
     // Error occured then stop the process
-    $message = t('Unzip failed (error code: %code).',	array('%code' => $stat));
+    $message = t('Unzip failed (error code: %code).',  array('%code' => $stat));
     $context['results']['#abort'] = $message;
     $context['message'] = $message;
     // Delete the corrupted zip file
@@ -175,7 +175,7 @@ function smart_ip_store_location_csv(&$context) {
   $fp = @fopen($context['results']['#location_csv_file'], 'r');
   if ($fp === FALSE) {
     // Error occured then stop the process
-    $message = t('Opening CSV file %file failed.',	array('%file' => $context['results']['#location_csv_file']));
+    $message = t('Opening CSV file %file failed.',  array('%file' => $context['results']['#location_csv_file']));
     $context['results']['#abort'] = $message;
     $context['message'] = $message;
     unset($context['results']['#location_csv_file']);
@@ -254,7 +254,7 @@ function smart_ip_update_database(&$context) {
   if ($fp === FALSE) {
     unset($context['results']['#blocks_csv_file']);
     // Error occured then stop the process
-    $message = t('Opening CSV file %file failed.',	array('%file' => $context['results']['#blocks_csv_file']));
+    $message = t('Opening CSV file %file failed.',  array('%file' => $context['results']['#blocks_csv_file']));
     $context['results']['#abort'] = $message;
     $context['message'] = $message;
     unset($context['results']['#blocks_csv_file']);

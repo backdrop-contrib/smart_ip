@@ -169,8 +169,8 @@ function smart_ip_menu() {
     'access arguments' => array('administer smart_ip'),
     'page callback'    => 'drupal_get_form',
     'page arguments'   => array('smart_ip_admin_settings'),
-    'file' 						 => 'includes/smart_ip.admin.inc',
-    'weight'					 => 2,
+    'file'             => 'includes/smart_ip.admin.inc',
+    'weight'           => 2,
   );
   // Default page for Smart IP batch operations during cron run.
   $items['smart_ip_batch'] = array(
@@ -179,6 +179,22 @@ function smart_ip_menu() {
     'type'            => MENU_CALLBACK,
   );
   return $items;
+}
+
+/**
+ * Implements hook_user_presave().
+ *
+ * Detects IP and geo location upon registration.
+ */
+function smart_ip_user_presave(&$edit, $account, $category) {
+  if ($account->is_new == TRUE && variable_get('smart_ip_save_user_location_creation', TRUE)) {
+    // Successful registration. First determine user's location based on IP
+    $ip = ip_address();
+    $location = smart_ip_get_location($ip);
+    // Store the location information in the $user object
+    $_SESSION['smart_ip']['location'] = array_merge($location, $_SESSION['smart_ip']['location']);
+    $edit['data']['geoip_location_original'] = $_SESSION['smart_ip']['location'];
+  }
 }
 
 /**
@@ -287,23 +303,23 @@ function smart_ip_get_count() {
  * Helper function for grabbing Maxmind's CSV archive filename.
  */
 function smart_ip_get_csv_source_filename() {
-	$maxmind_csv = &drupal_static(__FUNCTION__);
+  $maxmind_csv = &drupal_static(__FUNCTION__);
   
-	if (!isset($maxmind_csv)) {
+  if (!isset($maxmind_csv)) {
     $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/GeoLiteCity_' . format_date(time(), 'custom', 'Ym') . '01.zip');
-	}
-	return $maxmind_csv;
+  }
+  return $maxmind_csv;
 }
 
 /**
  * Helper function for grabbing region name (FIPS).
  */
 function smart_ip_get_region_static($country_code, $region_code) {
-	$region = &drupal_static(__FUNCTION__);
+  $region = &drupal_static(__FUNCTION__);
   
-	if (!isset($region[$country_code][$region_code])) {
+  if (!isset($region[$country_code][$region_code])) {
     module_load_include('inc', 'smart_ip', 'includes/smart_ip.region_lookup');
     $region[$country_code][$region_code] = smart_ip_get_region($country_code, $region_code);
-	}
-	return $region;
+  }
+  return $region;
 }

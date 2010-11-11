@@ -23,7 +23,7 @@ function smart_ip_admin_settings($form, &$form_state) {
       '#title'       => t('Manual database update'),
       '#collapsible' => FALSE,
       '#collapsed'   => FALSE,
-      '#states'        => array(
+      '#states'      => array(
         'invisible' => array(
           ':input[name="smart_ip_use_ipinfodb_service"]' => array('checked' => TRUE),
         ),
@@ -117,9 +117,15 @@ function smart_ip_admin_settings($form, &$form_state) {
   // Form to turn on save user location in $user object upon login
   $form['smart_ip_preferences']['smart_ip_save_user_location'] = array(
     '#type'          => 'checkbox',
-    '#title'         => t("Save user's location details"),
+    '#title'         => t("Save user's location details upon login"),
     '#default_value' => variable_get('smart_ip_save_user_location', TRUE),
-    '#description'   => t("Save the user's location details upon login."),
+    '#description'   => t("Save the user's location details every successful login."),
+  );
+  $form['smart_ip_preferences']['smart_ip_save_user_location_creation'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t("Save user's location details upon creation"),
+    '#default_value' => variable_get('smart_ip_save_user_location_creation', TRUE),
+    '#description'   => t("One time storing of user's location details upon registration."),
   );
   
   // Form to turn on debugging
