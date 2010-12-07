@@ -1,6 +1,6 @@
 // $Id$
 (function ($) {
-	Drupal.behaviors.deviceGeolocationAutoDetect = {
+  Drupal.behaviors.deviceGeolocationAutoDetect = {
     attach: function (context, settings) {
       if (isset(settings.device_geolocation.longitude)) {
         longitude = !isNaN(settings.device_geolocation.longitude) ? settings.device_geolocation.longitude : (!isNaN(settings.device_geolocation.longitude[0]) ? settings.device_geolocation.longitude[0] : 122);
@@ -94,7 +94,7 @@
         }
       }
     }
-  };	
+  };  
 })(jQuery);
 
 function isset() {  
@@ -102,15 +102,15 @@ function isset() {
   var l = a.length, i = 0;
   
   if (l === 0) {
-      throw new Error('Empty'); 
+    throw new Error('Empty'); 
   }
   while (i !== l) {
-      if (typeof(a[i]) == 'undefined' || a[i] === null) { 
-          return false; 
-      }
-      else { 
-          i++; 
-      }
+    if (typeof(a[i]) == 'undefined' || a[i] === null) { 
+        return false; 
+    }
+    else { 
+      i++; 
+    }
   }
   return true;
 }

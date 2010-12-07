@@ -15,6 +15,7 @@
 function smart_ip_admin_settings($form, &$form_state) {
   // Define submit handler function
   $form['#submit'][] = 'smart_ip_admin_settings_submit';
+  $form['#validate'][] = 'smart_ip_admin_settings_validate';
   if (!variable_get('smart_ip_use_ipinfodb_service', FALSE)) {
     $recover = !variable_get('smart_ip_db_update_busy', FALSE) & (variable_get('smart_ip_get_zip_done', FALSE) | variable_get('smart_ip_extract_zip_done', FALSE) | variable_get('smart_ip_store_location_csv_done', FALSE));
     // Container for database update preference forms 
@@ -33,8 +34,8 @@ function smart_ip_admin_settings($form, &$form_state) {
     // Form for message markup
     $form['smart_ip_database_update']['smart_ip_update_message'] = array(
       '#type'   => 'item',
-      '#markup' => '<div>'. t('The Smart IP database may be updated manually by pressing the "Update database now" button below. Note, this may take more or less five hours (it depends on the speed of the server). This process can recover from where it stopped or failed.') . '</div>',
-      '#suffix' => isset($form_state['storage']['smart_ip_db_message']) ? '<div id="database-update" class="messages">' . $form_state['storage']['smart_ip_db_message'] . '</div>' : '<div id="database-update" class="messages">'. t('Database last updated on ') . format_date($update_time, 'custom', 'n/j/Y') . t(' at ') . format_date($update_time, 'custom', 'H:i:s T') . '</div>',
+      '#markup' => '<div>' . t('The Smart IP database may be updated manually by pressing the "Update database now" button below. Note, this may take more or less five hours (it depends on the speed of the server). This process can recover from where it stopped or failed.') . '</div>',
+      '#suffix' => isset($form_state['storage']['smart_ip_db_message']) ? '<div id="database-update" class="messages">' . $form_state['storage']['smart_ip_db_message'] . '</div>' : '<div id="database-update" class="messages">' . t('Database last updated on ') . format_date($update_time, 'custom', 'n/j/Y') . t(' at ') . format_date($update_time, 'custom', 'H:i:s T') . '</div>',
     );
     $form['smart_ip_database_update']['smart_ip_csv_source'] = array(
       '#type'          => 'textfield',
@@ -88,12 +89,21 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#collapsed'   => FALSE,
   );
   
+  $use_ipinfodb = variable_get('smart_ip_use_ipinfodb_service', FALSE);
   // Form to enable the use of IPInfoDB service
   $form['smart_ip_preferences']['smart_ip_use_ipinfodb_service'] = array(
     '#type'          => 'checkbox',
     '#title'         => t('Use IPInfoDB service'),
     '#description'   => t('IPInfoDB.com service will be used to query Geo IP information instead of Smart IP database.'),
-    '#default_value' => variable_get('smart_ip_use_ipinfodb_service', FALSE),
+    '#default_value' => $use_ipinfodb,
+  );
+  
+  // Form for entering IPInfoDB key
+  $form['smart_ip_preferences']['smart_ip_ipinfodb_key'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('IPInfoDB key'),
+    '#description'   => t('The use of IPInfoDB.com service requires API key. Registration for the new API key is free, sign up !here.', array('!here' => l(t('here'), 'http://www.ipinfodb.com/register.php'))),
+    '#default_value' => variable_get('smart_ip_ipinfodb_key'),
   );
   
   // Form to enable automatic Smart IP database update every one month
@@ -101,18 +111,23 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#type'          => 'checkbox',
     '#title'         => t('Automatic Smart IP database update'),
     '#description'   => t('Database will be automatically updated via cron.php every one month (Maxmind updates every first day of a month). !cron must be enabled for this to work.', array('!cron' => l(t('Cron'), 'admin/config/system/cron'))),
-    '#default_value' => variable_get('smart_ip_auto_update', TRUE),
-  );
-  if (variable_get('smart_ip_auto_update', TRUE)) {
-    $form['smart_ip_preferences']['smart_ip_auto_update']['#states'] = array(
+    '#default_value' => $use_ipinfodb & variable_get('smart_ip_auto_update', TRUE),
+    '#disabled'      => $use_ipinfodb,
+    '#states'        => array(
       'unchecked' => array(
         ':input[name="smart_ip_use_ipinfodb_service"]' => array('checked' => TRUE),
       ),
       'disabled' => array(
         ':input[name="smart_ip_use_ipinfodb_service"]' => array('checked' => TRUE),
       ),
-    );
-  }
+      'checked' => array(
+        ':input[name="smart_ip_use_ipinfodb_service"]' => array('checked' => FALSE),
+      ),
+      'enabled' => array(
+        ':input[name="smart_ip_use_ipinfodb_service"]' => array('checked' => FALSE),
+      ),
+    ),
+  );
   
   // Form to turn on save user location in $user object upon login
   $form['smart_ip_preferences']['smart_ip_save_user_location'] = array(
@@ -204,6 +219,16 @@ function _smart_ip_lookup_submit($form, &$form_state) {
   }
   $form_state['storage']['smart_ip_message'] = $message;
   $form_state['rebuild'] = TRUE;
+}
+
+function smart_ip_admin_settings_validate($form, &$form_state) {
+  if (empty($form_state['values']['smart_ip_ipinfodb_key']) && $form_state['values']['smart_ip_use_ipinfodb_service']) {
+    form_set_error('smart_ip_ipinfodb_key', t('Please provide IPInfoDB key.'));
+  }
+  $ipinfodb_key = variable_get('smart_ip_ipinfodb_key');
+  if ($form_state['values']['smart_ip_ipinfodb_key'] != $ipinfodb_key) {
+    variable_set('smart_ip_correct_ipinfodb_key', FALSE);
+  }
 }
 
 /**

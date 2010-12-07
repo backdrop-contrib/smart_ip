@@ -2,6 +2,60 @@
 // $Id$
 
 /**
+ * @file
+ * Installation callback for Smart IP.
+ */
+
+/**
+ * Implements hook_requirements().
+ *
+ * @see smart_ip_admin_settings()
+ */
+function smart_ip_requirements($phase = 'runtime') {
+  $requirements = array();
+  if ($phase == 'runtime') {
+    $correct_key = variable_set('smart_ip_correct_ipinfodb_key', FALSE);
+    if (!$correct_key) {
+      $no_db = variable_get('smart_ip_last_update');
+      $use_ipinfodb_service = variable_get('smart_ip_use_ipinfodb_service', FALSE);
+      if (empty($no_db) || $use_ipinfodb_service) {
+        // Generate an appropriate error message:
+        // Missing API keys.
+        $ipinfodb_key = variable_get('smart_ip_ipinfodb_key');
+        if (empty($ipinfodb_key)) {
+          $requirements['smart_ip'] = array(
+            'title'       => 'IPInfoDB API key',
+            'severity'    => REQUIREMENT_ERROR,
+            'value'       => t('Not configured'),
+            'description' => t('The IPInfoDB API key is not configured yet. Visit Smart IP settings !page.', array(
+              '!page' => l(t('page'), 'admin/config/people/smart_ip'),
+            )),
+          );
+        }
+        else {
+          $response = drupal_http_request(smart_ip_get_ipinfodb_url($ipinfodb_key, '127.0.0.1'));
+          $stat     = drupal_json_decode($response->data);
+          if ($stat['Status'] == 'MISSING API KEY' || $stat['Status'] == 'INVALID API KEY') {
+            $requirements['smart_ip'] = array(
+              'title'       => 'IPInfoDB API key',
+              'severity'    => REQUIREMENT_ERROR,
+              'value'       => t('Invalid'),
+              'description' => t('The IPInfoDB API key is invalid. Visit Smart IP settings !page.', array(
+                '!page' => l(t('page'), 'admin/config/people/smart_ip'),
+              )),
+            );
+          }
+          else {
+            variable_set('smart_ip_correct_ipinfodb_key', TRUE);
+          }
+        }
+      }
+    }
+  }
+  return $requirements;
+} 
+ 
+/**
  * Smart IP schema definition array.
  *
  * @return
@@ -85,6 +139,7 @@ function smart_ip_schema() {
  */
 function smart_ip_install() {
   variable_set('smart_ip_use_ipinfodb_service', FALSE);
+  variable_set('smart_ip_correct_ipinfodb_key', FALSE);
   variable_set('smart_ip_get_zip_done', FALSE);
   variable_set('smart_ip_extract_zip_done', FALSE);
   variable_set('smart_ip_store_location_csv_done', FALSE);
@@ -107,7 +162,7 @@ function smart_ip_update_7000() {
   );
   db_change_field('smart_ip', 'country', 'country_code', $spec);
 }
-  
+
 /**
  * Implements hook_uninstall().
  *
@@ -116,6 +171,8 @@ function smart_ip_update_7000() {
  */
 function smart_ip_uninstall() {
   variable_del('smart_ip_use_ipinfodb_service');
+  variable_del('smart_ip_correct_ipinfodb_key');
+  variable_del('smart_ip_ipinfodb_key');
   variable_del('smart_ip_get_zip_done');
   variable_del('smart_ip_extract_zip_done');
   variable_del('smart_ip_store_location_csv_done');

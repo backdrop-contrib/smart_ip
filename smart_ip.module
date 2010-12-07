@@ -265,7 +265,8 @@ function smart_ip_get_location($ip_address) {
     }
   }
   if ($use_ipinfodb_service || empty($result)) {
-    $request = drupal_http_request("http://ipinfodb.com/ip_query.php?ip=$ip_address&output=json&timezone=false");
+    $ipinfodb_key = variable_get('smart_ip_ipinfodb_key', 0);
+    $request = drupal_http_request(smart_ip_get_ipinfodb_url($ipinfodb_key, $ip_address));
     $request_data = isset($request->data) ? drupal_json_decode($request->data) : '';
     $region = '';
     if (isset($request_data['RegionCode']) && isset($request_data['CountryCode'])) {
@@ -299,6 +300,10 @@ function smart_ip_get_count() {
   return (int) $count->fetchField(0);
 }
 
+function smart_ip_get_ipinfodb_url($ipinfodb_key, $ip_address) {
+  return "http://api.ipinfodb.com/v2/ip_query.php?key=$ipinfodb_key&ip=$ip_address&output=json&timezone=false";
+}
+
 /**
  * Helper function for grabbing Maxmind's CSV archive filename.
  */
@@ -307,6 +312,10 @@ function smart_ip_get_csv_source_filename() {
   
   if (!isset($maxmind_csv)) {
     $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/GeoLiteCity_' . format_date(time(), 'custom', 'Ym') . '01.zip');
+    // Check if Maxmind CSV file not updated, then fallback to the previous month
+    if (!@fopen($maxmind_csv, 'r')) {
+      $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/GeoLiteCity_' . format_date((time() - 2764800), 'custom', 'Ym') . '01.zip');
+    }
   }
   return $maxmind_csv;
 }

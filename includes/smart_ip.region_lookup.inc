@@ -4662,7 +4662,7 @@ function smart_ip_get_region($country_code, $region_code) {
       '10' => t('Harare'),
     ),
   );
-  if (empty($country_code) || empty($region_code)) {
+  if (!isset($region_codes[$country_code][$region_code]) || empty($country_code) || empty($region_code)) {
     return '';
   }
   else {

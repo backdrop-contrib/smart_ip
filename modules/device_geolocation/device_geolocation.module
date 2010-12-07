@@ -25,7 +25,7 @@ function device_geolocation_init() {
  */
 function device_geolocation_block_info() {
   $blocks['visitor_geolocation'] = array(
-    'info' 	=> t("Visitor's geolocation"),
+    'info' => t("Visitor's geolocation"),
   );
   return $blocks;
 }
@@ -53,9 +53,12 @@ function device_geolocation_contents() {
     $location = $_SESSION['smart_ip']['location'];
   }
   // Smart IP user object data
-  elseif (isset($user->data['geoip_location'])) {
-    $_SESSION['smart_ip']['location'] = $user->data['geoip_location'];
-    $location = $_SESSION['smart_ip']['location'];
+  else {
+    global $user;
+    if (isset($user->data['geoip_location'])) {
+      $_SESSION['smart_ip']['location'] = $user->data['geoip_location'];
+      $location = $_SESSION['smart_ip']['location'];
+    }
   }
   return theme('device_geolocation_visitor_info', array('location' => $location));
 }
@@ -67,7 +70,7 @@ function device_geolocation_theme() {
   return array(
     'device_geolocation_visitor_info' => array(
       'render element' => 'location',
-      'template' 	     => 'device-geolocation-visitor-info',
+      'template'       => 'device-geolocation-visitor-info',
       'path'           => drupal_get_path('module', 'device_geolocation') . '/theme',
     ),
   );
@@ -137,7 +140,6 @@ function device_geolocation_detector_ajax() {
     if (isset($_SESSION['smart_ip']['location']) && $user->uid) {
       user_save($user, array('data' => array('geoip_location' => $_SESSION['smart_ip']['location'])));
     }
-    $_SESSION['smart_ip']['qws']=$_SESSION['smart_ip']['location'];
   }
 }
 
