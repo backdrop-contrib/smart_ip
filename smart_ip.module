@@ -220,6 +220,7 @@ function smart_ip_user_login(&$edit, $account) {
         '%long'    => $location['longitude'],
         '%lat'     => $location['latitude'],
       )));
+      $_SESSION['smart_ip']['location'] = $location;
     }
   }
   
