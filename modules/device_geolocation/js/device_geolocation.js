@@ -53,7 +53,7 @@
         if (latitude != null && longitude != null && !isNaN(latitude) && !isNaN(longitude)) {
           var geocoder = new google.maps.Geocoder();
           var latlng   = new google.maps.LatLng(latitude, longitude);
-          var address = new Object;
+          var address  = new Object;
           geocoder.geocode({'latLng': latlng}, function(results, status) {
             if (status == google.maps.GeocoderStatus.OK) {
               if (results[1]) {

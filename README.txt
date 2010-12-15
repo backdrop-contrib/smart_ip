@@ -4,8 +4,8 @@ Description:
 Smart IP identify visitor's geographical location (longitude/latitude), country, 
 region, city and postal code based on the IP address of the user. These information 
 will be stored at session variable ($_SESSION) with array key 'smart_ip' and  Drupal 
-$user->data object with array key 'geoip_location' upon login of the user but optionally 
-it can be disabled at Smart IP admin page. Other modules can use the function 
+$user->data object with array key 'geoip_location' of the user but optionally it can  
+be disabled (by role) at Smart IP admin page. Other modules can use the function 
 smart_ip_get_location($ip_address) that returns an array containing the visitor's 
 ISO 3166 2-character country code, longitude, latitude, region, city and postal code. It 
 provides a feature for you to perform your own IP lookup and admin spoofing of an arbitrary 

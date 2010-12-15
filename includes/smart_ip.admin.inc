@@ -129,13 +129,16 @@ function smart_ip_admin_settings($form, &$form_state) {
     ),
   );
   
-  // Form to turn on save user location in $user object upon login
-  $form['smart_ip_preferences']['smart_ip_save_user_location'] = array(
-    '#type'          => 'checkbox',
-    '#title'         => t("Save user's location details upon login"),
-    '#default_value' => variable_get('smart_ip_save_user_location', TRUE),
-    '#description'   => t("Save the user's location details every successful login."),
+  // Form to select user roles to geolocate
+  $form['smart_ip_preferences']['smart_ip_roles_to_geolocate'] = array(
+    '#type'          => 'checkboxes',
+    '#title'         => t('Roles To Geolocate'),
+    '#default_value' => variable_get('smart_ip_roles_to_geolocate', array(DRUPAL_AUTHENTICATED_RID)),
+    '#options'       => user_roles(),
+    '#description'   => t('Select the roles you wish to geolocate. Note that selecting the anonymous role will add substantial overhead.')
   );
+  
+  // Form to turn on save user location in $user object upon registration
   $form['smart_ip_preferences']['smart_ip_save_user_location_creation'] = array(
     '#type'          => 'checkbox',
     '#title'         => t("Save user's location details upon creation"),
@@ -277,7 +280,7 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
     )));
     // Finally if it has been determined, store the location in the $user object
     if ($form_state['values']['smart_ip_debug']) {
-      user_save($user, array('data' => array('geoip_location' => $location)));
+      smart_ip_set_user_data($user, $location);
       $_SESSION['smart_ip']['location'] = $location;
       if (module_exists('device_geolocation')) {
         unset($_SESSION['device_geolocation']);
@@ -293,14 +296,14 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
           $_SESSION['device_geolocation']
         );
         $_SESSION['smart_ip']['location'] = $location;
-        user_save($user, array('data' => array('geoip_location' => $location)));
+        smart_ip_set_user_data($user, $location);
         if (module_exists('device_geolocation')) {
           device_geolocation_get_coordinates();
         }
       }
       else {
-        $_SESSION['smart_ip']['location'] = array_merge($location, $_SESSION['smart_ip']['location']);
-        user_save($user, array('data' => array('geoip_location' => $_SESSION['smart_ip']['location'])));
+        smart_ip_set_session_data($location);
+        smart_ip_set_user_data($user, $_SESSION['smart_ip']['location']);
       }
     }
   }
