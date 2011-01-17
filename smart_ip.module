@@ -331,7 +331,12 @@ function smart_ip_set_location_data($account, $location) {
  */
 function smart_ip_set_session_data($location) {
   // Store the location information in the session, merging any old data not overridden
-  $_SESSION['smart_ip']['location'] = array_merge($location, (array)$_SESSION['smart_ip']['location']);
+  if (isset($_SESSION['smart_ip']['location'])) {
+    $_SESSION['smart_ip']['location'] = array_merge($location, (array)$_SESSION['smart_ip']['location']);
+  }
+  else {
+    $_SESSION['smart_ip']['location'] = $location;
+  }
 }
 
 /**
