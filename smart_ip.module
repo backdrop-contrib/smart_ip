@@ -301,6 +301,11 @@ function smart_ip_get_location($ip_address) {
     $result['longitude']    = isset($request_data['Longitude']) ? $request_data['Longitude'] : '';
   }
   $result['timestamp'] = time();
+  // If coordinates are (0, 0) there was no match
+  if ($result['latitude'] == 0 && $result['longitude'] == 0) {
+    $result['latitude']  = NULL;
+    $result['longitude'] = NULL;
+  }
   // Allow other modules to modify result via hook_smart_ip_get_location_alter()
   drupal_alter('smart_ip_get_location', $result);
   return $result;

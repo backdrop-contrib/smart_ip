@@ -3,16 +3,16 @@
   Drupal.behaviors.deviceGeolocationAutoDetect = {
     attach: function (context, settings) {
       if (isset(settings.device_geolocation.longitude)) {
-        longitude = !isNaN(settings.device_geolocation.longitude) ? settings.device_geolocation.longitude : (!isNaN(settings.device_geolocation.longitude[0]) ? settings.device_geolocation.longitude[0] : 122);
+        longitude = !isNaN(settings.device_geolocation.longitude) ? settings.device_geolocation.longitude : (!isNaN(settings.device_geolocation.longitude[0]) ? settings.device_geolocation.longitude[0] : null);
       }
       else {
-        longitude = 122;
+        longitude = null;
       }
       if (isset(settings.device_geolocation.latitude)) {
-        latitude = !isNaN(settings.device_geolocation.latitude) ? settings.device_geolocation.latitude : (!isNaN(settings.device_geolocation.latitude[0]) ? settings.device_geolocation.latitude[0] : 13);
+        latitude = !isNaN(settings.device_geolocation.latitude) ? settings.device_geolocation.latitude : (!isNaN(settings.device_geolocation.latitude[0]) ? settings.device_geolocation.latitude[0] : null);
       }
       else {
-        latitude = 13;
+        latitude = null;
       }
       // Try W3C Geolocation (Preferred) to detect user's location
       if (navigator.geolocation && !settings.device_geolocation.debug_mode) {
