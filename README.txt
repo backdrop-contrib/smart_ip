@@ -1,4 +1,3 @@
-$Id$
 
 Description:
 Smart IP identify visitor's geographical location (longitude/latitude), country, 

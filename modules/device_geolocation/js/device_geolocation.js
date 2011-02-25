@@ -1,4 +1,3 @@
-// $Id$
 (function ($) {
   Drupal.behaviors.deviceGeolocationAutoDetect = {
     attach: function (context, settings) {

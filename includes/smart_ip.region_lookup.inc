@@ -1,5 +1,4 @@
 <?php
-// $Id$
 /**
  * @file
  * Utility to get region name (Federal Information Processing Standards).

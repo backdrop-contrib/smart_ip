@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * @file device-geolocation-visitor-info.tpl.php

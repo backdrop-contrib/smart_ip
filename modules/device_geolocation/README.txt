@@ -1,4 +1,3 @@
-$Id$
 
 Description:
 Provides visitor's geographical location using client device location source 
