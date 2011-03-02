@@ -252,8 +252,20 @@ function _smart_ip_lookup_js($form, $form_state) {
 function smart_ip_admin_settings_submit($form, &$form_state) {
   global $user;
 
+  // Save the roles to geolocate
+  $roles_to_geolocate = array();
+  foreach ($form_state['values']['smart_ip_roles_to_geolocate'] as $rid => $value) {
+    if($rid == $value){
+      $roles_to_geolocate[] = $rid;
+    }
+  }
+  variable_set('smart_ip_roles_to_geolocate', $roles_to_geolocate);
   // Exclude unnecessary elements from being saved in variable table
-  unset($form_state['values']['smart_ip_lookup'], $form_state['values']['smart_ip_csv_source']);
+  unset(
+    $form_state['values']['smart_ip_lookup'], 
+    $form_state['values']['smart_ip_csv_source'],
+    $form_state['values']['smart_ip_roles_to_geolocate']
+  );
 
   // Check to see if debug set
   if ($form_state['values']['smart_ip_debug']) {

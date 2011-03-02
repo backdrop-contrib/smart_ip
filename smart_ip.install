@@ -33,19 +33,21 @@ function smart_ip_requirements($phase = 'runtime') {
         }
         else {
           $response = drupal_http_request(smart_ip_get_ipinfodb_url($ipinfodb_key, '127.0.0.1'));
-          $stat     = drupal_json_decode($response->data);
-          if ($stat['Status'] == 'MISSING API KEY' || $stat['Status'] == 'INVALID API KEY') {
-            $requirements['smart_ip'] = array(
-              'title'       => 'IPInfoDB API key',
-              'severity'    => REQUIREMENT_ERROR,
-              'value'       => t('Invalid'),
-              'description' => t('The IPInfoDB API key is invalid. Visit Smart IP settings !page.', array(
-                '!page' => l(t('page'), 'admin/config/people/smart_ip'),
-              )),
-            );
-          }
-          else {
-            variable_set('smart_ip_correct_ipinfodb_key', TRUE);
+          if (isset($response->data)) {
+            $stat     = drupal_json_decode($response->data);
+            if ($stat['Status'] == 'MISSING API KEY' || $stat['Status'] == 'INVALID API KEY') {
+              $requirements['smart_ip'] = array(
+                'title'       => 'IPInfoDB API key',
+                'severity'    => REQUIREMENT_ERROR,
+                'value'       => t('Invalid'),
+                'description' => t('The IPInfoDB API key is invalid. Visit Smart IP settings !page.', array(
+                  '!page' => l(t('page'), 'admin/config/people/smart_ip'),
+                )),
+              );
+            }
+            else {
+              variable_set('smart_ip_correct_ipinfodb_key', TRUE);
+            }
           }
         }
       }
