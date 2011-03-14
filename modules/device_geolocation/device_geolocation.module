@@ -14,7 +14,6 @@ function device_geolocation_init() {
   if (_device_geolocation_check_allowed_page($_GET['q']) && !isset($_SESSION['device_geolocation'])) {
     if (!isset($_SESSION['device_geolocation_attempt']) || variable_get('device_geolocation_check_frequency', 0) < (time() - $_SESSION['device_geolocation_attempt'])) {
       $_SESSION['device_geolocation_attempt'] = time();
-
       drupal_add_js('http://maps.google.com/maps/api/js?sensor=true');
       device_geolocation_get_coordinates();
       drupal_add_js('http://code.google.com/apis/gears/gears_init.js');

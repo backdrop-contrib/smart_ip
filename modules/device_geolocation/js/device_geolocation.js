@@ -55,16 +55,23 @@
           var address  = new Object;
           geocoder.geocode({'latLng': latlng}, function(results, status) {
             if (status == google.maps.GeocoderStatus.OK) {
-              if (results[1]) {
-                var number = results.length;
-                for (var i = 0; i < number; ++i) {
-                  var long_name  = results[i].address_components[0].long_name;
-                  var short_name = results[i].address_components[0].short_name;
+              if (results[0]) {
+                for (var i = 0; i < results[0].address_components.length; ++i) {
+                  var long_name  = results[0].address_components[i].long_name || '';
+                  var short_name = results[0].address_components[i].short_name || '';
+                  var type = results[0].address_components[i].types[0];
                   if (long_name != null) {
-                    address[results[i].address_components[0].types[0]] = long_name;
-                  }
-                  if (results[i].address_components[0].types[0] == 'country' && short_name != null) {
-                    address['country_code'] = short_name;
+                    // Manipulate the result to our liking
+                    switch(type) {
+                      case 'country':
+                        address['country'] = long_name;
+                        if (short_name != null) {
+                          address['country_code'] = short_name;
+                        }
+                        break;
+                      default:
+                        address[type] = long_name;
+                    }
                   }
                 }
                 address['latitude']  = latitude;
