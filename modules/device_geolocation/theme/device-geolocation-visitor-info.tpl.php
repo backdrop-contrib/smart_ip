@@ -26,15 +26,17 @@
  * @ingroup themeable
  */
 ?>
-<dl>
-  <?php foreach ($location as $item => $value): ?>
-    <?php if (!empty($value) && $item != 'region_code' && $item != 'timestamp'): ?>
-      <?php
-        $item = str_replace('_', ' ', $item);
-        $item[0] = strtoupper($item[0]);
-      ?>
-      <dt><?php print $item; ?></dt>
-      <dd><?php print $value; ?></dd>
-    <?php endif; ?>
-  <?php endforeach; ?>
-</dl>
+<?php if (!empty($location)): ?>
+  <dl>
+    <?php foreach ($location as $item => $value): ?>
+      <?php if (!empty($value) && $item != 'region_code' && $item != 'timestamp'): ?>
+        <?php
+          $item = str_replace('_', ' ', $item);
+          $item[0] = strtoupper($item[0]);
+        ?>
+        <dt><?php print $item; ?></dt>
+        <dd><?php print $value; ?></dd>
+      <?php endif; ?>
+    <?php endforeach; ?>
+  </dl>
+<?php endif; ?>
