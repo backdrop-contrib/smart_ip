@@ -246,6 +246,51 @@ function smart_ip_user_login(&$edit, $account) {
     }
   }
 }
+/**
+ * Implements hook_theme().
+ */
+function smart_ip_theme() {
+  return array(
+    'smart_ip_latitude_dms' => array(
+      'render element' => 'latitude',
+    ),
+    'smart_ip_longitude_dms' => array(
+      'render element' => 'longitude',
+    ),
+  );
+}
+
+/**
+ * Display latitude.
+ */
+function theme_smart_ip_latitude_dms($variable) {
+  $output = '';
+  list($degrees, $minutes, $seconds, $negative) = coordinates_dd_to_dms($variable['latitude']);
+  $output .= "${degrees}&deg; ${minutes}' ${seconds}\" ";
+  if (!$negative) {
+    $output .= 'N';
+  }
+  else {
+    $output .= 'S';
+  }
+  return $output;
+}
+
+/**
+ * Display longitude.
+ */
+function theme_smart_ip_longitude_dms($variable) {
+  $output = '';
+  list($degrees, $minutes, $seconds, $negative) = coordinates_dd_to_dms($variable['longitude']);
+  $output .= "${degrees}&deg; ${minutes}' ${seconds}\" ";
+  if (!$negative) {
+    $output .= 'E';
+  }
+  else {
+    $output .= 'W';
+  }
+  return $output;
+}
 
 /******************************************************************************
  * Module API                                                          *
@@ -385,4 +430,20 @@ function smart_ip_get_region_static($country_code, $region_code) {
     $region[$country_code][$region_code] = smart_ip_get_region($country_code, $region_code);
   }
   return $region;
+}
+
+/**
+ * Convert decimal degrees to degrees, minutes, seconds.
+ */
+function coordinates_dd_to_dms($coord) {
+  $negative = ($coord < 0) ? TRUE : FALSE;
+  $coord    = abs($coord);
+  $degrees  = floor($coord);
+  $coord   -= $degrees;
+  $coord   *= 60;
+  $minutes  = floor($coord);
+  $coord   -= $minutes;
+  $coord   *= 60;
+  $seconds  = round($coord, 6);
+  return array($degrees, $minutes, $seconds, $negative);
 }
