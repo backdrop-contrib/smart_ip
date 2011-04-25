@@ -77,7 +77,7 @@
                 address['latitude']  = latitude;
                 address['longitude'] = longitude;
                 $.ajax({
-                  url:  '/field-coordinates',
+                  url:  '/geolocate-user',
                   type: 'POST',
                   dataType: 'json',
                   data: address
@@ -86,7 +86,7 @@
             }
             else {
               $.ajax({
-                url:  '/field-coordinates',
+                url:  '/geolocate-user',
                 type: 'POST',
                 dataType: 'json',
                 data: ({

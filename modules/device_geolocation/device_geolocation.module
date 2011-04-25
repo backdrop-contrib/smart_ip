@@ -156,7 +156,7 @@ function _device_geolocation_allowed_pages_validate($form, &$form_state) {
  * Implements hook_menu().
  */
 function device_geolocation_menu() {
-  $items['field-coordinates'] = array(
+  $items['geolocate-user'] = array(
     'page callback'    => 'device_geolocation_detector_ajax',
     'access callback'  => 'user_access',
     'access arguments' => array('access content'),

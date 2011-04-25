@@ -16,3 +16,10 @@ function device_geolocation_uninstall() {
   variable_del('device_geolocation_allowed_pages');
   variable_del('device_geolocation_check_frequency');
 }
+
+/**
+ * Rename 'field-coordinates' menu to 'geolocate-user'.
+ */
+function device_geolocation_update_7000() {
+  cache_clear_all();
+}
