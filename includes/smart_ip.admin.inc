@@ -15,7 +15,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   // Define submit handler function
   $form['#submit'][] = 'smart_ip_admin_settings_submit';
   $form['#validate'][] = 'smart_ip_admin_settings_validate';
-  if (!variable_get('smart_ip_use_ipinfodb_service', FALSE)) {
+  if (!variable_get('smart_ip_use_ipinfodb_service', TRUE)) {
     $recover = !variable_get('smart_ip_db_update_busy', FALSE) & (variable_get('smart_ip_get_zip_done', FALSE) | variable_get('smart_ip_extract_zip_done', FALSE) | variable_get('smart_ip_store_location_csv_done', FALSE));
     // Container for database update preference forms 
     $form['smart_ip_database_update'] = array(
@@ -88,7 +88,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#collapsed'   => FALSE,
   );
   
-  $use_ipinfodb = variable_get('smart_ip_use_ipinfodb_service', FALSE);
+  $use_ipinfodb = variable_get('smart_ip_use_ipinfodb_service', TRUE);
   // Form to enable the use of IPInfoDB service
   $form['smart_ip_preferences']['smart_ip_use_ipinfodb_service'] = array(
     '#type'          => 'checkbox',
@@ -109,7 +109,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   $form['smart_ip_preferences']['smart_ip_auto_update'] = array(
     '#type'          => 'checkbox',
     '#title'         => t('Automatic Smart IP database update'),
-    '#description'   => t('Database will be automatically updated via cron.php every one month (Maxmind updates every first day of a month). !cron must be enabled for this to work.', array('!cron' => l(t('Cron'), 'admin/config/system/cron'))),
+    '#description'   => t('Database will be automatically updated via cron.php every one month (Maxmind updates every first day of a month). !cron must be enabled for this to work. Note: this option is very expensive to run and it requires about 450MB database and 600MB additional database space for temporary working table.', array('!cron' => l(t('Cron'), 'admin/config/system/cron'))),
     '#default_value' => $use_ipinfodb & variable_get('smart_ip_auto_update', TRUE),
     '#disabled'      => $use_ipinfodb,
     '#states'        => array(

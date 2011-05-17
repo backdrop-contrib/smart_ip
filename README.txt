@@ -28,7 +28,7 @@ continue the broken process at Smart IP admin page.
 
 Another source of Smart IP is the IPInfoDB.com service which also uses Maxmind's database, in 
 this case IPInfoDB.com will handle database resource load instead of your server's database. 
-By default the use of IPInfoDB.com service as source is disabled. If IPInfoDB.com is desired to  
+By default the use of IPInfoDB.com service as source is enabled. If IPInfoDB.com is desired to  
 handle database resource load, it can be configured at Smart IP admin page settings.
 
 Note: The Smart IP database is empty upon initial installation of this module. Either manually 
