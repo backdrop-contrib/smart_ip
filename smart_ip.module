@@ -323,27 +323,41 @@ function smart_ip_get_location($ip_address) {
   }
   if ($use_ipinfodb_service || empty($result)) {
     $ipinfodb_key = variable_get('smart_ip_ipinfodb_key', 0);
-    $request = drupal_http_request(smart_ip_get_ipinfodb_url($ipinfodb_key, $ip_address));
+    $version = variable_get('smart_ip_use_ipinfodb_api_version', 3);
+    $request = drupal_http_request(smart_ip_get_ipinfodb_url($ipinfodb_key, $ip_address, $version));
     $request_data = isset($request->data) ? drupal_json_decode($request->data) : '';
-    $region = '';
-    if (isset($request_data['RegionCode']) && isset($request_data['CountryCode'])) {
-      $region_result = array();
-      $region_result = smart_ip_get_region_static($request_data['CountryCode'], $request_data['RegionCode']);
-      $region = $region_result[$request_data['CountryCode']][$request_data['RegionCode']];
+    if ($version == 3) {
+      $result['country']      = isset($request_data['countryName']) ? ucwords(strtolower($request_data['countryName'])) : '';
+      $result['country_code'] = isset($request_data['countryCode']) ? $request_data['countryCode'] : '';
+      $result['region']       = isset($request_data['regionName']) ? ucwords(strtolower($request_data['regionName'])) : '';;
+      $result['region_code']  = '';
+      $result['city']         = isset($request_data['cityName']) ? ucwords(strtolower($request_data['cityName'])) : '';
+      $result['zip']          = isset($request_data['zipCode']) ? $request_data['zipCode'] : '';
+      $result['latitude']     = isset($request_data['latitude']) ? $request_data['latitude'] : '';
+      $result['longitude']    = isset($request_data['longitude']) ? $request_data['longitude'] : '';
     }
-    elseif (isset($request_data['RegionName'])) {
-      $region = $request_data['RegionName'];
+    else {
+      $region = '';
+      if (isset($request_data['RegionCode']) && isset($request_data['CountryCode'])) {
+        $region_result = array();
+        $region_result = smart_ip_get_region_static($request_data['CountryCode'], $request_data['RegionCode']);
+        $region = $region_result[$request_data['CountryCode']][$request_data['RegionCode']];
+      }
+      elseif (isset($request_data['RegionName'])) {
+        $region = $request_data['RegionName'];
+      }
+      $result['country']      = isset($request_data['CountryName']) ? $request_data['CountryName'] : '';
+      $result['country_code'] = isset($request_data['CountryCode']) ? $request_data['CountryCode'] : '';
+      $result['region']       = $region;
+      $result['region_code']  = isset($request_data['RegionCode']) ? $request_data['RegionCode'] : '';
+      $result['city']         = isset($request_data['City']) ? $request_data['City'] : '';
+      $result['zip']          = isset($request_data['ZipPostalCode']) ? $request_data['ZipPostalCode'] : '';
+      $result['latitude']     = isset($request_data['Latitude']) ? $request_data['Latitude'] : '';
+      $result['longitude']    = isset($request_data['Longitude']) ? $request_data['Longitude'] : '';
     }
-    $result['country']      = isset($request_data['CountryName']) ? $request_data['CountryName'] : '';
-    $result['country_code'] = isset($request_data['CountryCode']) ? $request_data['CountryCode'] : '';
-    $result['region']       = $region;
-    $result['region_code']  = isset($request_data['RegionCode']) ? $request_data['RegionCode'] : '';
-    $result['city']         = isset($request_data['City']) ? $request_data['City'] : '';
-    $result['zip']          = isset($request_data['ZipPostalCode']) ? $request_data['ZipPostalCode'] : '';
-    $result['latitude']     = isset($request_data['Latitude']) ? $request_data['Latitude'] : '';
-    $result['longitude']    = isset($request_data['Longitude']) ? $request_data['Longitude'] : '';
   }
-  $result['timestamp'] = time();
+  $result['ip_address'] = $ip_address;
+  $result['timestamp']  = time();
   // If coordinates are (0, 0) there was no match
   if ($result['latitude'] == 0 && $result['longitude'] == 0) {
     $result['latitude']  = NULL;
@@ -399,8 +413,13 @@ function smart_ip_set_user_data($account, $location) {
 /******************************************************************************
  * Helper Functions                                                           *
  ******************************************************************************/
-function smart_ip_get_ipinfodb_url($ipinfodb_key, $ip_address) {
-  return "http://api.ipinfodb.com/v2/ip_query.php?key=$ipinfodb_key&ip=$ip_address&output=json&timezone=false";
+function smart_ip_get_ipinfodb_url($ipinfodb_key, $ip_address, $version = 3) {
+  if ($version == 3) {
+    return "http://api.ipinfodb.com/v3/ip-city/ip_query.php?key=$ipinfodb_key&ip=$ip_address&format=json";
+  }
+  else {
+    return "http://api.ipinfodb.com/v2/ip_query.php?key=$ipinfodb_key&ip=$ip_address&output=json&timezone=false";
+  }
 }
 
 /**

@@ -97,6 +97,15 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#default_value' => $use_ipinfodb,
   );
   
+  // Form to select IPInfoDB API version
+  $form['smart_ip_preferences']['smart_ip_use_ipinfodb_api_version'] = array(
+    '#type'          => 'select',
+    '#title'         => t('IPInfoDB API version'),
+    '#default_value' => variable_get('smart_ip_use_ipinfodb_api_version', 3),
+    '#options'       => array(2 => 2, 3 => 3),
+    '#description'   => t('IPInfoDB.com version 2 do have region code, in version 3 it was removed.'),
+  );
+  
   // Form for entering IPInfoDB key
   $form['smart_ip_preferences']['smart_ip_ipinfodb_key'] = array(
     '#type'          => 'textfield',
@@ -134,7 +143,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#title'         => t('Roles To Geolocate'),
     '#default_value' => variable_get('smart_ip_roles_to_geolocate', array(DRUPAL_AUTHENTICATED_RID)),
     '#options'       => user_roles(),
-    '#description'   => t('Select the roles you wish to geolocate. Note that selecting the anonymous role will add substantial overhead.')
+    '#description'   => t('Select the roles you wish to geolocate. Note that selecting the anonymous role will add substantial overhead.'),
   );
   
   // Form to turn on save user location in $user object upon registration
