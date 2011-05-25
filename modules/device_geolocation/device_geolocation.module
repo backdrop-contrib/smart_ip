@@ -140,7 +140,11 @@ function _device_geolocation_allowed_pages_validate($form, &$form_state) {
   // Remove carriage return (in Windows)
   $list = str_replace("\r", '', $list);
   $list = str_replace('&lt;front&gt;', '<front>', $list);
-  $list = explode("\n", $list);
+  if (!empty($list)) {
+    $list = explode("\n", $list); }
+  else {
+    $list = array();
+  }
   $form_state['values']['device_geolocation_allowed_pages'] = $list;
   $value = $form_state['values']['device_geolocation_check_frequency'];
   if ($value !== '' && (!is_numeric($value) || $value < 0)) {
