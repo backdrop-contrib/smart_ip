@@ -34,8 +34,8 @@ function smart_ip_requirements($phase = 'runtime') {
         else {
           $response = drupal_http_request(smart_ip_get_ipinfodb_url($ipinfodb_key, '127.0.0.1'));
           if (isset($response->data)) {
-            $stat     = drupal_json_decode($response->data);
-            if ($stat['Status'] == 'MISSING API KEY' || $stat['Status'] == 'INVALID API KEY') {
+            $stat = drupal_json_decode($response->data);
+            if ((isset($stat['Status']) && ($stat['Status'] == 'MISSING API KEY' || $stat['Status'] == 'INVALID API KEY')) || (isset($stat['statusCode']) && ($stat['statusCode'] == 'ERROR'))) {
               $requirements['smart_ip'] = array(
                 'title'       => 'IPInfoDB API key',
                 'severity'    => REQUIREMENT_ERROR,
