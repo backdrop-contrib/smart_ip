@@ -1,0 +1,9 @@
+; $Id$
+name = Smart IP Views Bridge
+description = Exposes Smart IP visitor's location details to Views field (coordinates, country, ISO 3166 2-character country code, region, region code (FIPS), city and zip) and filter (country, ISO 3166 2-character country code, region, region code (FIPS), city and zip).
+package = Views
+
+core = 6.x
+php = 5.0
+dependencies[] = views
+dependencies[] = smart_ip
