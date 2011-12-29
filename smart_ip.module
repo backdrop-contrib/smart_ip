@@ -13,7 +13,7 @@
  * Additionaly, users accessing a server on a local network may be using
  * an IP that is not assigned to any country (e.g. 192.168.x.x).
  *
- * @author Roland Michael dela Peña.
+ * @author Roland Michael dela PeÃ±a.
  */
 define('SMART_IP_LOCATION_CSV', 'GeoLiteCity-Location.csv');
 define('SMART_IP_BLOCKS_CSV', 'GeoLiteCity-Blocks.csv');
