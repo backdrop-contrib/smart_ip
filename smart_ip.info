@@ -7,4 +7,5 @@ files[] = smart_ip.module
 files[] = includes/smart_ip.utility.inc
 files[] = includes/smart_ip.admin.inc
 files[] = includes/smart_ip.region_lookup.inc
+files[] = includes/smart_ip.tokens.inc
 configure = admin/config/people/smart_ip

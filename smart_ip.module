@@ -18,6 +18,8 @@
 define('SMART_IP_LOCATION_CSV', 'GeoLiteCity-Location.csv');
 define('SMART_IP_BLOCKS_CSV', 'GeoLiteCity-Blocks.csv');
 
+// Include Token support
+module_load_include('inc', 'smart_ip', 'includes/smart_ip.tokens');
 /******************************************************************************
  * Drupal Hooks                                                               *
  ******************************************************************************/
@@ -246,17 +248,23 @@ function smart_ip_user_login(&$edit, $account) {
     }
   }
 }
+
 /**
- * Implements hook_theme().
+ * Implements hook_token_info().
  */
-function smart_ip_theme() {
+function smart_ip_token_info() {
+  $type = array(
+    'name' => t('Smart IP'), 
+    'description' => t('Tokens related to Smart IP geolocation info'), 
+  );
+
+  $tokens = array('country', 'country_code', 'region', 'region_code', 'city', 'latitude', 'longitude', 'locality', 'postal_code');
+  foreach ($tokens as $name) {
+	$smart_ip[$name] = array('name' => t(ucfirst(str_replace('_', ' ', $name))));
+  }
   return array(
-    'smart_ip_latitude_dms' => array(
-      'render element' => 'latitude',
-    ),
-    'smart_ip_longitude_dms' => array(
-      'render element' => 'longitude',
-    ),
+	'types' => array('smart_ip' => $type),
+    'tokens' => array('smart_ip' => $smart_ip),
   );
 }
 
