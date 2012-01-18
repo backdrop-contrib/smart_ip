@@ -18,12 +18,11 @@
 define('SMART_IP_LOCATION_CSV', 'GeoLiteCity-Location.csv');
 define('SMART_IP_BLOCKS_CSV', 'GeoLiteCity-Blocks.csv');
 
-// Include Token support
-module_load_include('inc', 'smart_ip', 'includes/smart_ip.tokens');
+
 /******************************************************************************
  * Drupal Hooks                                                               *
  ******************************************************************************/
- /**
+/**
  * Implements hook_help().
  */
 function smart_ip_help($path, $arg) {
@@ -260,11 +259,52 @@ function smart_ip_token_info() {
 
   $tokens = array('country', 'country_code', 'region', 'region_code', 'city', 'latitude', 'longitude', 'locality', 'postal_code');
   foreach ($tokens as $name) {
-	$smart_ip[$name] = array('name' => t(ucfirst(str_replace('_', ' ', $name))));
+    $label = ucfirst(str_replace('_', ' ', $name));
+    $smart_ip[$name] = array('name' => $label);
+    $smart_ip[$name]['description'] = t('Smart IP @label', array('@label' => $label));
   }
   return array(
 	'types' => array('smart_ip' => $type),
     'tokens' => array('smart_ip' => $smart_ip),
+  );
+}
+
+
+/**
+ * Implements hook_tokens().
+ */
+function smart_ip_tokens($type, $tokens, array $data = array(), array $options = array()) {
+/*
+  if (isset($options['language'])) {
+    $url_options['language'] = $options['language'];
+    $language_code = $options['language']->language;
+  }
+  else {
+    $language_code = NULL;
+  }
+  $sanitize = !empty($options['sanitize']);
+*/
+
+  $replacements = array();
+  if ($type == 'smart_ip' && !empty($_SESSION['smart_ip']['location'])) {
+    foreach ($tokens as $name => $original) {
+      $replacements[$original] = $_SESSION['smart_ip']['location'][$name];
+    }
+  }
+  return $replacements;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function smart_ip_theme() {
+  return array(
+    'smart_ip_latitude_dms' => array(
+      'render element' => 'latitude',
+    ),
+    'smart_ip_longitude_dms' => array(
+      'render element' => 'longitude',
+    ),
   );
 }
 
