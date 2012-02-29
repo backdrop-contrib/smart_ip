@@ -117,7 +117,7 @@ function device_geolocation_form_alter(&$form, &$form_state, $form_id) {
       '#type'          => 'textarea',
       '#rows'          => 5,
       '#description'   => t("Specify pages by using their paths (not the aliased path). Enter one path per line. The '*' character is a wildcard. Example paths are blog for the blog page and blog/* for every personal blog. &lt;front&gt; is the front page. Leave blank if all pages."),
-      '#default_value' => implode("\n", variable_get('device_geolocation_allowed_pages', array())),
+      '#default_value' => variable_get('device_geolocation_allowed_pages', ''),
     );
     $form['smart_ip_preferences']['device_geolocation_check_frequency'] = array(
       '#title'         => t("Frequency of user's geolocation checking"),
@@ -137,15 +137,7 @@ function device_geolocation_form_alter(&$form, &$form_state, $form_id) {
  */
 function _device_geolocation_allowed_pages_validate($form, &$form_state) {
   $list = check_plain($form_state['values']['device_geolocation_allowed_pages']);
-  // Remove carriage return (in Windows)
-  $list = str_replace("\r", '', $list);
-  $list = str_replace('&lt;front&gt;', '<front>', $list);
-  if (!empty($list)) {
-    $list = explode("\n", $list); }
-  else {
-    $list = array();
-  }
-  $form_state['values']['device_geolocation_allowed_pages'] = $list;
+  $form_state['values']['device_geolocation_allowed_pages'] = str_replace('&lt;front&gt;', '<front>', $list);
   $value = $form_state['values']['device_geolocation_check_frequency'];
   if ($value !== '' && (!is_numeric($value) || $value < 0)) {
     form_set_error('device_geolocation_check_frequency', t("Frequency of user's geolocation checking must be a positive number."));
@@ -244,17 +236,19 @@ function device_geolocation_get_coordinates() {
  * Check page URL in allowed geolocate list.
  */
 function _device_geolocation_check_allowed_page($url) {
-  $urls = variable_get('device_geolocation_allowed_pages', array());
-  if (empty($urls)) {
+  $pages = variable_get('device_geolocation_allowed_pages', '');
+  if (empty($pages)) {
     // No pages specified then all pages are allowed
     return TRUE;
   }
-  elseif (drupal_is_front_page()) {
-    $url = '<front>';
-    return in_array($url, $urls);
-  }
   else {
-    $url_wildcard = preg_replace('#/[0-9]+#', '/*', $url);
-    return in_array($url, $urls) | in_array($url_wildcard, $urls);
+    // Convert the Drupal path to lowercase
+    $path = drupal_strtolower(drupal_get_path_alias($_GET['q']));
+    // Compare the lowercase internal and lowercase path alias (if any).
+    $page_match = drupal_match_path($path, $pages);
+    if ($path != $_GET['q']) {
+      $page_match = $page_match || drupal_match_path($_GET['q'], $pages);
+    }
+    return $page_match;
   }
 }

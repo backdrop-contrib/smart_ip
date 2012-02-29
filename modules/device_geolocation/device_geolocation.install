@@ -23,3 +23,10 @@ function device_geolocation_uninstall() {
 function device_geolocation_update_7000() {
   cache_clear_all();
 }
+
+/**
+ * Convert variable 'device_geolocation_allowed_pages' from array to string.
+ */
+function device_geolocation_update_7001() {
+  variable_set('device_geolocation_allowed_pages', implode("\n", variable_get('device_geolocation_allowed_pages', array())));
+}
