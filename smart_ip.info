@@ -4,6 +4,7 @@ package = Location
 core = 7.x
 files[] = smart_ip.install
 files[] = smart_ip.module
+files[] = includes/smart_ip.rules.inc
 files[] = includes/smart_ip.utility.inc
 files[] = includes/smart_ip.admin.inc
 files[] = includes/smart_ip.region_lookup.inc
