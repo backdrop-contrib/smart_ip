@@ -16,7 +16,8 @@ function device_geolocation_init() {
       $_SESSION['device_geolocation_attempt'] = time();
       drupal_add_js('http://maps.google.com/maps/api/js?sensor=true');
       device_geolocation_get_coordinates();
-      drupal_add_js('http://code.google.com/apis/gears/gears_init.js');
+      // 404 since April 2012: drupal_add_js('http://code.google.com/apis/gears/gears_init.js');
+      drupal_add_js(drupal_get_path('module', 'device_geolocation') . '/js/gears_init.js');
       drupal_add_js(drupal_get_path('module', 'device_geolocation') . '/js/device_geolocation.js');
     }
   }
