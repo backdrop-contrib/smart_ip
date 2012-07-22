@@ -138,6 +138,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   );
   
   // Form to select user roles to geolocate
+  drupal_add_js(drupal_get_path('module', 'smart_ip') . '/js/smart_ip-admin.js');
   $form['smart_ip_preferences']['smart_ip_roles_to_geolocate'] = array(
     '#type'          => 'checkboxes',
     '#title'         => t('Roles To Geolocate'),
