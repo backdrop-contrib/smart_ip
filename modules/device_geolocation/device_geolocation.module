@@ -168,7 +168,18 @@ function device_geolocation_menu() {
 function device_geolocation_detector_ajax() {
   if (isset($_POST['latitude']) && isset($_POST['longitude'])) {
     global $user;
-    unset($_SESSION['device_geolocation']);
+    $ip_address = $_SESSION['smart_ip']['location']['ip_address'];
+    $_SESSION['smart_ip']['maxmind_location'] = $_SESSION['smart_ip']['location'];
+    unset($_SESSION['device_geolocation'], $_SESSION['smart_ip']['location']);
+    $_SESSION['smart_ip']['location']['ip_address']   = $ip_address;
+    $_SESSION['smart_ip']['location']['country']      = '';
+    $_SESSION['smart_ip']['location']['country_code'] = '';
+    $_SESSION['smart_ip']['location']['region']       = '';
+    $_SESSION['smart_ip']['location']['region_code']  = '';
+    $_SESSION['smart_ip']['location']['city']         = '';
+    $_SESSION['smart_ip']['location']['zip']          = '';
+    $_SESSION['smart_ip']['location']['latitude']     = '';
+    $_SESSION['smart_ip']['location']['longitude']    = '';
     foreach ($_POST as $label => $address) {
       if (!empty($address)) {
         $label = check_plain($label);
@@ -177,10 +188,13 @@ function device_geolocation_detector_ajax() {
         unset($_SESSION['device_geolocation_attempt']);
       }
     }
-    if (isset($_SESSION['smart_ip']['location']['postal_code']) && !empty($_SESSION['smart_ip']['location']['postal_code'])) {
-      // 'postal_cod' already exist, remove the redundant 'zip'
-      unset($_SESSION['smart_ip']['location']['zip']);
+    if (empty($_SESSION['smart_ip']['location']['zip']) && isset($_SESSION['smart_ip']['location']['postal_code'])) {
+      $_SESSION['smart_ip']['location']['zip'] = $_SESSION['smart_ip']['location']['postal_code'];
     }
+    if (empty($_SESSION['smart_ip']['location']['city']) && isset($_SESSION['smart_ip']['location']['locality'])) {
+      $_SESSION['smart_ip']['location']['city'] = $_SESSION['smart_ip']['location']['locality'];
+    }
+    $_SESSION['smart_ip']['location']['timestamp'] = time();
     // Allow other modules to modify result via hook_device_geolocation_detector_ajax_alter()
     drupal_alter('device_geolocation_detector_ajax', $_SESSION['smart_ip']['location']);
 

@@ -378,10 +378,17 @@ function smart_ip_get_location($ip_address) {
     $version = variable_get('smart_ip_use_ipinfodb_api_version', 3);
     $request = drupal_http_request(smart_ip_get_ipinfodb_url($ipinfodb_key, $ip_address, $version));
     $request_data = isset($request->data) ? drupal_json_decode($request->data) : '';
+    if (!empty($request_data)) {
+      foreach ($request_data as &$datum) {
+        if ($datum == '-') {
+          $datum = '';
+        }
+      }
+    }
     if ($version == 3) {
       $result['country']      = isset($request_data['countryName']) ? ucwords(strtolower($request_data['countryName'])) : '';
       $result['country_code'] = isset($request_data['countryCode']) ? $request_data['countryCode'] : '';
-      $result['region']       = isset($request_data['regionName']) ? ucwords(strtolower($request_data['regionName'])) : '';;
+      $result['region']       = isset($request_data['regionName']) ? ucwords(strtolower($request_data['regionName'])) : '';
       $result['region_code']  = '';
       $result['city']         = isset($request_data['cityName']) ? ucwords(strtolower($request_data['cityName'])) : '';
       $result['zip']          = isset($request_data['zipCode']) ? $request_data['zipCode'] : '';
