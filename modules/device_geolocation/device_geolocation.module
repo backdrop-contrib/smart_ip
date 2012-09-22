@@ -7,6 +7,10 @@
  * Google Geocoding service.
  */
 
+define('DEVICE_GEOLOCATION_MAXMIND', 1);
+define('DEVICE_GEOLOCATION_W3C', 2);
+define('DEVICE_GEOLOCATION_GOOGLE_GEARS', 3);
+
 /**
  * Implements hook_init().
  */

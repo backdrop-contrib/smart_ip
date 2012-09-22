@@ -31,6 +31,22 @@
     <?php foreach ($location as $item => $value): ?>
       <?php if (!empty($value) && $item != 'region_code' && $item != 'timestamp'): ?>
         <?php
+          if ($item == 'source') {
+            switch ($value) {
+              case DEVICE_GEOLOCATION_MAXMIND:
+                $value = 'Geocoded Maxmind coordinates';
+                break;
+              case DEVICE_GEOLOCATION_W3C:
+                $value = 'Geocoded W3C coordinates';
+                break;
+              case DEVICE_GEOLOCATION_GOOGLE_GEARS:
+                $value = 'Geocoded Google Gears coordinates';
+                break;
+              default:
+                $value = 'Maxmind geolocation';
+                break;
+            }
+          }
           $item = str_replace('_', ' ', $item);
           $item[0] = strtoupper($item[0]);
         ?>

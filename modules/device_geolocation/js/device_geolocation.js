@@ -1,6 +1,7 @@
 (function ($) {
   Drupal.behaviors.deviceGeolocationAutoDetect = {
     attach: function (context, settings) {
+      var geolocation_source = 1; // Default it to Maxmind
       if (isset(settings.device_geolocation.longitude)) {
         longitude = !isNaN(settings.device_geolocation.longitude) ? settings.device_geolocation.longitude : (!isNaN(settings.device_geolocation.longitude[0]) ? settings.device_geolocation.longitude[0] : null);
       }
@@ -16,6 +17,7 @@
       // Try W3C Geolocation (Preferred) to detect user's location
       if (navigator.geolocation && !settings.device_geolocation.debug_mode) {
         navigator.geolocation.getCurrentPosition(function(position) {
+          geolocation_source = 2; // W3C
           geocoder_send_address(position.coords.latitude, position.coords.longitude);
         }, function() {
           // Smart IP (Maxmind) fallback
@@ -26,6 +28,7 @@
       else if (google.gears && !settings.device_geolocation.debug_mode) {
         var geo = google.gears.factory.create('beta.geolocation');
         geo.getCurrentPosition(function(position) {
+          geolocation_source = 3; // Google Gears
           geocoder_send_address(position.latitude, position.longitude);
         }, function() {
           // Smart IP (Maxmind) fallback
@@ -74,6 +77,7 @@
                     }
                   }
                 }
+                address['source']    = geolocation_source;
                 address['latitude']  = latitude;
                 address['longitude'] = longitude;
                 $.ajax({
