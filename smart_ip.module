@@ -90,16 +90,17 @@ function smart_ip_permission() {
 function smart_ip_init(){
   // Save a database hit. If there's already session data, don't check if we need to 
   // geolocate they anonymous role
-  if(empty($_SESSION['smart_ip']['location'])) {
+  $smart_ip_session = smart_ip_session_get('smart_ip');
+  if (empty($smart_ip_session['location'])) {
     $roles_to_geo_locate = variable_get('smart_ip_roles_to_geolocate', array(DRUPAL_AUTHENTICATED_RID));
     if(in_array(DRUPAL_ANONYMOUS_RID, $roles_to_geo_locate) ){
       global $user;
       smart_ip_set_location_data($user, smart_ip_get_location(ip_address()));
     }
   }
-  if (isset($_SESSION['smart_ip']['location'])) {
+  if (isset($smart_ip_session['location'])) {
     // Make user geolocation available to javascript
-    drupal_add_js(array('smart_ip' => $_SESSION['smart_ip']), 'setting');
+    drupal_add_js(array('smart_ip' => $smart_ip_session), 'setting');
   }
 }
 
@@ -212,7 +213,8 @@ function smart_ip_user_presave(&$edit, $account, $category) {
     $location = smart_ip_get_location($ip);
     // Store the location information in the $user object
     smart_ip_set_session_data($location);
-    $edit['data']['geoip_location_original'] = $_SESSION['smart_ip']['location'];
+    $smart_ip_session = smart_ip_session_get('smart_ip');
+    $edit['data']['geoip_location_original'] = $smart_ip_session['location'];
   }
 }
 
@@ -238,7 +240,9 @@ function smart_ip_user_login(&$edit, $account) {
         '%long'    => $location['longitude'],
         '%lat'     => $location['latitude'],
       )));
-      $_SESSION['smart_ip']['location'] = $location;
+      $smart_ip_session = smart_ip_session_get('smart_ip');
+      $smart_ip_session['location'] = $location;
+      smart_ip_session_set('smart_ip', $smart_ip_session);
     }
   }
   else {
@@ -290,9 +294,10 @@ function smart_ip_tokens($type, $tokens, array $data = array(), array $options =
 */
 
   $replacements = array();
-  if ($type == 'smart_ip' && !empty($_SESSION['smart_ip']['location'])) {
+  $smart_ip_session = smart_ip_session_get('smart_ip');
+  if ($type == 'smart_ip' && !empty($smart_ip_session['location'])) {
     foreach ($tokens as $name => $original) {
-      $replacements[$original] = $_SESSION['smart_ip']['location'][$name];
+      $replacements[$original] = $smart_ip_session['location'][$name];
     }
   }
   return $replacements;
@@ -452,12 +457,14 @@ function smart_ip_set_location_data($account, $location) {
  */
 function smart_ip_set_session_data($location) {
   // Store the location information in the session, merging any old data not overridden
-  if (isset($_SESSION['smart_ip']['location'])) {
-    $_SESSION['smart_ip']['location'] = array_merge((array)$_SESSION['smart_ip']['location'], $location);
+  $smart_ip_session = smart_ip_session_get('smart_ip');
+  if (isset($smart_ip_session['location'])) {
+    $smart_ip_session['location'] = array_merge((array)$smart_ip_session['location'], $location);
   }
   else {
-    $_SESSION['smart_ip']['location'] = $location;
+    $smart_ip_session['location'] = $location;
   }
+  smart_ip_session_set('smart_ip', $smart_ip_session);
 }
 
 /**
@@ -466,6 +473,30 @@ function smart_ip_set_session_data($location) {
 function smart_ip_set_user_data($account, $location) {
   if ($account->uid != 0) {
     user_save($account, array('data' => array('geoip_location' => $location)));
+  }
+}
+
+/**
+ * Write session variable.
+ */
+function smart_ip_session_set($key, $value) {
+  if (module_exists('session_cache')) {
+    session_cache_set($key, $value);
+  }
+  else {
+    $_SESSION[$key] = $value;
+  }
+}
+
+/**
+ * Read session variable.
+ */
+function smart_ip_session_get($key) {
+  if (module_exists('session_cache')) {
+    return session_cache_get($key);
+  }
+  else {
+    return isset($_SESSION) && isset($_SESSION[$key]) ? $_SESSION[$key] : NULL;
   }
 }
 

@@ -281,7 +281,9 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
   if ($form_state['values']['smart_ip_debug']) {
     // Debug on
     $ip = $form_state['values']['smart_ip_test_ip_address'];
-    $_SESSION['smart_ip']['debug_mode'] = TRUE;
+    $smart_ip_session = smart_ip_session_get('smart_ip');
+    $smart_ip_session['debug_mode'] = TRUE;
+    smart_ip_session_set('smart_ip', $smart_ip_session);
   }
   else {
     // Debug off - make sure we set/reset to their real values
@@ -302,21 +304,21 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
     // Finally if it has been determined, store the location in the $user object
     if ($form_state['values']['smart_ip_debug']) {
       smart_ip_set_user_data($user, $location);
-      $_SESSION['smart_ip']['location'] = $location;
+      $smart_ip_session = smart_ip_session_get('smart_ip');
+      $smart_ip_session['location'] = $location;
+      smart_ip_session_set('smart_ip', $smart_ip_session);
       if (module_exists('device_geolocation')) {
-        unset($_SESSION['device_geolocation']);
+        smart_ip_session_set('device_geolocation', NULL);
         device_geolocation_get_coordinates();
       }
     }
     else {
-      if (isset($_SESSION['smart_ip']['debug_mode'])) {
-        unset(
-          $user->data['geoip_location'],
-          $_SESSION['smart_ip']['location'], 
-          $_SESSION['smart_ip']['debug_mode'], 
-          $_SESSION['device_geolocation']
-        );
-        $_SESSION['smart_ip']['location'] = $location;
+      if (!is_null($smart_ip_session['debug_mode'])) {
+        $smart_ip_session = smart_ip_session_get('smart_ip');
+        unset($user->data['geoip_location'], $smart_ip_session['debug_mode']);
+        $smart_ip_session['location'] = $location;
+        smart_ip_session_set('device_geolocation', NULL);
+        smart_ip_session_set('smart_ip', $smart_ip_session);
         smart_ip_set_user_data($user, $location);
         if (module_exists('device_geolocation')) {
           device_geolocation_get_coordinates();
@@ -324,7 +326,8 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
       }
       else {
         smart_ip_set_session_data($location);
-        smart_ip_set_user_data($user, $_SESSION['smart_ip']['location']);
+        $smart_ip_session = smart_ip_session_get('smart_ip');
+        smart_ip_set_user_data($user, $smart_ip_session['location']);
       }
     }
   }
