@@ -39,7 +39,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     $form['smart_ip_database_update']['smart_ip_csv_source'] = array(
       '#type'          => 'textfield',
       '#title'         => t('CSV URL source'),
-      '#default_value' => smart_ip_get_csv_source_filename(TRUE),
+      '#default_value' => smart_ip_get_csv_source_filename(),
       '#description'   => t("Enter the Maxmind's CSV URL, source for updating the Smart IP database"),
       '#size'          => 120,
     );

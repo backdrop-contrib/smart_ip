@@ -515,14 +515,22 @@ function smart_ip_get_ipinfodb_url($ipinfodb_key, $ip_address, $version = 3) {
 /**
  * Helper function for grabbing Maxmind's CSV archive filename.
  */
-function smart_ip_get_csv_source_filename($bypass_fallback = FALSE) {
+function smart_ip_get_csv_source_filename() {
   $maxmind_csv = &drupal_static(__FUNCTION__);
   
   if (!isset($maxmind_csv)) {
-    $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/GeoLiteCity_' . format_date(time(), 'custom', 'Ym') . '01.zip');
+    // Get CSV list of zip files
+    $html = file_get_contents('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV');
+    $regex = '/GeoLiteCity_' . format_date(time(), 'custom', 'Ym') . '.{2}\.zip/';
+    preg_match($regex, $html, $match);
     // Check if Maxmind CSV file not updated, then fallback to the previous month
-    if (!$bypass_fallback && !@fopen($maxmind_csv, 'r')) {
-      $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/GeoLiteCity_' . format_date((time() - 2764800), 'custom', 'Ym') . '01.zip');
+    if (empty($match)) {
+      $regex = '/GeoLiteCity_' . format_date((time() - 2764800), 'custom', 'Ym') . '.{2}\.zip/';
+      preg_match($regex, $html, $match);
+      $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/' . $match[0]);
+    }
+    else {
+      $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/' . $match[0]);
     }
   }
   return $maxmind_csv;
