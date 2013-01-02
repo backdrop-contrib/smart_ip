@@ -307,8 +307,8 @@ function smart_ip_update_database(&$context) {
     }
     if (count($data) > 1 && is_numeric($data[0])) {
       variable_set('smart_ip_blocks_csv_pointer', $context['sandbox']['#blocks_csv_pointer']);
+      $location = cache_get('smart_ip:' . $data[2], 'cache_smart_ip');
       try {
-        $location = cache_get('smart_ip:' . $data[2], 'cache_smart_ip');
         // Insert GeoIP into the temporary working Smart IP database table
         db_insert('smart_ip_update_table')
           ->fields(array(
