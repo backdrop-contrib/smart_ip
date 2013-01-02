@@ -180,11 +180,11 @@ function smart_ip_update_7001() {
  * Added smart_ip_source variable.
  */
 function smart_ip_update_7002() {
-  if (variable_get('smart_ip_auto_update', FALSE)) {
-    variable_set('smart_ip_source', 'local_db');
-  }
-  elseif (variable_get('smart_ip_use_ipinfodb_service', FALSE)) {
+  if (variable_get('smart_ip_use_ipinfodb_service', FALSE)) {
     variable_set('smart_ip_source', 'ipinfodb_service');
+  }
+  elseif (variable_get('smart_ip_auto_update', FALSE)) {
+    variable_set('smart_ip_source', 'local_db');
   }
   variable_del('smart_ip_use_ipinfodb_service');
 }
