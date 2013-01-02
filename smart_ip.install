@@ -19,7 +19,7 @@ function smart_ip_requirements($phase = 'runtime') {
       if ($smart_ip_source == 'ipinfodb_service') {
         // Generate an appropriate error message:
         // Missing API keys.
-        $ipinfodb_key = variable_get('smart_ip_ipinfodb_key');
+        $ipinfodb_key = variable_get('smart_ip_ipinfodb_key', '');
         if (empty($ipinfodb_key)) {
           $requirements['smart_ip'] = array(
             'title'       => 'IPInfoDB API key',

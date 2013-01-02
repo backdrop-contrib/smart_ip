@@ -122,7 +122,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#type'          => 'textfield',
     '#title'         => t('IPInfoDB key'),
     '#description'   => t('The use of IPInfoDB.com service requires API key. Registration for the new API key is free, sign up !here.', array('!here' => l(t('here'), 'http://www.ipinfodb.com/register.php'))),
-    '#default_value' => variable_get('smart_ip_ipinfodb_key'),
+    '#default_value' => variable_get('smart_ip_ipinfodb_key', ''),
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'ipinfodb_service'),
@@ -137,12 +137,12 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#description'   => t('Choose service. Only Country is available at the moment.'),
     '#options' => array(
         'country' => t('Country'),
-        //@todo Use other services
+        //@TODO Use other services
         /*'city' => t('City'),
         'city_isp_org' => t('City/ISP/Org'),
         'omni' => t('Omni'),*/
     ),
-    '#default_value' => variable_get('smart_ip_maxmind_service'),
+    '#default_value' => variable_get('smart_ip_maxmind_service', 'country'),
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmindgeoip_service'),
@@ -155,7 +155,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#type'          => 'textfield',
     '#title'         => t('Maxmind GeoIP developer key'),
     '#description'   => t('The use of geoip.maxmind.com service requires developer key.'),
-    '#default_value' => variable_get('smart_ip_maxmind_key'),
+    '#default_value' => variable_get('smart_ip_maxmind_key', ''),
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmindgeoip_service'),
@@ -288,7 +288,7 @@ function smart_ip_admin_settings_validate($form, &$form_state) {
   if ($form_state['values']['smart_ip_source'] == 'ipinfodb_service' && empty($form_state['values']['smart_ip_ipinfodb_key'])) {
     form_set_error('smart_ip_ipinfodb_key', t('Please provide IPInfoDB key.'));
   }
-  $ipinfodb_key = variable_get('smart_ip_ipinfodb_key');
+  $ipinfodb_key = variable_get('smart_ip_ipinfodb_key', '');
   if ($form_state['values']['smart_ip_ipinfodb_key'] != $ipinfodb_key) {
     variable_set('smart_ip_correct_ipinfodb_key', FALSE);
   }

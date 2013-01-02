@@ -533,8 +533,8 @@ function smart_ip_get_ipinfodb_url($ipinfodb_key, $ip_address, $version = 3) {
  * @param String $ip_adresse IP address to geolocate
  */
 function smart_ip_get_maxmindgeoip_url($ip_address) {
-  $maxmind_key = variable_get('smart_ip_maxmind_key');
-  switch(variable_get('smart_ip_maxmind_service')){
+  $maxmind_key = variable_get('smart_ip_maxmind_key', '');
+  switch(variable_get('smart_ip_maxmind_service', 'country')){
     case 'country':
       return "https://geoip.maxmind.com/a?l=$maxmind_key&i=$ip_address";
       break;
