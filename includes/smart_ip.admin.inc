@@ -25,8 +25,8 @@ function smart_ip_admin_settings($form, &$form_state) {
       '#collapsible' => FALSE,
       '#collapsed'   => FALSE,
       '#states'      => array(
-        'invisible' => array(
-          ':input[name="smart_ip_source"]' => array('value' => 'ipinfodb_service'),
+        'visible' => array(
+          ':input[name="smart_ip_source"]' => array('value' => 'local_db'),
         ),
       ),
     );
