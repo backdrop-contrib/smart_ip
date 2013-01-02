@@ -359,8 +359,8 @@ function theme_smart_ip_longitude_dms($variable) {
  *   FALSE if the lookup failed to find a location for this IP
  */
 function smart_ip_get_location($ip_address) {
-  $use_ipinfodb_service = variable_get('smart_ip_use_ipinfodb_service', TRUE);
-  if (!$use_ipinfodb_service) {
+  $smart_ip_source = variable_get('smart_ip_source', 'ipinfodb_service');
+  if ($smart_ip_source == 'local_db') {
     $ip = explode('.', $ip_address);
     $result = FALSE;
     if (count($ip) == 4) {
@@ -378,7 +378,23 @@ function smart_ip_get_location($ip_address) {
       }
     }
   }
-  if ($use_ipinfodb_service || empty($result)) {
+  
+  if ($smart_ip_source == 'maxmindgeoip_service') {
+    //Use Maxmind GeoIP service if needed : only for Maxmind GeoIp Country
+    include_once DRUPAL_ROOT . '/includes/locale.inc';
+    $countries = country_get_list();
+    $request = drupal_http_request(smart_ip_get_maxmindgeoip_url($ip_address));
+    $result['country_code'] = isset($request->data) ? strtolower($request->data) : '';
+    $result['country']      = empty($result['country_code']) ? '' : $countries[$result['country_code']];
+    $result['region']       = '';
+    $result['region_code']  = '';
+    $result['city']         = '';
+    $result['zip']          = '';
+    $result['latitude']     = '';
+    $result['longitude']    = '';
+  }
+  
+  if ($smart_ip_source == 'ipinfodb_service' || empty($result)) {
     $ipinfodb_key = variable_get('smart_ip_ipinfodb_key', 0);
     $version = variable_get('smart_ip_use_ipinfodb_api_version', 3);
     $request = drupal_http_request(smart_ip_get_ipinfodb_url($ipinfodb_key, $ip_address, $version));
@@ -510,6 +526,20 @@ function smart_ip_get_ipinfodb_url($ipinfodb_key, $ip_address, $version = 3) {
   else {
     return "http://api.ipinfodb.com/v2/ip_query.php?key=$ipinfodb_key&ip=$ip_address&output=json&timezone=false";
   }
+}
+
+/**
+ * Get Maxmind GeoIP URL
+ * @param String $ip_adresse IP address to geolocate
+ */
+function smart_ip_get_maxmindgeoip_url($ip_address) {
+  $maxmind_key = variable_get('smart_ip_maxmind_key');
+  switch(variable_get('smart_ip_maxmind_service')){
+    case 'country':
+      return "https://geoip.maxmind.com/a?l=$maxmind_key&i=$ip_address";
+      break;
+  }
+  return '';
 }
 
 /**

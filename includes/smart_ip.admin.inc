@@ -15,7 +15,8 @@ function smart_ip_admin_settings($form, &$form_state) {
   // Define submit handler function
   $form['#submit'][] = 'smart_ip_admin_settings_submit';
   $form['#validate'][] = 'smart_ip_admin_settings_validate';
-  if (!variable_get('smart_ip_use_ipinfodb_service', TRUE)) {
+  $smart_ip_source = variable_get('smart_ip_source', 'ipinfodb_service');
+  if ($smart_ip_source == 'local_db') {
     $recover = !variable_get('smart_ip_db_update_busy', FALSE) & (variable_get('smart_ip_get_zip_done', FALSE) | variable_get('smart_ip_extract_zip_done', FALSE) | variable_get('smart_ip_store_location_csv_done', FALSE));
     // Container for database update preference forms 
     $form['smart_ip_database_update'] = array(
@@ -25,7 +26,7 @@ function smart_ip_admin_settings($form, &$form_state) {
       '#collapsed'   => FALSE,
       '#states'      => array(
         'invisible' => array(
-          ':input[name="smart_ip_use_ipinfodb_service"]' => array('checked' => TRUE),
+          ':input[name="smart_ip_source"]' => array('value' => 'ipinfodb_service'),
         ),
       ),
     );
@@ -80,61 +81,111 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#suffix' => isset($form_state['storage']['smart_ip_message']) ? '<div id="lookup-message" class="messages">' . $form_state['storage']['smart_ip_message'] . '</div>' : '',
   );
 
+  // Container for Smart IP source forms
+  $form['smart_ip_source_selection'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Smart IP source'),
+    '#description'   => t('Please select only one source:'),
+    '#collapsible' => FALSE,
+    '#collapsed'   => FALSE,
+  );
+  
+  // Form for Smart IP source selection
+  $form['smart_ip_source_selection']['smart_ip_source'] = array(
+    '#type'          => 'radios',
+    '#title'         => t('Select Smart IP source'),
+    '#description'   => t('Please populate the appropriate fields below according to your selected Smart IP source.'),
+    '#options' => array(
+      'ipinfodb_service' => t('Use IPInfoDB service, IPInfoDB.com service will be used to query Geo IP information instead of Smart IP database.'),
+      'maxmindgeoip_service' => t('Use Maxmind service, geoip.maxmind.com service will be used to query Geo IP information instead of Smart IP database. For using this, you need to buy a developer key.'),
+      'local_db' => t("Use Smart IP database, the site's local database populated from Maxmind's CSV will be used to query Geo IP information. Note: this option is very expensive to run and it requires about 450MB database and 600MB additional database space for temporary working table."),
+    ),
+    '#default_value' => variable_get('smart_ip_source', 'ipinfodb_service'),
+  );
+  
+  // Form to select IPInfoDB API version
+  $form['smart_ip_source_selection']['smart_ip_use_ipinfodb_api_version'] = array(
+    '#type'          => 'select',
+    '#title'         => t('IPInfoDB API version'),
+    '#default_value' => variable_get('smart_ip_use_ipinfodb_api_version', 3),
+    '#options'       => array(2 => 2, 3 => 3),
+    '#description'   => t('IPInfoDB.com version 2 do have region code, in version 3 it was removed.'),
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="smart_ip_source"]' => array('value' => 'ipinfodb_service'),
+      ),
+    ),
+  );
+  
+  // Form for entering IPInfoDB key
+  $form['smart_ip_source_selection']['smart_ip_ipinfodb_key'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('IPInfoDB key'),
+    '#description'   => t('The use of IPInfoDB.com service requires API key. Registration for the new API key is free, sign up !here.', array('!here' => l(t('here'), 'http://www.ipinfodb.com/register.php'))),
+    '#default_value' => variable_get('smart_ip_ipinfodb_key'),
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="smart_ip_source"]' => array('value' => 'ipinfodb_service'),
+      ),
+    ),
+  );
+
+  // Form for choosing Maxmind GeoIP service
+  $form['smart_ip_source_selection']['smart_ip_maxmind_service'] = array(
+    '#type'          => 'select',
+    '#title'         => t('Maxmind GeoIP service'),
+    '#description'   => t('Choose service. Only Country is available at the moment.'),
+    '#options' => array(
+        'country' => t('Country'),
+        //@todo Use other services
+        /*'city' => t('City'),
+        'city_isp_org' => t('City/ISP/Org'),
+        'omni' => t('Omni'),*/
+    ),
+    '#default_value' => variable_get('smart_ip_maxmind_service'),
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="smart_ip_source"]' => array('value' => 'maxmindgeoip_service'),
+      ),
+    ),
+  );
+
+  // Form for entering Maxmind GeoIP key
+  $form['smart_ip_source_selection']['smart_ip_maxmind_key'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Maxmind GeoIP developer key'),
+    '#description'   => t('The use of geoip.maxmind.com service requires developer key.'),
+    '#default_value' => variable_get('smart_ip_maxmind_key'),
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="smart_ip_source"]' => array('value' => 'maxmindgeoip_service'),
+      ),
+    ),
+  );
+  
+  // Form to enable automatic Smart IP database update every one month
+  $form['smart_ip_source_selection']['smart_ip_auto_update'] = array(
+    '#type'          => 'select',
+    '#title'         => t('Automatic Smart IP database update'),
+    '#description'   => t('Database will be automatically updated via cron.php every one month (Maxmind updates every first day of a month). !cron must be enabled for this to work.', array('!cron' => l(t('Cron'), 'admin/config/system/cron'))),
+    '#options' => array(
+       TRUE  => t('Yes'),
+       FALSE => t('No'),
+     ),
+    '#default_value' => variable_get('smart_ip_auto_update', TRUE),
+    '#states'        => array(
+      'invisible' => array(
+        ':input[name="smart_ip_source"]' => array('value' => 'ipinfodb_service'),
+      ),
+    ),
+  );
+  
   // Container for preference forms
   $form['smart_ip_preferences'] = array(
     '#type'        => 'fieldset',
     '#title'       => t('Smart IP settings'),
     '#collapsible' => FALSE,
     '#collapsed'   => FALSE,
-  );
-  
-  $use_ipinfodb = variable_get('smart_ip_use_ipinfodb_service', TRUE);
-  // Form to enable the use of IPInfoDB service
-  $form['smart_ip_preferences']['smart_ip_use_ipinfodb_service'] = array(
-    '#type'          => 'checkbox',
-    '#title'         => t('Use IPInfoDB service'),
-    '#description'   => t('IPInfoDB.com service will be used to query Geo IP information instead of Smart IP database.'),
-    '#default_value' => $use_ipinfodb,
-  );
-  
-  // Form to select IPInfoDB API version
-  $form['smart_ip_preferences']['smart_ip_use_ipinfodb_api_version'] = array(
-    '#type'          => 'select',
-    '#title'         => t('IPInfoDB API version'),
-    '#default_value' => variable_get('smart_ip_use_ipinfodb_api_version', 3),
-    '#options'       => array(2 => 2, 3 => 3),
-    '#description'   => t('IPInfoDB.com version 2 do have region code, in version 3 it was removed.'),
-  );
-  
-  // Form for entering IPInfoDB key
-  $form['smart_ip_preferences']['smart_ip_ipinfodb_key'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('IPInfoDB key'),
-    '#description'   => t('The use of IPInfoDB.com service requires API key. Registration for the new API key is free, sign up !here.', array('!here' => l(t('here'), 'http://www.ipinfodb.com/register.php'))),
-    '#default_value' => variable_get('smart_ip_ipinfodb_key'),
-  );
-  
-  // Form to enable automatic Smart IP database update every one month
-  $form['smart_ip_preferences']['smart_ip_auto_update'] = array(
-    '#type'          => 'checkbox',
-    '#title'         => t('Automatic Smart IP database update'),
-    '#description'   => t('Database will be automatically updated via cron.php every one month (Maxmind updates every first day of a month). !cron must be enabled for this to work. Note: this option is very expensive to run and it requires about 450MB database and 600MB additional database space for temporary working table.', array('!cron' => l(t('Cron'), 'admin/config/system/cron'))),
-    '#default_value' => $use_ipinfodb & variable_get('smart_ip_auto_update', TRUE),
-    '#disabled'      => $use_ipinfodb,
-    '#states'        => array(
-      'unchecked' => array(
-        ':input[name="smart_ip_use_ipinfodb_service"]' => array('checked' => TRUE),
-      ),
-      'disabled' => array(
-        ':input[name="smart_ip_use_ipinfodb_service"]' => array('checked' => TRUE),
-      ),
-      'checked' => array(
-        ':input[name="smart_ip_use_ipinfodb_service"]' => array('checked' => FALSE),
-      ),
-      'enabled' => array(
-        ':input[name="smart_ip_use_ipinfodb_service"]' => array('checked' => FALSE),
-      ),
-    ),
   );
   
   // Form to select user roles to geolocate
@@ -234,12 +285,15 @@ function _smart_ip_lookup_submit($form, &$form_state) {
 }
 
 function smart_ip_admin_settings_validate($form, &$form_state) {
-  if (empty($form_state['values']['smart_ip_ipinfodb_key']) && $form_state['values']['smart_ip_use_ipinfodb_service']) {
+  if ($form_state['values']['smart_ip_source'] == 'ipinfodb_service' && empty($form_state['values']['smart_ip_ipinfodb_key'])) {
     form_set_error('smart_ip_ipinfodb_key', t('Please provide IPInfoDB key.'));
   }
   $ipinfodb_key = variable_get('smart_ip_ipinfodb_key');
   if ($form_state['values']['smart_ip_ipinfodb_key'] != $ipinfodb_key) {
     variable_set('smart_ip_correct_ipinfodb_key', FALSE);
+  }
+  if ($form_state['values']['smart_ip_source'] == 'maxmindgeoip_service' && empty($form_state['values']['smart_ip_maxmind_key'])) {
+    form_set_error('smart_ip_maxmind_key', t('Please provide Maxmind GeoIP developer key.'));
   }
 }
 
@@ -301,10 +355,10 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
       '%long'    => $location['longitude'],
       '%lat'     => $location['latitude'],
     )));
+    $smart_ip_session = smart_ip_session_get('smart_ip');
     // Finally if it has been determined, store the location in the $user object
     if ($form_state['values']['smart_ip_debug']) {
       smart_ip_set_user_data($user, $location);
-      $smart_ip_session = smart_ip_session_get('smart_ip');
       $smart_ip_session['location'] = $location;
       smart_ip_session_set('smart_ip', $smart_ip_session);
       if (module_exists('device_geolocation')) {
@@ -313,8 +367,7 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
       }
     }
     else {
-      if (!is_null($smart_ip_session['debug_mode'])) {
-        $smart_ip_session = smart_ip_session_get('smart_ip');
+      if (isset($smart_ip_session['debug_mode']) && !is_null($smart_ip_session['debug_mode'])) {
         unset($user->data['geoip_location'], $smart_ip_session['debug_mode']);
         $smart_ip_session['location'] = $location;
         smart_ip_session_set('device_geolocation', NULL);
@@ -326,7 +379,6 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
       }
       else {
         smart_ip_set_session_data($location);
-        $smart_ip_session = smart_ip_session_get('smart_ip');
         smart_ip_set_user_data($user, $smart_ip_session['location']);
       }
     }

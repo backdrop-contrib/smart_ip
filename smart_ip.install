@@ -15,9 +15,8 @@ function smart_ip_requirements($phase = 'runtime') {
   if ($phase == 'runtime') {
     $correct_key = variable_set('smart_ip_correct_ipinfodb_key', FALSE);
     if (!$correct_key) {
-      $no_db = variable_get('smart_ip_last_update');
-      $use_ipinfodb_service = variable_get('smart_ip_use_ipinfodb_service', TRUE);
-      if (empty($no_db) || $use_ipinfodb_service) {
+      $smart_ip_source = variable_get('smart_ip_source', 'ipinfodb_service');
+      if ($smart_ip_source == 'ipinfodb_service') {
         // Generate an appropriate error message:
         // Missing API keys.
         $ipinfodb_key = variable_get('smart_ip_ipinfodb_key');
@@ -178,13 +177,28 @@ function smart_ip_update_7001() {
 }
 
 /**
+ * Added smart_ip_source variable.
+ */
+function smart_ip_update_7002() {
+  if (variable_get('smart_ip_auto_update', FALSE)) {
+    variable_set('smart_ip_source', 'local_db');
+  }
+  elseif (variable_get('smart_ip_use_ipinfodb_service', FALSE)) {
+    variable_set('smart_ip_source', 'ipinfodb_service');
+  }
+  variable_del('smart_ip_use_ipinfodb_service');
+}
+
+/**
  * Implements hook_uninstall().
  *
  * Removes all tables and variables inserted into the
  * database by this module.
  */
 function smart_ip_uninstall() {
-  variable_del('smart_ip_use_ipinfodb_service');
+  variable_del('smart_ip_source');
+  variable_del('smart_ip_maxmind_service');
+  variable_del('smart_ip_maxmind_key');
   variable_del('smart_ip_correct_ipinfodb_key');
   variable_del('smart_ip_use_ipinfodb_api_version');
   variable_del('smart_ip_ipinfodb_key');
