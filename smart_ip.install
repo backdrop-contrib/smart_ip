@@ -199,8 +199,8 @@ function smart_ip_uninstall() {
   variable_del('smart_ip_source');
   variable_del('smart_ip_maxmind_service');
   variable_del('smart_ip_maxmind_key');
-  variable_del('smart_ip_correct_ipinfodb_key');
   variable_del('smart_ip_use_ipinfodb_api_version');
+  variable_del('smart_ip_correct_ipinfodb_key');
   variable_del('smart_ip_ipinfodb_key');
   variable_del('smart_ip_get_zip_done');
   variable_del('smart_ip_extract_zip_done');

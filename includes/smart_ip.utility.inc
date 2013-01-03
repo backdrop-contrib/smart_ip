@@ -59,6 +59,7 @@ function smart_ip_get_zip($src = NULL, &$context) {
   }
   variable_set('smart_ip_get_zip_done', FALSE);
   if (empty($src)) {
+    // Fallback zip file
     $src = 'http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/GeoLiteCity_' . format_date(time(), 'custom', 'Ym') . '01.zip';
   }
   if (isset($context['results']['#zip_file'])) {
@@ -95,10 +96,10 @@ function smart_ip_extract_zip(&$context) {
     // Accumulate the previous extracted csv files.
     $csv_files = file_scan_directory($path, '/\.csv$/');
     foreach ($csv_files as $csv_file) {
-      if ($csv_file->filename == SMART_IP_LOCATION_CSV) {
+      if (strpos($csv_file->filename, SMART_IP_LOCATION_CSV) !== FALSE) {
         $context['results']['#location_csv_file'] = $csv_file->uri;
       }
-      elseif ($csv_file->filename == SMART_IP_BLOCKS_CSV) {
+      elseif (strpos($csv_file->filename, SMART_IP_BLOCKS_CSV) !== FALSE) {
         $context['results']['#blocks_csv_file'] = $csv_file->uri;
       }
     }
@@ -127,10 +128,10 @@ function smart_ip_extract_zip(&$context) {
     $csv_files = file_scan_directory($path, '/\.csv$/');
     foreach ($csv_files as $csv_file) {
       file_unmanaged_move($csv_file->uri, $path . '/' . $csv_file->filename, FILE_EXISTS_REPLACE);
-      if ($csv_file->filename == SMART_IP_LOCATION_CSV) {
+      if (strpos($csv_file->filename, SMART_IP_LOCATION_CSV) !== FALSE) {
         $context['results']['#location_csv_file'] = drupal_realpath($path . '/' . $csv_file->filename);
       }
-      elseif ($csv_file->filename == SMART_IP_BLOCKS_CSV) {
+      elseif (strpos($csv_file->filename, SMART_IP_BLOCKS_CSV) !== FALSE) {
         $context['results']['#blocks_csv_file'] = drupal_realpath($path . '/' . $csv_file->filename);
       }
     }
@@ -206,7 +207,7 @@ function smart_ip_store_location_csv(&$context) {
       fclose($fp);
       // Update our progress information.
       $context['finished'] = TRUE;
-      $context['message']  = t('Processing %location done', array('%location' => SMART_IP_LOCATION_CSV));   
+      $context['message']  = t('Processing %location done', array('%location' => basename($context['results']['#location_csv_file'])));   
       unset($context['results']['#location_csv_file']);
       // An indicator that is to be used in recovery mode
       variable_set('smart_ip_store_location_csv_done', (int) variable_get('smart_ip_indicator_last_ip'));
@@ -222,7 +223,7 @@ function smart_ip_store_location_csv(&$context) {
       // Update our progress information.
       $context['finished'] = $estimated_progress / 100;
       $context['message']  = t('Parsing %location at line number: @value of @end', array(
-        '%location' => SMART_IP_LOCATION_CSV, 
+        '%location' => basename($context['results']['#location_csv_file']), 
         '@value'    => $current_pointer,
         '@end'      => $last_pointer,
       ));
@@ -284,10 +285,10 @@ function smart_ip_update_database(&$context) {
     $context['sandbox']['#blocks_csv_pointer'] = @ftell($fp);
     if (@feof($fp)) {
       @fclose($fp);
-      unset($context['results']['#blocks_csv_file']);
       // Update our progress information.
       $context['finished'] = TRUE;
-      $context['message']  = t('Processing %blocks done', array('%blocks' => SMART_IP_BLOCKS_CSV));
+      $context['message']  = t('Processing %blocks done', array('%blocks' => basename($context['results']['#blocks_csv_file'])));
+      unset($context['results']['#blocks_csv_file']);
       // Tasks completed. Reset the recovery mode indicators.
       variable_set('smart_ip_get_zip_done', FALSE);
       variable_set('smart_ip_extract_zip_done', FALSE);
@@ -300,7 +301,7 @@ function smart_ip_update_database(&$context) {
       // Update our progress information.
       $context['finished'] = $estimated_progress / 100;
       $context['message']  = t('Parsing %blocks at line number: @value of @end', array(
-        '%blocks' => SMART_IP_BLOCKS_CSV,
+        '%blocks' => basename($context['results']['#blocks_csv_file']),
         '@value'  => $current_pointer,
         '@end'    => $last_pointer,
       ));

@@ -15,8 +15,8 @@
  *
  * @author Roland Michael dela Peña.
  */
-define('SMART_IP_LOCATION_CSV', 'GeoLiteCity-Location.csv');
-define('SMART_IP_BLOCKS_CSV', 'GeoLiteCity-Blocks.csv');
+define('SMART_IP_LOCATION_CSV', 'Location.csv');
+define('SMART_IP_BLOCKS_CSV', 'Blocks.csv');
 
 
 /******************************************************************************
