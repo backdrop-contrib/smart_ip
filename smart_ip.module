@@ -364,6 +364,7 @@ function smart_ip_get_location($ip_address) {
     $ip = explode('.', $ip_address);
     $result = FALSE;
     if (count($ip) == 4) {
+      smart_ip_check_fix_local_db();
       $ipl = (($ip[0] * 256 + $ip[1]) * 256 + $ip[2]) * 256 + $ip[3];
       $query = db_query('SELECT * FROM {smart_ip} WHERE ip_ref <= :ip ORDER BY ip_ref DESC LIMIT 1', array(':ip' => $ipl));
       $result = $query->fetchAssoc();
@@ -452,6 +453,7 @@ function smart_ip_get_location($ip_address) {
  * Get the total count of IP ranges in database
  */
 function smart_ip_get_count() {
+  smart_ip_check_fix_local_db();
   $sql   = 'SELECT COUNT(*) FROM {smart_ip}';
   $count = db_query($sql);
   return (int) $count->fetchField(0);
@@ -577,6 +579,24 @@ function smart_ip_get_region_static($country_code, $region_code) {
     $region[$country_code][$region_code] = smart_ip_get_region($country_code, $region_code);
   }
   return $region;
+}
+
+/**
+ * Ensure smart_ip table exist
+ */
+function smart_ip_check_fix_local_db() {
+  if (!db_table_exists('smart_ip')) {
+    if (db_table_exists('smart_ip_update_table')) {
+      // Database update was broken in the middle and smart_ip table was dropped but 
+      // staging smart_ip_update_table failed to rename to production smart_ip table
+      db_rename_table('smart_ip_update_table', 'smart_ip');
+    }
+    else {
+      // smart_ip table dropped then re-create one
+      module_load_install('smart_ip');
+      db_create_table('smart_ip', smart_ip_schema_definition_array());
+    }
+  }
 }
 
 /**
