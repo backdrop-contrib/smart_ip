@@ -2,6 +2,11 @@
   Drupal.behaviors.deviceGeolocationAutoDetect = {
     attach: function (context, settings) {
       var geolocation_source = 1; // Default it to Maxmind
+      if (!settings.device_geolocation.ask_geolocate) {
+        // Don't ask user for geolocation. Duration of frequency checking is set.
+        return;
+      }
+      settings.device_geolocation.ask_geolocate = false;
       if (isset(settings.device_geolocation.longitude)) {
         longitude = !isNaN(settings.device_geolocation.longitude) ? settings.device_geolocation.longitude : (!isNaN(settings.device_geolocation.longitude[0]) ? settings.device_geolocation.longitude[0] : null);
       }
