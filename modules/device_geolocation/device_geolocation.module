@@ -16,7 +16,7 @@ define('DEVICE_GEOLOCATION_GOOGLE_GEARS', 3);
  */
 function device_geolocation_init() {
   $ajax_check = variable_get('device_geolocation_ajax_check', FALSE);
-  if (device_geolocation_check_geolocation_attempt() || $ajax_check) {
+  if ($ajax_check || device_geolocation_check_geolocation_attempt()) {
     device_geolocation_get_coordinates();
     if (!$ajax_check) {
       drupal_add_js(array('device_geolocation' => array('ask_geolocate' => TRUE)), 'setting');
