@@ -15,7 +15,8 @@ define('DEVICE_GEOLOCATION_GOOGLE_GEARS', 3);
  * Implements hook_init().
  */
 function device_geolocation_init() {
-  $ajax_check = variable_get('device_geolocation_ajax_check', FALSE);
+  $user_allowed = !is_null(smart_ip_session_get('device_geolocation')); // if true, the user has allowed to share his/her location
+  $ajax_check   = variable_get('device_geolocation_ajax_check', FALSE) & !$user_allowed;
   if ($ajax_check || device_geolocation_check_geolocation_attempt()) {
     device_geolocation_get_coordinates();
     if (!$ajax_check) {
@@ -310,7 +311,7 @@ function device_geolocation_check_geolocation_attempt_ajax() {
  * Check Geolocation attempt.
  */
 function device_geolocation_check_geolocation_attempt() {
-  if (_device_geolocation_check_allowed_page($_GET['q']) && is_null(smart_ip_session_get('device_geolocation'))) {
+  if ((_device_geolocation_check_allowed_page($_GET['q']) && is_null(smart_ip_session_get('device_geolocation'))) || !is_null(smart_ip_session_get('device_geolocation'))) {
     if (is_null(smart_ip_session_get('device_geolocation_attempt')) || variable_get('device_geolocation_check_frequency', 0) < (time() - smart_ip_session_get('device_geolocation_attempt'))) {
       smart_ip_session_set('device_geolocation_attempt', time());
       return TRUE;
