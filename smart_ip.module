@@ -359,6 +359,12 @@ function theme_smart_ip_longitude_dms($variable) {
  *   FALSE if the lookup failed to find a location for this IP
  */
 function smart_ip_get_location($ip_address) {
+  // Use a static cache if this function is called more often
+  // for the same ip on the same page.
+  $results = &drupal_static(__FUNCTION__);
+  if (isset($results[$ip_address])) {
+    return $results[$ip_address];
+  }
   $smart_ip_source = variable_get('smart_ip_source', 'ipinfodb_service');
   if ($smart_ip_source == 'local_db') {
     $ip = explode('.', $ip_address);
@@ -446,6 +452,7 @@ function smart_ip_get_location($ip_address) {
   }
   // Allow other modules to modify result via hook_smart_ip_get_location_alter()
   drupal_alter('smart_ip_get_location', $result);
+  $results[$ip_address] = $result;
   return $result;
 }
 
