@@ -391,7 +391,7 @@ function smart_ip_get_location($ip_address) {
     include_once DRUPAL_ROOT . '/includes/locale.inc';
     $countries = country_get_list();
     $request = drupal_http_request(smart_ip_get_maxmindgeoip_url($ip_address));
-    $result['country_code'] = isset($request->data) ? strtolower($request->data) : '';
+    $result['country_code'] = isset($request->data) ? $request->data : '';
     $result['country']      = empty($result['country_code']) ? '' : $countries[$result['country_code']];
     $result['region']       = '';
     $result['region_code']  = '';
