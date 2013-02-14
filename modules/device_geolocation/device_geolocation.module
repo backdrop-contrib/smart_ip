@@ -250,9 +250,9 @@ function device_geolocation_get_coordinates() {
     $longitude = $smart_ip_session['location']['longitude'];
     smart_ip_session_set('smart_ip', $smart_ip_session);
   }
-  // None, then determine user's geo location via smart_ip_get_location()
+  // None, then determine user's geo location via smart_ip_get_current_visitor_location_data()
   else {
-    $smart_ip_session['location'] = smart_ip_get_location(ip_address());
+    $smart_ip_session['location'] = smart_ip_get_current_visitor_location_data();
     smart_ip_session_set('smart_ip', $smart_ip_session);
     if ($user->uid) {
       user_save($user, array('data' => array('geoip_location' => $smart_ip_session['location'])));

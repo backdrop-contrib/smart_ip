@@ -40,9 +40,8 @@ function smart_ip_country_list() {
  * Condition implementation for IP address in country.
  */
 function smart_ip_condition_in_country($countries) {
-  $ip = ip_address();
-  $result = smart_ip_get_location($ip);
-  if (isset($countries[$result['country_code']])) {
+  $location = smart_ip_get_current_visitor_location_data();
+  if (isset($countries[$location['country_code']])) {
     return TRUE;
   }
   return FALSE;
