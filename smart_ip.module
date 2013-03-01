@@ -393,8 +393,10 @@ function smart_ip_get_location($ip_address) {
     $countries = country_get_list();
     $request = drupal_http_request(smart_ip_get_maxmindgeoip_url($ip_address));
     if (!empty($request)) {
-      $result['country_code'] = isset($request->data) ? $request->data : '';
-      $result['country']      = empty($result['country_code']) ? '' : $countries[$result['country_code']];
+      // In case of errors the country code "(null),IP_NOT_FOUND" is returned,
+      // so we need to check if the code is in our countries list.
+      $result['country_code'] = isset($request->data) && isset($countries[$request->data]) ? $request->data : '';
+      $result['country']      = empty($result['country_code']) ? '' : $countries[$request->data];
       $result['region']       = '';
       $result['region_code']  = '';
       $result['city']         = '';
