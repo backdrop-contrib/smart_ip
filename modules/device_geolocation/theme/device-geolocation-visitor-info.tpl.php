@@ -6,8 +6,8 @@
  *
  * Available variables:
  * - $location: An associative array with possible array items:
- * -- latitude: May came from Smart IP or W3C Geolocation API or Google Gears
- * -- longitude: May came from Smart IP or W3C Geolocation API or Google Gears
+ * -- latitude: May came from Smart IP or W3C Geolocation API 
+ * -- longitude: May came from Smart IP or W3C Geolocation API
  * -- street_number: Google Geocoder service specific item
  * -- postal_code: Google Geocoder service specific item
  * -- route: Google Geocoder service specific item
@@ -38,9 +38,6 @@
                 break;
               case DEVICE_GEOLOCATION_W3C:
                 $value = 'Geocoded W3C coordinates';
-                break;
-              case DEVICE_GEOLOCATION_GOOGLE_GEARS:
-                $value = 'Geocoded Google Gears coordinates';
                 break;
               default:
                 $value = 'Maxmind geolocation';

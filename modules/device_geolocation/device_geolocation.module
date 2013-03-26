@@ -2,14 +2,13 @@
 
 /**
  * @file
- * Provides visitor's geographical location using client device location source 
- * that implements W3C Geolocation API (with Google Gears as fallback) and 
+ * Provides visitor's geographical location using client device 
+ * location source that implements W3C Geolocation API and 
  * Google Geocoding service.
  */
 
 define('DEVICE_GEOLOCATION_MAXMIND', 1);
 define('DEVICE_GEOLOCATION_W3C', 2);
-define('DEVICE_GEOLOCATION_GOOGLE_GEARS', 3);
 
 /**
  * Implements hook_init().
@@ -23,8 +22,6 @@ function device_geolocation_init() {
       drupal_add_js(array('device_geolocation' => array('ask_geolocate' => TRUE)), 'setting');
     }
     drupal_add_js('http://maps.google.com/maps/api/js?sensor=true', array('scope' => 'footer', 'weight' => 0));
-    // 404 since April 2012: drupal_add_js('http://code.google.com/apis/gears/gears_init.js');
-    drupal_add_js(drupal_get_path('module', 'device_geolocation') . '/js/gears_init.js', array('scope' => 'footer', 'weight' => 0));
     drupal_add_js(drupal_get_path('module', 'device_geolocation') . '/js/device_geolocation.js', array('scope' => 'footer', 'weight' => 1));
   }
   if ($ajax_check) {
@@ -100,16 +97,16 @@ function device_geolocation_help($path, $arg) {
     case 'admin/help#device_geolocation':
       return '<p>' . 
       t("Provides visitor's geographical location using client device location source 
-      that implements W3C Geolocation API (with Google Gears as fallback) whereas 
-      the coordinates are geocoded using Google Geocoding service. Google Geocoding 
-      returns a more detailed location information such as: street number, postal code, 
-      route, neighborhood, locality, sublocality, establishment, administrative area level 1, 
-      administrative area level 2, etc.") . '</p><p>' . 
-      t("Smart IP is the last fallback if W3C Geolocation API or Google Gears failed. Even 
-      if the visitors refuses to share their location, the geographical information provided 
-      by Smart IP will be used to know your visitors' geolocation details. A themeable Block 
-      content is available to show your visitor's geolocation information. Device Geolocation 
-      merges its location data (collected at Google Geocoding service) with Smart IP visitor's 
+      that implements W3C Geolocation API whereas the coordinates are geocoded using 
+      Google Geocoding service. Google Geocoding returns a more detailed location information 
+      such as: street number, postal code, route, neighborhood, locality, sublocality, 
+      establishment, administrative area level 1, administrative area level 2, etc.") . 
+      '</p><p>' . 
+      t("Smart IP is the last fallback if W3C Geolocation API failed. Even if the visitors 
+      refuses to share their location, the geographical information provided by Smart IP 
+      will be used to know your visitors' geolocation details. A themeable Block content 
+      is available to show your visitor's geolocation information. Device Geolocation merges 
+      its location data (collected at Google Geocoding service) with Smart IP visitor's 
       location data storage which is in session variable (@session) with array key 'smart_ip' 
       and Drupal @user->data object with array key 'geoip_location'.", array(
         '@session' => '$_SESSION',

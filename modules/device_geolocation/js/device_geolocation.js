@@ -29,17 +29,6 @@
           geocoder_send_address(latitude, longitude);
         });
       }
-      // Try Google Gears Geolocation
-      else if (google.gears && !settings.device_geolocation.debug_mode) {
-        var geo = google.gears.factory.create('beta.geolocation');
-        geo.getCurrentPosition(function(position) {
-          geolocation_source = 3; // Google Gears
-          geocoder_send_address(position.latitude, position.longitude);
-        }, function() {
-          // Smart IP (Maxmind) fallback
-          geocoder_send_address(latitude, longitude);
-        });     
-      }
       // Smart IP (Maxmind) fallback or using debug mode coordinates
       else {
         geocoder_send_address(latitude, longitude);
