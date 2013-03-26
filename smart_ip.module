@@ -642,7 +642,7 @@ function smart_ip_get_csv_source_filename() {
       $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/' . $match[0]);
     }
     else {
-      $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/' . $match[0]);
+      $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/GeoLiteCity-latest.zip');
     }
   }
   return $maxmind_csv;
