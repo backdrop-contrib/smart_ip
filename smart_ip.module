@@ -639,11 +639,12 @@ function smart_ip_get_csv_source_filename() {
     if (empty($match)) {
       $regex = '/GeoLiteCity_' . format_date((time() - 2764800), 'custom', 'Ym') . '.{2}\.zip/';
       preg_match($regex, $html, $match);
-      $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/' . $match[0]);
+      if (isset($match[0])) {
+        $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/' . $match[0]);
+        return $maxmind_csv;
+      }
     }
-    else {
-      $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/GeoLiteCity-latest.zip');
-    }
+    $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/GeoLiteCity-latest.zip');
   }
   return $maxmind_csv;
 }
