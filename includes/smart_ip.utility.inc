@@ -306,7 +306,7 @@ function smart_ip_update_database(&$context) {
         '@end'    => $last_pointer,
       ));
     }
-    if (count($data) == 3 && is_numeric($data[0])) {
+    if (count($data) == 3 && is_numeric($data[2])) {
       variable_set('smart_ip_blocks_csv_pointer', $context['sandbox']['#blocks_csv_pointer']);
       $location = cache_get('smart_ip:' . $data[2], 'cache_smart_ip');
       try {
