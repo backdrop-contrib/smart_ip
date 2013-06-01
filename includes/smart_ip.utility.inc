@@ -228,7 +228,7 @@ function smart_ip_store_location_csv(&$context) {
         '@end'      => $last_pointer,
       ));
     }
-    if (count($data) == 7 && is_numeric($data[0])) {
+    if (count($data) == 9 && is_numeric($data[0])) {
       $data_location = array(
         'country_code' => $data[1], 
         'region'       => $data[2], 
@@ -269,9 +269,15 @@ function smart_ip_update_database(&$context) {
         @fseek($fp, $blocks_csv_pointer);
       }
       else {
-        module_load_install('smart_ip');
-        // Add temporary working table for updating Smart IP database.
-        db_create_table('smart_ip_update_table', smart_ip_schema_definition_array());
+        if (db_table_exists('smart_ip_update_table')) {
+          // The temporary working table for updating Smart IP database already exist, truncate it.
+          $result = db_truncate('smart_ip_update_table')->execute();
+        }
+        else {
+          module_load_install('smart_ip');
+          // Add temporary working table for updating Smart IP database.
+          db_create_table('smart_ip_update_table', smart_ip_schema_definition_array());
+        }
         // Record the last pointer
         $fp_check = @fopen($context['results']['#blocks_csv_file'], 'r');
         @fseek($fp_check, -1, SEEK_END);

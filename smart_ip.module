@@ -695,3 +695,15 @@ function coordinates_dd_to_dms($coord) {
   $seconds  = round($coord, 6);
   return array($degrees, $minutes, $seconds, $negative);
 }
+
+/**
+ * Reset meta data of Smart IP database update process.
+ */
+function smart_ip_reset_db_update_meta_data() {
+  cache_clear_all('smart_ip:', 'cache_smart_ip', TRUE);
+  variable_set('smart_ip_blocks_csv_pointer', 0);
+  variable_set('smart_ip_db_update_busy', FALSE);
+  variable_set('smart_ip_get_zip_done', FALSE);
+  variable_set('smart_ip_extract_zip_done', FALSE);
+  variable_set('smart_ip_store_location_csv_done', FALSE);
+}
