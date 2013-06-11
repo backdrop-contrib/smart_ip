@@ -385,8 +385,7 @@ function smart_ip_get_location($ip_address) {
         $result['region'] = $region[$result['country_code']][$result['region_code']];
       }
     }
-  }
-  
+  }  
   if ($smart_ip_source == 'maxmindgeoip_service') {
     // Use Maxmind GeoIP service if needed
     include_once DRUPAL_ROOT . '/includes/locale.inc';
@@ -423,8 +422,7 @@ function smart_ip_get_location($ip_address) {
           break;
       }
     }
-  }
-  
+  }  
   if ($smart_ip_source == 'ipinfodb_service' || empty($result)) {
     $ipinfodb_key = variable_get('smart_ip_ipinfodb_key', 0);
     $version = variable_get('smart_ip_use_ipinfodb_api_version', 3);
@@ -589,7 +587,8 @@ function smart_ip_set_session_data($location) {
  */
 function smart_ip_set_user_data($account, $location) {
   if ($account->uid != 0) {
-    user_save($account, array('data' => array('geoip_location' => $location)));
+    $user_obj = user_load($account->uid);
+    user_save($user_obj, array('data' => array('geoip_location' => $location)));
   }
 }
 
