@@ -406,19 +406,22 @@ function smart_ip_get_location($ip_address) {
           $result['latitude']     = '';
           $result['longitude']    = '';
           break;
-        case 'city':
-          // For Maxmind GeoIp City
+        case 'city_isp_org':
+          // For Maxmind GeoIP City/ISP/Organization Web Service
           // In case of errors the country code "(null),IP_NOT_FOUND" is returned,
           // so we need to check if the code is in our countries list.
           $response = str_getcsv($request->data);
           $result['country_code'] = isset($request->data) && isset($countries[$response[0]]) ? $response[0] : '';
           $result['country']      = empty($result['country_code']) ? '' : $countries[$response[0]];
-          $result['region']       = '';
+          $result['region']       = $response[1];
           $result['region_code']  = $response[1];
           $result['city']         = $response[2];
           $result['zip']          = '';
-          $result['latitude']     = '';
-          $result['longitude']    = '';
+          $result['latitude']     = $response[3];
+          $result['longitude']    = $response[4];
+          break;
+        case 'omni':
+          //@TODO For Maxmind GeoIP Omni Web Service
           break;
       }
     }

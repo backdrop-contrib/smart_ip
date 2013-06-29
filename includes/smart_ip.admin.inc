@@ -133,14 +133,13 @@ function smart_ip_admin_settings($form, &$form_state) {
   // Form for choosing Maxmind GeoIP service
   $form['smart_ip_source_selection']['smart_ip_maxmind_service'] = array(
     '#type'          => 'select',
-    '#title'         => t('Maxmind GeoIP service'),
+    '#title'         => t('Maxmind GeoIP Web Services'),
     '#description'   => t('Choose service.'),
     '#options' => array(
-        'country' => t('Country'),
-        'city'    => t('City'),
-        //@TODO Use other services
-        /*'city_isp_org' => t('City/ISP/Org'),
-        'omni' => t('Omni'),*/
+        'country' => t('Country Web Service'),
+        'city_isp_org' => t('City/ISP/Organization Web Service'),
+        //@TODO Use omni
+        /*'omni' => t('Omni Web Service'),*/
     ),
     '#default_value' => variable_get('smart_ip_maxmind_service', 'country'),
     '#states'        => array(
