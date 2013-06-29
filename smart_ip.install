@@ -206,6 +206,7 @@ function smart_ip_update_7003() {
  */
 function smart_ip_uninstall() {
   variable_del('smart_ip_source');
+  variable_del('smart_ip_ip2location_bin_path');
   variable_del('smart_ip_maxmind_service');
   variable_del('smart_ip_maxmind_key');
   variable_del('smart_ip_use_ipinfodb_api_version');

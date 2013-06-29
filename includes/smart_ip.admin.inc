@@ -96,9 +96,10 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#title'         => t('Select Smart IP source'),
     '#description'   => t('Please populate the appropriate fields below according to your selected Smart IP source.'),
     '#options' => array(
-      'ipinfodb_service' => t('Use IPInfoDB service, IPInfoDB.com service will be used to query Geo IP information instead of Smart IP database.'),
-      'maxmindgeoip_service' => t('Use Maxmind service, geoip.maxmind.com service will be used to query Geo IP information instead of Smart IP database. For using this, you need to buy a developer key.'),
-      'local_db' => t("Use Smart IP database, the site's local database populated from Maxmind's CSV will be used to query Geo IP information. Note: this option is very expensive to run and it requires about 450MB database and 600MB additional database space for temporary working table."),
+      'ipinfodb_service'     => t('Use IPInfoDB service, IPInfoDB.com service will be used to query Geo IP information.'),
+      'ip2location_bin'      => t('IP2Location binary will be used to query Geo IP information. For using this, you need to register at !ip2location (its free) to download the binary file (lite and paid versions are available) and upload it to your server.', array('!ip2location' => l(t('IP2Location website'), 'http://ip2location.com'))),
+      'maxmindgeoip_service' => t('Use Maxmind service, geoip.maxmind.com service will be used to query Geo IP information. For using this, you need to buy a developer key.'),
+      'local_db'             => t("Use Smart IP database, the site's local database populated from Maxmind's CSV will be used to query Geo IP information. Note: this option is very expensive to run and it requires about 450MB database and 600MB additional database space for temporary working table."),
     ),
     '#default_value' => variable_get('smart_ip_source', 'ipinfodb_service'),
   );
@@ -126,6 +127,37 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'ipinfodb_service'),
+      ),
+    ),
+  );
+  
+  // Form for entering IP2Location binary file path
+  $form['smart_ip_source_selection']['smart_ip_ip2location_bin_path'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('IP2Location binary file path'),
+    '#description'   => t('The path of to where the IP2Location binary file was uploaded. Enter path relative to your Drupal installation, e.g. sites/default/files/IP2LOCATION-LITE-DB11.BIN.'),
+    '#default_value' => variable_get('smart_ip_ip2location_bin_path', ''),
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="smart_ip_source"]' => array('value' => 'ip2location_bin'),
+      ),
+    ),
+  );
+
+  // Form for choosing IP2Location cache
+  $form['smart_ip_source_selection']['smart_ip_ip2location_bin_cache'] = array(
+    '#type'        => 'select',
+    '#title'       => t('IP2Location cache'),
+    '#description' => t('"No cache" - standard lookup with no cache. "Memory cache" - cache the database into memory to accelerate lookup speed. "Shared memory" - cache whole database into system memory and share among other scripts and websites. Please make sure your system have sufficient RAM if enabling "Memory cache" or "Shared memory".'),
+    '#options' => array(
+      'no_cache'      => t('No cache'),
+      'memory_cache'  => t('Memory cache'),
+      'shared_memory' => t('Shared memory'),
+    ),
+    '#default_value' => variable_get('smart_ip_ip2location_bin_cache', 'no_cache'),
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="smart_ip_source"]' => array('value' => 'ip2location_bin'),
       ),
     ),
   );
@@ -173,8 +205,8 @@ function smart_ip_admin_settings($form, &$form_state) {
      ),
     '#default_value' => variable_get('smart_ip_auto_update', TRUE),
     '#states'        => array(
-      'invisible' => array(
-        ':input[name="smart_ip_source"]' => array('value' => 'ipinfodb_service'),
+      'visible' => array(
+        ':input[name="smart_ip_source"]' => array('value' => 'local_db'),
       ),
     ),
   );
@@ -274,6 +306,8 @@ function _smart_ip_lookup_submit($form, &$form_state) {
       '<dd>' . t('%latitude', array('%latitude' => $location['latitude'])) . '</dd>' .
       '<dt>' . t('Longitude:') . '</dt>' .
       '<dd>' . t('%longitude', array('%longitude' => $location['longitude'])) . '</dd>' .
+      '<dt>' . t('Time zone:') . '</dt>' .
+      '<dd>' . t('%time_zone', array('%time_zone' => $location['time_zone'])) . '</dd>' .
     '</dl>';
   }
   else {
@@ -290,6 +324,31 @@ function smart_ip_admin_settings_validate($form, &$form_state) {
   $ipinfodb_key = variable_get('smart_ip_ipinfodb_key', '');
   if ($form_state['values']['smart_ip_ipinfodb_key'] != $ipinfodb_key) {
     variable_set('smart_ip_correct_ipinfodb_key', FALSE);
+  }
+  if ($form_state['values']['smart_ip_source'] == 'ip2location_bin') {
+    if (empty($form_state['values']['smart_ip_ip2location_bin_path'])) {
+      form_set_error('smart_ip_ip2location_bin_path', t('Please provide IP2Location binary file path.'));
+    }
+    if (!empty($form_state['values']['smart_ip_ip2location_bin_path'])) {
+      // Check IP2Location binary file path if valid
+      if (!is_file($form_state['values']['smart_ip_ip2location_bin_path'])) {
+        form_set_error('smart_ip_ip2location_bin_path', t('The IP2Location binary file path is not valid.'));
+      }
+      else {
+        // Check IP2Location binary file if valid
+        try {
+          module_load_include('inc', 'smart_ip', 'includes/IP2Location');
+          $location_data = new IP2Location($form_state['values']['smart_ip_ip2location_bin_path'], IP2Location::FILE_IO);
+          $record = $location_data->lookup('8.8.8.8', IP2Location::ALL);
+          if (empty($record->ipNumber)) {
+            form_set_error('smart_ip_ip2location_bin_path', t('The IP2Location binary file is not valid or corrupted.'));
+          }
+        }
+        catch(Exception $error) {
+          form_set_error('smart_ip_ip2location_bin_path', t('The IP2Location binary file is not valid or corrupted.'));
+        }
+      }
+    }
   }
   if ($form_state['values']['smart_ip_source'] == 'maxmindgeoip_service' && empty($form_state['values']['smart_ip_maxmind_key'])) {
     form_set_error('smart_ip_maxmind_key', t('Please provide Maxmind GeoIP developer key.'));
@@ -345,15 +404,16 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
     $ip = $location['ip'];
   }
   if ($location) {
-    drupal_set_message(t('Using @type IP: %ip / Country: %country / Region: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat', array(
-      '@type'    => $form_state['values']['smart_ip_debug'] ? 'debug' : 'actual',
-      '%ip'      => $ip, 
-      '%country' => $location['country'],
-      '%region'  => $location['region'],
-      '%city'    => $location['city'],
-      '%zip'     => $location['zip'],
-      '%long'    => $location['longitude'],
-      '%lat'     => $location['latitude'],
+    drupal_set_message(t('Using @type IP: %ip / Country: %country / Region: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat / Time zone: %time_zone', array(
+      '@type'      => $form_state['values']['smart_ip_debug'] ? 'debug' : 'actual',
+      '%ip'        => $ip, 
+      '%country'   => $location['country'],
+      '%region'    => $location['region'],
+      '%city'      => $location['city'],
+      '%zip'       => $location['zip'],
+      '%long'      => $location['longitude'],
+      '%lat'       => $location['latitude'],
+      '%time_zone' => $location['time_zone'],
     )));
     $smart_ip_session = smart_ip_session_get('smart_ip');
     // Finally if it has been determined, store the location in the $user object
