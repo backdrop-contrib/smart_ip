@@ -401,7 +401,7 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
   else {
     // Debug off - make sure we set/reset to their real values
     $location = smart_ip_get_current_visitor_location_data();
-    $ip = $location['ip'];
+    $ip = $location['ip_address'];
   }
   if ($location) {
     drupal_set_message(t('Using @type IP: %ip / Country: %country / Region: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat / Time zone: %time_zone', array(
