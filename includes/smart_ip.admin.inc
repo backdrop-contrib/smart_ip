@@ -407,13 +407,13 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
     drupal_set_message(t('Using @type IP: %ip / Country: %country / Region: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat / Time zone: %time_zone', array(
       '@type'      => $form_state['values']['smart_ip_debug'] ? 'debug' : 'actual',
       '%ip'        => $ip, 
-      '%country'   => $location['country'],
-      '%region'    => $location['region'],
-      '%city'      => $location['city'],
-      '%zip'       => $location['zip'],
-      '%long'      => $location['longitude'],
-      '%lat'       => $location['latitude'],
-      '%time_zone' => $location['time_zone'],
+      '%country'   => isset($location['country']) ? $location['country'] : '',
+      '%region'    => isset($location['region']) ? $location['region'] : '',
+      '%city'      => isset($location['city']) ? $location['city'] : '',
+      '%zip'       => isset($location['zip']) ? $location['zip'] : '',
+      '%long'      => isset($location['longitude']) ? $location['longitude'] : '',
+      '%lat'       => isset($location['latitude']) ? $location['latitude'] : '',
+      '%time_zone' => isset($location['time_zone']) ? $location['time_zone'] : '',
     )));
     $smart_ip_session = smart_ip_session_get('smart_ip');
     // Finally if it has been determined, store the location in the $user object
