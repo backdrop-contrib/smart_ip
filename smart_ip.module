@@ -387,6 +387,31 @@ function smart_ip_get_location($ip_address) {
       }
     }
   }
+  if ($smart_ip_source == 'mod_geoip') {
+    if (function_exists('apache_note')) {
+      $result['country']      = apache_note('GEOIP_COUNTRY_NAME');
+      $result['country_code'] = apache_note('GEOIP_COUNTRY_CODE');
+      $result['country_code'] = strtoupper($result['country_code']);
+      $result['region']       = apache_note('GEOIP_REGION_NAME');
+      $result['region_code']  = apache_note('GEOIP_REGION');
+      $result['city']         = apache_note('GEOIP_CITY');
+      $result['zip']          = apache_note('GEOIP_POSTAL_CODE');
+      $result['latitude']     = apache_note('GEOIP_LATITUDE');
+      $result['longitude']    = apache_note('GEOIP_LONGITUDE');
+      $result['time_zone']    = '';
+    }
+    else {
+      $result['country']      = $_SERVER['GEOIP_COUNTRY_NAME'];
+      $result['country_code'] = $_SERVER['GEOIP_COUNTRY_CODE'];
+      $result['region']       = $_SERVER['GEOIP_REGION_NAME'];
+      $result['region_code']  = strtoupper($_SERVER['GEOIP_REGION']);
+      $result['city']         = $_SERVER['GEOIP_CITY'];
+      $result['zip']          = $_SERVER['GEOIP_POSTAL_CODE'];
+      $result['latitude']     = $_SERVER['GEOIP_LATITUDE'];
+      $result['longitude']    = $_SERVER['GEOIP_LONGITUDE'];
+      $result['time_zone']    = '';
+    }
+  }
   if ($smart_ip_source == 'maxmindgeoip_service') {
     // Maxmind GeoIP service
     include_once DRUPAL_ROOT . '/includes/locale.inc';
@@ -502,6 +527,19 @@ function smart_ip_get_location($ip_address) {
       }
     }
   }
+  if ($smart_ip_source == 'x_header') {
+    include_once DRUPAL_ROOT . '/includes/locale.inc';
+    $countries = country_get_list();
+    $result['country_code'] = isset($_SERVER['HTTP_X_GEOIP_COUNTRY']) ? $_SERVER['HTTP_X_GEOIP_COUNTRY'] : '';
+    $result['country']      = empty($result['country_code']) ? '' : $countries[$result['country_code']];
+    $result['region']       = '';
+    $result['region_code']  = '';
+    $result['city']         = '';
+    $result['zip']          = '';
+    $result['latitude']     = '';
+    $result['longitude']    = '';
+    $result['time_zone']    = '';
+  }
   if (!empty($result)) {
     // If coordinates are (0, 0) there was no match
     if ($result['latitude'] == 0 && $result['longitude'] == 0) {
@@ -567,8 +605,16 @@ function smart_ip_get_current_visitor_location_data() {
       if (isset($_SERVER['GEOIP_COUNTRY_NAME'])) {
         $location['country'] = $_SERVER['GEOIP_COUNTRY_NAME'];
       }
+      elseif (isset($_SERVER['HTTP_X_GEOIP_COUNTRY'])) {
+        include_once DRUPAL_ROOT . '/includes/locale.inc';
+        $countries = country_get_list();
+        $location['country'] = $countries[$_SERVER['HTTP_X_GEOIP_COUNTRY']];
+      }
       if (isset($_SERVER['GEOIP_COUNTRY_CODE'])) {
-        $location['country_code'] = $_SERVER['GEOIP_COUNTRY_CODE'];
+        $location['country'] = $_SERVER['HTTP_X_GEOIP_COUNTRY'];
+      }
+      elseif (isset($_SERVER['HTTP_X_GEOIP_COUNTRY'])) {
+        $location['country_code'] = $_SERVER['HTTP_X_GEOIP_COUNTRY'];
       }
       if (isset($_SERVER['GEOIP_REGION_NAME'])) {
         $location['region'] = $_SERVER['GEOIP_REGION_NAME'];

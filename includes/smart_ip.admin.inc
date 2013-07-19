@@ -99,7 +99,9 @@ function smart_ip_admin_settings($form, &$form_state) {
       'ipinfodb_service'     => t('Use IPInfoDB service, IPInfoDB.com service will be used to query Geo IP information.'),
       'ip2location_bin'      => t('IP2Location binary will be used to query Geo IP information. For using this, you need to register at !ip2location (its free) to download the binary file (lite and paid versions are available) and upload it to your server.', array('!ip2location' => l(t('IP2Location website'), 'http://ip2location.com'))),
       'maxmindgeoip_service' => t('Use Maxmind service, geoip.maxmind.com service will be used to query Geo IP information. For using this, you need to buy a developer key.'),
+      'mod_geoip'            => t("Use Maxmind's Apache module mod_geoip... !read_more.", array('!read_more' => l(t('read more'), 'http://dev.maxmind.com/geoip/legacy/mod_geoip2'))),
       'local_db'             => t("Use Smart IP database, the site's local database populated from Maxmind's CSV will be used to query Geo IP information. Note: this option is very expensive to run and it requires about 450MB database and 600MB additional database space for temporary working table."),
+      'x_header'             => t('Use the X-GeoIP-Country: XX header, set by e.g. nginx'),
     ),
     '#default_value' => variable_get('smart_ip_source', 'ipinfodb_service'),
   );
@@ -318,6 +320,12 @@ function _smart_ip_lookup_submit($form, &$form_state) {
 }
 
 function smart_ip_admin_settings_validate($form, &$form_state) {
+  if ($form_state['values']['smart_ip_source'] == 'mod_geoip' && !isset($_SERVER['GEOIP_COUNTRY_NAME'])) {
+    form_set_error('smart_ip_source', t("Maxmind's Apache module mod_geoip is not installed in your server."));
+  }
+  if ($form_state['values']['smart_ip_source'] == 'x_header' && !isset($_SERVER['HTTP_X_GEOIP_COUNTRY'])) {
+    form_set_error('smart_ip_source', t('Your server does not support X-header GeoIP functionality.'));
+  }
   if ($form_state['values']['smart_ip_source'] == 'ipinfodb_service' && empty($form_state['values']['smart_ip_ipinfodb_key'])) {
     form_set_error('smart_ip_ipinfodb_key', t('Please provide IPInfoDB key.'));
   }
