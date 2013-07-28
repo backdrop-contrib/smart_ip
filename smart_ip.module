@@ -88,20 +88,24 @@ function smart_ip_permission() {
  * Allows geo location of anonymous users
  */
 function smart_ip_init(){
-  // Save a database hit. If there's already session data, 
-  // don't check if we need to geolocate the anonymous role
-  $smart_ip_session = smart_ip_session_get('smart_ip');
-  if (empty($smart_ip_session['location'])) {
-    $roles_to_geo_locate = variable_get('smart_ip_roles_to_geolocate', array(DRUPAL_AUTHENTICATED_RID));
-    if(in_array(DRUPAL_ANONYMOUS_RID, $roles_to_geo_locate) ){
-      global $user;
-      $location = smart_ip_get_current_visitor_location_data();
-      smart_ip_set_location_data($user, $location);
+  $done_check = &drupal_static(__FUNCTION__);
+  if (!$done_check) {
+    $done_check = TRUE;
+    // Save a database hit. If there's already session data, 
+    // don't check if we need to geolocate the anonymous role
+    $smart_ip_session = smart_ip_session_get('smart_ip');
+    if (empty($smart_ip_session['location'])) {
+      $roles_to_geo_locate = variable_get('smart_ip_roles_to_geolocate', array(DRUPAL_AUTHENTICATED_RID));
+      if(in_array(DRUPAL_ANONYMOUS_RID, $roles_to_geo_locate) ){
+        global $user;
+        $location = smart_ip_get_current_visitor_location_data();
+        smart_ip_set_location_data($user, $location);
+      }
     }
-  }
-  if (isset($smart_ip_session['location'])) {
-    // Make user geolocation available to javascript
-    drupal_add_js(array('smart_ip' => $smart_ip_session), 'setting');
+    if (isset($smart_ip_session['location'])) {
+      // Make user geolocation available to javascript
+      drupal_add_js(array('smart_ip' => $smart_ip_session), 'setting');
+    }
   }
 }
 
@@ -401,14 +405,14 @@ function smart_ip_get_location($ip_address) {
       $result['time_zone']    = '';
     }
     else {
-      $result['country']      = $_SERVER['GEOIP_COUNTRY_NAME'];
-      $result['country_code'] = $_SERVER['GEOIP_COUNTRY_CODE'];
-      $result['region']       = $_SERVER['GEOIP_REGION_NAME'];
-      $result['region_code']  = strtoupper($_SERVER['GEOIP_REGION']);
-      $result['city']         = $_SERVER['GEOIP_CITY'];
-      $result['zip']          = $_SERVER['GEOIP_POSTAL_CODE'];
-      $result['latitude']     = $_SERVER['GEOIP_LATITUDE'];
-      $result['longitude']    = $_SERVER['GEOIP_LONGITUDE'];
+      $result['country']      = isset($_SERVER['GEOIP_COUNTRY_NAME']) ? $_SERVER['GEOIP_COUNTRY_NAME'] : '';
+      $result['country_code'] = isset($_SERVER['GEOIP_COUNTRY_CODE']) ? $_SERVER['GEOIP_COUNTRY_CODE'] : '';
+      $result['region']       = isset($_SERVER['GEOIP_REGION_NAME']) ? $_SERVER['GEOIP_REGION_NAME'] : '';
+      $result['region_code']  = isset($_SERVER['GEOIP_REGION']) ? strtoupper($_SERVER['GEOIP_REGION']) : '';
+      $result['city']         = isset($_SERVER['GEOIP_CITY']) ? $_SERVER['GEOIP_CITY'] : '';
+      $result['zip']          = isset($_SERVER['GEOIP_POSTAL_CODE']) ? $_SERVER['GEOIP_POSTAL_CODE'] : '';
+      $result['latitude']     = isset($_SERVER['GEOIP_LATITUDE']) ? $_SERVER['GEOIP_LATITUDE'] : '';
+      $result['longitude']    = isset($_SERVER['GEOIP_LONGITUDE']) ? $_SERVER['GEOIP_LONGITUDE'] : '';
       $result['time_zone']    = '';
     }
   }
