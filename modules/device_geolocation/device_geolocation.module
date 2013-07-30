@@ -14,23 +14,19 @@ define('DEVICE_GEOLOCATION_W3C', 2);
  * Implements hook_init().
  */
 function device_geolocation_init() {
-  $done_check = &drupal_static(__FUNCTION__);
-  if (!$done_check) {
-    $done_check = TRUE;
-    $user_allowed = !is_null(smart_ip_session_get('device_geolocation')); // If true, the user has allowed to share his/her location
-    $ajax_check   = !$user_allowed && variable_get('device_geolocation_ajax_check', FALSE);
-    if ($ajax_check || device_geolocation_check_geolocation_attempt()) {
-      device_geolocation_get_coordinates();
-      if (!$ajax_check) {
-        drupal_add_js(array('device_geolocation' => array('ask_geolocate' => TRUE)), 'setting');
-      }
-      drupal_add_js('http://maps.google.com/maps/api/js?sensor=true', array('scope' => 'footer', 'weight' => 0));
-      drupal_add_js(drupal_get_path('module', 'device_geolocation') . '/js/device_geolocation.js', array('scope' => 'footer', 'weight' => 1));
+  $user_allowed = !is_null(smart_ip_session_get('device_geolocation')); // If true, the user has allowed to share his/her location
+  $ajax_check   = !$user_allowed && variable_get('device_geolocation_ajax_check', FALSE);
+  if ($ajax_check || device_geolocation_check_geolocation_attempt()) {
+    device_geolocation_get_coordinates();
+    if (!$ajax_check) {
+      drupal_add_js(array('device_geolocation' => array('ask_geolocate' => TRUE)), 'setting');
     }
-    if ($ajax_check) {
-      drupal_add_js(array('device_geolocation' => array('ask_geolocate' => FALSE)), 'setting');
-      drupal_add_js(drupal_get_path('module', 'device_geolocation') . '/js/device_geolocation_check.js', array('scope' => 'footer', 'weight' => 0));
-    }
+    drupal_add_js('http://maps.google.com/maps/api/js?sensor=true', array('scope' => 'footer', 'weight' => 0));
+    drupal_add_js(drupal_get_path('module', 'device_geolocation') . '/js/device_geolocation.js', array('scope' => 'footer', 'weight' => 1));
+  }
+  if ($ajax_check) {
+    drupal_add_js(array('device_geolocation' => array('ask_geolocate' => FALSE)), 'setting');
+    drupal_add_js(drupal_get_path('module', 'device_geolocation') . '/js/device_geolocation_check.js', array('scope' => 'footer', 'weight' => 0));
   }
 }
 
