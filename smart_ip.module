@@ -17,6 +17,10 @@
  */
 define('SMART_IP_LOCATION_CSV', 'Location.csv');
 define('SMART_IP_BLOCKS_CSV', 'Blocks.csv');
+define('SMART_IP_BIN_DB_NAME', 'GeoIPCity');
+define('SMART_IP_BIN_LITE_DB_NAME', 'GeoLiteCity');
+define('SMART_IP_BIN_LICENSED_VERSION', 0);
+define('SMART_IP_BIN_LITE_VERSION', 1);
 
 
 /******************************************************************************
@@ -133,6 +137,10 @@ function smart_ip_cron() {
       );
       drupal_http_request($base_root . '/?q=smart_ip_batch', $options);
     }
+  }
+  if (variable_get('smart_ip_maxmind_bin_db_auto_update', TRUE)) {
+    module_load_include('inc', 'smart_ip', 'includes/smart_ip.utility');
+    smart_ip_maxmind_bin_db_update(variable_get('smart_ip_maxmind_license', ''), TRUE);
   }
 }
 
@@ -452,6 +460,38 @@ function smart_ip_get_location($ip_address) {
           //@TODO For Maxmind GeoIP Omni Web Service
           break;
       }
+    }
+  }
+  if ($smart_ip_source == 'maxmind_bin') {
+    // Maxmind binary database
+    module_load_include('inc', 'smart_ip', 'includes/geoipcity');
+    $db_path = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
+    if (variable_get('smart_ip_maxmind_bin_version', SMART_IP_BIN_LICENSED_VERSION) == SMART_IP_BIN_LICENSED_VERSION) {
+      $db_path = $db_path . '/' . SMART_IP_BIN_DB_NAME . '.dat';
+    }
+    else {
+      $db_path = $db_path . '/' . SMART_IP_BIN_LITE_DB_NAME . '.dat';
+    }
+    if (file_exists($db_path)) {
+      require 'includes/geoipregionvars.php';
+      $gi  = geoip_open($db_path, GEOIP_STANDARD);
+      $rec = geoip_record_by_addr($gi, $ip_address);
+      if ($rec) {
+        $result['country']      = $rec->country_name;
+        $result['country_code'] = strtoupper($rec->country_code);
+        $result['city']         = $rec->city;
+        $result['zip']          = $rec->postal_code;
+        $result['region_code']  = $rec->region;
+        $result['region']       = $GEOIP_REGION_NAME[$rec->country_code][$rec->region];
+        $result['latitude']     = $rec->latitude;
+        $result['longitude']    = $rec->longitude;
+        $result['time_zone']    = '';
+      }
+      geoip_close($gi);
+    }
+    else {
+      watchdog('smart_ip', 'Maxmind bin database has not been downloaded yet', array(), WATCHDOG_NOTICE);
+      variable_set('smart_ip_maxmind_bin_db_update_error', t('Maxmind bin database does not exist (you can download the database now to get rid of this message).'));
     }
   }
   if ($smart_ip_source == 'ip2location_bin') {
