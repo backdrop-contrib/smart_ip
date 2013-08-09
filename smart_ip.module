@@ -609,6 +609,10 @@ function smart_ip_get_count() {
  * Get current visitor's location information
  */
 function smart_ip_get_current_visitor_location_data() {
+  $smart_ip_session = smart_ip_session_get('smart_ip');
+  if (isset($smart_ip_session['debug_mode'])) {
+    return $smart_ip_session['location'];
+  }
   $location = smart_ip_get_location(ip_address());
   if (!isset($location['country']) && !isset($location['country_code']) && 
     !isset($location['region']) && !isset($location['region_code']) && 
