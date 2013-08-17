@@ -377,7 +377,7 @@ function _smart_ip_bin_database_update_submit($form, &$form_state) {
   // Utility functions for loading database from external sources
   module_load_include('inc', 'smart_ip', 'includes/smart_ip.utility');
   // Force the update even if the database is up-to-date
-  smart_ip_maxmind_bin_db_update($form_state['values']['smart_ip_maxmind_license'], $cron=FALSE, $force=TRUE);
+  smart_ip_maxmind_bin_db_update($form_state['values']['smart_ip_maxmind_license'], FALSE, TRUE);
   $form_state['storage']['smart_ip_db_message'] = t('The Maxmind binary database has been updated.');
   $form_state['rebuild'] = TRUE;
 }

@@ -425,7 +425,7 @@ function smart_ip_get_location($ip_address) {
     include_once DRUPAL_ROOT . '/includes/locale.inc';
     $countries = country_get_list();
     $request = drupal_http_request(smart_ip_get_maxmindgeoip_url($ip_address));
-    if (!empty($request)) {
+    if (!empty($request->code) && $request->code == 200 && !empty($request->data)) {
       switch (variable_get('smart_ip_maxmind_service', 'country')) {
         case 'country':
           // For Maxmind GeoIp Country
@@ -460,6 +460,9 @@ function smart_ip_get_location($ip_address) {
           //@TODO For Maxmind GeoIP Omni Web Service
           break;
       }
+    }
+    else {
+      watchdog('smart_ip', 'The web service request from %site seems to be broken, due to "%error".', array('%site' => $smart_ip_source, '%error' => "$result->code $result->error"), WATCHDOG_WARNING);
     }
   }
   if ($smart_ip_source == 'maxmind_bin') {
