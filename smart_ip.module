@@ -800,7 +800,7 @@ function smart_ip_get_maxmindgeoip_url($ip_address) {
       return "https://geoip.maxmind.com/a?l=$maxmind_key&i=$ip_address";
       break;
     case 'city_isp_org':
-      return "https://geoip.maxmind.com/b?l=$maxmind_key&i=$ip_address";
+      return "https://geoip.maxmind.com/f?l=$maxmind_key&i=$ip_address";
       break;
     case 'omni':
       return '';
