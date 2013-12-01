@@ -485,7 +485,7 @@ function smart_ip_get_location($ip_address) {
         $result['city']         = $rec->city;
         $result['zip']          = $rec->postal_code;
         $result['region_code']  = $rec->region;
-        $result['region']       = $GEOIP_REGION_NAME[$rec->country_code][$rec->region];
+        $result['region']       = isset($GEOIP_REGION_NAME[$rec->country_code][$rec->region]) ? $GEOIP_REGION_NAME[$rec->country_code][$rec->region] : '';
         $result['latitude']     = $rec->latitude;
         $result['longitude']    = $rec->longitude;
         $result['time_zone']    = '';
