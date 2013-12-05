@@ -52,6 +52,14 @@ function smart_ip_admin_settings($form, &$form_state) {
       '#validate' => array('_smart_ip_database_update_validate'),
       '#suffix'   => $recover ? '<div class="messages error">' . t('The previous attempt of updating Smart IP database has failed. Press the button above to continue the unfinished task.') . '</div>' : '',
     );
+    // Form to reset (ongoing) update process
+    $form['smart_ip_database_update']['smart_ip_reset_update_database'] = array(
+      '#type'        => 'submit',
+      '#value'       => t('Reset update process'),
+      '#submit'      => array('_smart_ip_database_reset_update_submit'),
+      '#prefix'      => '<div>', 
+      '#suffix'      => '<div class="messages warning">' . t('Caution: The "Reset update process" button above will reset (ongoing) update process and will erase the data stored in database came from maxmind CSV. Please use this function only if the update hanged. It will lead to abnormal update processing if misused.') . '</div></div>',
+    );
   }
   if ($smart_ip_source == 'maxmind_bin' && variable_get('smart_ip_maxmind_bin_version', SMART_IP_BIN_LICENSED_VERSION) == SMART_IP_BIN_LICENSED_VERSION) {
     $bin_update_error = variable_get('smart_ip_maxmind_bin_db_update_error', FALSE);
@@ -368,6 +376,14 @@ function _smart_ip_database_update_submit($form, &$form_state) {
   watchdog('smart_ip', $watchdog_msg);
   $form_state['storage']['smart_ip_db_message'] = t('The Smart IP database has been updated. @rows rows affected.', array('@rows' => smart_ip_get_count()));
   $form_state['rebuild'] = TRUE;
+}
+
+/**
+ * Reset Smart IP local database update process.
+ */
+function _smart_ip_database_reset_update_submit($form, &$form_state) {
+  smart_ip_reset_db_update_meta_data();
+  drupal_set_message(t('The Smart IP local database update process is now reset.'));
 }
 
 /**

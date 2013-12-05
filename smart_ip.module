@@ -885,6 +885,11 @@ function coordinates_dd_to_dms($coord) {
  * Reset meta data of Smart IP database update process.
  */
 function smart_ip_reset_db_update_meta_data() {
+  smart_ip_check_fix_local_db();
+  if (db_table_exists('smart_ip_update_table') && db_table_exists('smart_ip')) {
+    // Remove the temporary table "smart_ip_update_table" if the final "smart_ip" table exist
+    db_drop_table('smart_ip_update_table');
+  }
   cache_clear_all('smart_ip:', 'cache_smart_ip', TRUE);
   variable_set('smart_ip_blocks_csv_pointer', 0);
   variable_set('smart_ip_db_update_busy', FALSE);
