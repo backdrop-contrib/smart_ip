@@ -817,7 +817,7 @@ function smart_ip_get_csv_source_filename() {
   
   if (!isset($maxmind_csv)) {
     // Get CSV list of zip files
-    $html = file_get_contents('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV');
+    $html = smart_ip_file_get_contents('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV');
     $regex = '/GeoLiteCity_' . format_date(time(), 'custom', 'Ym') . '.{2}\.zip/';
     preg_match($regex, $html, $match);
     // Check if Maxmind CSV file not updated, then fallback to the previous month
@@ -863,6 +863,24 @@ function smart_ip_check_fix_local_db() {
       db_create_table('smart_ip', smart_ip_schema_definition_array());
     }
   }
+}
+
+/**
+ * Get contents of given path
+ */
+function smart_ip_file_get_contents($url) {
+  if (function_exists('curl_version')) {
+    $curl = curl_init();
+    curl_setopt($curl, CURLOPT_URL, $url);
+    curl_setopt($curl, CURLOPT_HEADER, 0);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+    $contents = curl_exec($curl);
+    curl_close($curl);
+  }
+  else {
+    $contents = file_get_contents($url);
+  }
+  return $contents;
 }
 
 /**
