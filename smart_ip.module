@@ -451,10 +451,14 @@ function smart_ip_get_location($ip_address) {
           $result['region']       = $response[1];
           $result['region_code']  = $response[1];
           $result['city']         = $response[2];
-          $result['zip']          = '';
-          $result['latitude']     = $response[3];
-          $result['longitude']    = $response[4];
+          $result['zip']          = $response[3];
+          $result['latitude']     = $response[4];
+          $result['longitude']    = $response[5];
           $result['time_zone']    = '';
+          $result['metro_code']   = $response[6];
+          $result['area_code']    = $response[7];
+          $result['isp_name']     = $response[8];
+          $result['organization_name'] = $response[9];
           break;
         case 'omni':
           //@TODO For Maxmind GeoIP Omni Web Service
