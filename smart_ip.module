@@ -301,12 +301,13 @@ function smart_ip_tokens($type, $tokens, array $data = array(), array $options =
   }
   $sanitize = !empty($options['sanitize']);
 */
-
   $replacements = array();
-  $smart_ip_session = smart_ip_session_get('smart_ip');
-  if ($type == 'smart_ip' && !empty($smart_ip_session['location'])) {
-    foreach ($tokens as $name => $original) {
-      $replacements[$original] = $smart_ip_session['location'][$name];
+  if ($type == 'smart_ip') {
+    $smart_ip_session = smart_ip_session_get('smart_ip');
+    if (!empty($smart_ip_session['location'])) {
+      foreach ($tokens as $name => $original) {
+        $replacements[$original] = $smart_ip_session['location'][$name];
+      }
     }
   }
   return $replacements;
