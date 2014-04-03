@@ -434,12 +434,20 @@ function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force
   }
 
   try {
-    $p = new PharData(drupal_realpath($gz_name));
-    $p->extractTo(drupal_realpath($path . '/db_tmp'));
+		if (class_exists('PharData')) {
+			$p = new PharData(drupal_realpath($gz_name));
+			$p->extractTo(drupal_realpath($path . '/db_tmp'));
+		}
+		else {
+			$msg = 'Error extracting tar archive. Server does not have Phar extension installed.';
+			variable_set('smart_ip_maxmind_bin_db_update_error', $msg);
+			watchdog('smart_ip', $msg, array(), WATCHDOG_WARNING);
+			return FALSE;
+		}
     
     $files = file_scan_directory($path . '/db_tmp', '/^' . SMART_IP_BIN_DB_NAME . '.dat$/');
     if (count($files) !== 1) {
-      throw new Exception('Unable to determing the contents of the db_tmp directory (' . $path . '/db_tmp)');
+      throw new Exception('Unable to determine the contents of the db_tmp directory (' . $path . '/db_tmp)');
     }
 
     foreach ($files as $file) {
