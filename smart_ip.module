@@ -612,6 +612,12 @@ function smart_ip_get_location($ip_address) {
   }
   $result['ip_address'] = $ip_address;
   $result['timestamp']  = time();
+  // Make sure external data in UTF-8.
+  foreach ($result as &$item) {
+    if (is_string($item) && !mb_detect_encoding($item, 'UTF-8', TRUE)) {
+      $item = mb_convert_encoding($item, 'UTF-8', 'ISO-8859-1');
+    }
+  }
   // Allow other modules to modify result via hook_smart_ip_get_location_alter()
   drupal_alter('smart_ip_get_location', $result);
   $results[$ip_address] = $result;
