@@ -134,15 +134,15 @@ function device_geolocation_form_alter(&$form, &$form_state, $form_id) {
       '#title'         => t("Use AJAX in user's geolocation checking (useful if the site or pages listed above are cached)"),
       '#default_value' => variable_get('device_geolocation_ajax_check', FALSE),
     );
+    $device_geolocation_check_frequency = variable_get('device_geolocation_check_frequency', NULL);
     $form['smart_ip_preferences']['device_geolocation_check_frequency'] = array(
       '#title'         => t("Frequency of user's geolocation checking"),
       '#type'          => 'textfield',
       '#size'          => 10,
-      '#description'   => t('Specify number of hours will prompt the user for geolocation.'),
-      '#default_value' => variable_get('device_geolocation_check_frequency', 0) / 3600,
+      '#description'   => t('Specify number of hours will prompt the user for geolocation. Leave it empty to disable.'),
+      '#default_value' => $device_geolocation_check_frequency === NULL ? '' : $device_geolocation_check_frequency / 3600,
       '#field_suffix'  => t('hours'),
     );
-    //variable_get('device_geolocation_check_frequency', 0)
     $form['#validate'][] = '_device_geolocation_allowed_pages_validate';
   }
 }
@@ -154,7 +154,10 @@ function _device_geolocation_allowed_pages_validate($form, &$form_state) {
   $list = check_plain($form_state['values']['device_geolocation_allowed_pages']);
   $form_state['values']['device_geolocation_allowed_pages'] = str_replace('&lt;front&gt;', '<front>', $list);
   $value = $form_state['values']['device_geolocation_check_frequency'];
-  if ($value !== '' && (!is_numeric($value) || $value < 0)) {
+  if ($value == '') {
+    $form_state['values']['device_geolocation_check_frequency'] = NULL;
+  }
+  elseif (!is_numeric($value) || $value < 0) {
     form_set_error('device_geolocation_check_frequency', t("Frequency of user's geolocation checking must be a positive number."));
   }
   else {
@@ -217,7 +220,7 @@ function device_geolocation_detector_ajax() {
     if (empty($smart_ip_session['location']['city']) && isset($smart_ip_session['location']['locality'])) {
       $smart_ip_session['location']['city'] = $smart_ip_session['location']['locality'];
     }
-    $smart_ip_session['location']['timestamp'] = time();
+    $smart_ip_session['location']['timestamp'] = REQUEST_TIME;
     // Allow other modules to modify result via hook_device_geolocation_detector_ajax_alter()
     drupal_alter('device_geolocation_detector_ajax', $smart_ip_session['location']);
 
@@ -311,11 +314,18 @@ function device_geolocation_check_geolocation_attempt_ajax() {
  * Check Geolocation attempt.
  */
 function device_geolocation_check_geolocation_attempt() {
-  if ((_device_geolocation_check_allowed_page($_GET['q']) && is_null(smart_ip_session_get('device_geolocation'))) || !is_null(smart_ip_session_get('device_geolocation'))) {
-    if (is_null(smart_ip_session_get('device_geolocation_attempt')) || variable_get('device_geolocation_check_frequency', 0) < (time() - smart_ip_session_get('device_geolocation_attempt'))) {
-      smart_ip_session_set('device_geolocation_attempt', time());
-      return TRUE;
+  $device_geolocation_check_frequency = variable_get('device_geolocation_check_frequency', NULL);
+  if ($device_geolocation_check_frequency === NULL) {
+    return FALSE;
+  }
+  else {
+    // Check if the current page is on the list of "Ask user's geolocation on specific Drupal native pages" then refresh user's location
+    // or if user has allowed to share his/her location then refresh on specified frequency time.
+    if ((_device_geolocation_check_allowed_page($_GET['q']) && is_null(smart_ip_session_get('device_geolocation'))) || !is_null(smart_ip_session_get('device_geolocation'))) {
+      if (is_null(smart_ip_session_get('device_geolocation_attempt')) || $device_geolocation_check_frequency < (REQUEST_TIME - smart_ip_session_get('device_geolocation_attempt'))) {
+        smart_ip_session_set('device_geolocation_attempt', REQUEST_TIME);
+        return TRUE;
+      }
     }
   }
-  return FALSE;
 }

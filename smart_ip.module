@@ -115,7 +115,7 @@ function smart_ip_init(){
  * Updates the Smart IP database automatically on one month periodic basis.
  */
 function smart_ip_cron() {
-  $time = time();
+  $time = REQUEST_TIME;
   if ((variable_get('smart_ip_db_update_busy_timeout', 0) <= ($time - 3600)) && variable_get('smart_ip_db_update_busy', FALSE)) {
     // Reset busy flag after 1 hour
     variable_set('smart_ip_db_update_busy', FALSE);
@@ -611,7 +611,7 @@ function smart_ip_get_location($ip_address) {
     }
   }
   $result['ip_address'] = $ip_address;
-  $result['timestamp']  = time();
+  $result['timestamp']  = REQUEST_TIME;
   // Make sure external data in UTF-8.
   foreach ($result as &$item) {
     if (is_string($item) && !mb_detect_encoding($item, 'UTF-8', TRUE)) {
@@ -829,11 +829,11 @@ function smart_ip_get_csv_source_filename() {
   if (!isset($maxmind_csv)) {
     // Get CSV list of zip files
     $html = smart_ip_file_get_contents('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV');
-    $regex = '/GeoLiteCity_' . format_date(time(), 'custom', 'Ym') . '.{2}\.zip/';
+    $regex = '/GeoLiteCity_' . format_date(REQUEST_TIME, 'custom', 'Ym') . '.{2}\.zip/';
     preg_match($regex, $html, $match);
     // Check if Maxmind CSV file not updated, then fallback to the previous month
     if (empty($match)) {
-      $regex = '/GeoLiteCity_' . format_date((time() - 2764800), 'custom', 'Ym') . '.{2}\.zip/';
+      $regex = '/GeoLiteCity_' . format_date((REQUEST_TIME - 2764800), 'custom', 'Ym') . '.{2}\.zip/';
       preg_match($regex, $html, $match);
       if (isset($match[0])) {
         $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/' . $match[0]);

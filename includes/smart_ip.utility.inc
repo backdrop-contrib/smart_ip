@@ -63,7 +63,7 @@ function smart_ip_get_zip($src = NULL, &$context) {
   variable_set('smart_ip_get_zip_done', FALSE);
   if (empty($src)) {
     // Fallback zip file
-    $src = 'http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/GeoLiteCity_' . format_date(time(), 'custom', 'Ym') . '01.zip';
+    $src = 'http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/GeoLiteCity_' . format_date(REQUEST_TIME, 'custom', 'Ym') . '01.zip';
   }
   if (isset($context['results']['#zip_file'])) {
     // Don't download, use manually uploaded zip file then 
@@ -371,7 +371,7 @@ function smart_ip_update_database(&$context) {
       db_rename_table('smart_ip_update_table', 'smart_ip'); // 'RENAME TABLE {smart_ip_update_table} TO {smart_ip}'
       cache_clear_all('smart_ip:', 'cache_smart_ip', TRUE);
       variable_set('smart_ip_blocks_csv_pointer', 0);
-      variable_set('smart_ip_last_update', time());
+      variable_set('smart_ip_last_update', REQUEST_TIME);
       watchdog('smart_ip', 'Smart IP Database successfuly updated from maxmind.com.');
     }
   }
@@ -464,7 +464,7 @@ function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force
   }
 
   variable_set('smart_ip_maxmind_bin_db_update_error', NULL);
-  variable_set('smart_ip_maxmind_bin_db_last_update', time());
+  variable_set('smart_ip_maxmind_bin_db_last_update', REQUEST_TIME);
 
   if ($cron_run) {
     watchdog('smart_ip', 'The Maxmind binary database has been updated via cron.');   
