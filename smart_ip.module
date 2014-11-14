@@ -725,7 +725,7 @@ function smart_ip_get_current_visitor_location_data() {
  */
 function smart_ip_set_location_data($account, $location) {
   global $user;
-  if($account->uid == $user->uid){
+  if ($account->uid == $user->uid) {
     smart_ip_set_session_data($location);
   }
   smart_ip_set_user_data($account, $location);
@@ -773,11 +773,24 @@ function smart_ip_session_set($key, $value) {
  */
 function smart_ip_session_get($key) {
   if (module_exists('session_cache')) {
-    return session_cache_get($key);
+    $smart_ip_session = session_cache_get($key);
   }
   else {
-    return isset($_SESSION) && isset($_SESSION[$key]) ? $_SESSION[$key] : NULL;
+    $smart_ip_session = isset($_SESSION) && isset($_SESSION[$key]) ? $_SESSION[$key] : NULL;
   }
+  if ($key == 'smart_ip') {
+    $ip = ip_address();
+    if (!isset($smart_ip_session['location']['ip_address']) || $smart_ip_session['location']['ip_address'] != $ip) {
+      global $user;
+      // Update the user's location if the IP address stored in session
+      // is not the same as the IP address detected by the server
+      $location = smart_ip_get_location($ip);
+      $smart_ip_session['location'] = $location;
+      smart_ip_session_set('smart_ip', $smart_ip_session);
+      smart_ip_set_user_data($user, $location);
+    }
+  }
+  return $smart_ip_session;
 }
 
 /******************************************************************************
