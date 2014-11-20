@@ -386,8 +386,8 @@ function smart_ip_get_location($ip_address) {
       $query = db_query('SELECT * FROM {smart_ip} WHERE ip_ref <= :ip ORDER BY ip_ref DESC LIMIT 1', array(':ip' => $ipl));
       $result = $query->fetchAssoc();
       if (!empty($result)) {
-        include_once DRUPAL_ROOT . '/includes/locale.inc';
-        $countries = country_get_list();
+        module_load_include('inc', 'smart_ip', 'includes/smart_ip.country_list');
+        $countries = country_get_predefined_list();
         $result['country'] = $countries[$result['country_code']];
         $region = array();
         $result['region_code'] = $result['region'];
@@ -423,8 +423,8 @@ function smart_ip_get_location($ip_address) {
   }
   if ($smart_ip_source == 'maxmindgeoip_service') {
     // Maxmind GeoIP service
-    include_once DRUPAL_ROOT . '/includes/locale.inc';
-    $countries = country_get_list();
+    module_load_include('inc', 'smart_ip', 'includes/smart_ip.country_list');
+    $countries = country_get_predefined_list();
     $request = drupal_http_request(smart_ip_get_maxmindgeoip_url($ip_address));
     if (!empty($request->code) && $request->code == 200 && !empty($request->data)) {
       switch (variable_get('smart_ip_maxmind_service', 'country')) {
@@ -577,8 +577,8 @@ function smart_ip_get_location($ip_address) {
   }
   if ($smart_ip_source == 'x_header') {
     // X-GeoIP
-    include_once DRUPAL_ROOT . '/includes/locale.inc';
-    $countries = country_get_list();
+    module_load_include('inc', 'smart_ip', 'includes/smart_ip.country_list');
+    $countries = country_get_predefined_list();
     $result['country_code'] = isset($_SERVER['HTTP_X_GEOIP_COUNTRY']) ? $_SERVER['HTTP_X_GEOIP_COUNTRY'] : '';
     $result['country']      = empty($result['country_code']) ? '' : $countries[$result['country_code']];
     $result['region']       = '';
@@ -591,8 +591,8 @@ function smart_ip_get_location($ip_address) {
   }
   if ($smart_ip_source == 'cf_header') {
     // Cloudflare IP Geolocation
-    include_once DRUPAL_ROOT . '/includes/locale.inc';
-    $countries = country_get_list();
+    module_load_include('inc', 'smart_ip', 'includes/smart_ip.country_list');
+    $countries = country_get_predefined_list();
     $result['country_code'] = isset($_SERVER['HTTP_CF_IPCOUNTRY']) ? $_SERVER['HTTP_CF_IPCOUNTRY'] : '';
     $result['country']      = empty($result['country_code']) ? '' : $countries[$result['country_code']];
     $result['region']       = '';
@@ -679,13 +679,13 @@ function smart_ip_get_current_visitor_location_data() {
         $location['country'] = $_SERVER['GEOIP_COUNTRY_NAME'];
       }
       elseif (isset($_SERVER['HTTP_X_GEOIP_COUNTRY'])) {
-        include_once DRUPAL_ROOT . '/includes/locale.inc';
-        $countries = country_get_list();
+        module_load_include('inc', 'smart_ip', 'includes/smart_ip.country_list');
+        $countries = country_get_predefined_list();
         $location['country'] = $countries[$_SERVER['HTTP_X_GEOIP_COUNTRY']];
       }
       elseif (isset($_SERVER['HTTP_CF_IPCOUNTRY'])) {
-        include_once DRUPAL_ROOT . '/includes/locale.inc';
-        $countries = country_get_list();
+        module_load_include('inc', 'smart_ip', 'includes/smart_ip.country_list');
+        $countries = country_get_predefined_list();
         $location['country'] = $countries[$_SERVER['HTTP_CF_IPCOUNTRY']];
       }
       if (isset($_SERVER['GEOIP_COUNTRY_CODE'])) {
