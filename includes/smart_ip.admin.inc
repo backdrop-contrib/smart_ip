@@ -482,7 +482,10 @@ function smart_ip_admin_settings_validate($form, &$form_state) {
   }
   if ($form_state['values']['smart_ip_source'] == 'maxmind_bin' && $form_state['values']['smart_ip_maxmind_bin_version'] == SMART_IP_BIN_LITE_VERSION) {
     $db_path = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
-    if (!file_exists($db_path . '/' . SMART_IP_BIN_LITE_DB_NAME . '.dat')) {
+    if (empty($db_path)) {
+      form_set_error('smart_ip_maxmind_bin_version', t('Please define the "Private file system path" !here.', array('!here' => l(t('here'), 'admin/config/media/file-system'))));
+    }
+    elseif (!file_exists($db_path . '/' . SMART_IP_BIN_LITE_DB_NAME . '.dat')) {
       form_set_error('smart_ip_maxmind_bin_version', t('Please upload the GeoLiteCity.dat at !path.', array('!path' => $db_path)));
     }
   }
