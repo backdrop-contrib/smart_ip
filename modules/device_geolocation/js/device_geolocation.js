@@ -89,7 +89,7 @@
                 dataType: 'json',
                 data: ({
                   latitude:  latitude,
-                  longitude: latitude
+                  longitude: longitude
                 })
               });
               if (window.console) {
