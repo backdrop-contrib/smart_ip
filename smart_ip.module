@@ -472,7 +472,9 @@ function smart_ip_get_location($ip_address) {
   }
   if ($smart_ip_source == 'maxmind_bin') {
     // Maxmind binary database
-    module_load_include('inc', 'smart_ip', 'includes/geoipcity');
+    if (!extension_loaded('geoip')) {
+      module_load_include('inc', 'smart_ip', 'includes/geoipcity');
+    }
     $db_path = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
     if (variable_get('smart_ip_maxmind_bin_version', SMART_IP_BIN_LICENSED_VERSION) == SMART_IP_BIN_LICENSED_VERSION) {
       $db_path = $db_path . '/' . SMART_IP_BIN_DB_NAME . '.dat';
