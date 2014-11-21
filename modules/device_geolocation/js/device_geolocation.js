@@ -92,7 +92,9 @@
                   longitude: latitude
                 })
               });
-              console.log('Geocoder failed due to: ' + status);
+              if (window.console) {
+                console.log('Geocoder failed due to: ' + status);
+              }
             }
           });
         }
