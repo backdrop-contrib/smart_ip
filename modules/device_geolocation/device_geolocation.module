@@ -281,19 +281,25 @@ function device_geolocation_get_coordinates() {
 /**
  * Check page URL in allowed geolocate list.
  */
-function _device_geolocation_check_allowed_page($url) {
+function _device_geolocation_check_allowed_page() {
   $pages = variable_get('device_geolocation_allowed_pages', '');
   if (empty($pages)) {
     // No pages specified then all pages are allowed
     return TRUE;
   }
   else {
+    if (isset($_GET['uri'])) {
+      $url = $_GET['uri'];
+    }
+    else {
+      $url = $_GET['q'];
+    }
     // Convert the Drupal path to lowercase
-    $path = drupal_strtolower(drupal_get_path_alias($_GET['q']));
+    $path = drupal_strtolower(drupal_get_path_alias($url));
     // Compare the lowercase internal and lowercase path alias (if any).
     $page_match = drupal_match_path($path, $pages);
-    if ($path != $_GET['q']) {
-      $page_match = $page_match || drupal_match_path($_GET['q'], $pages);
+    if ($path != $url) {
+      $page_match = $page_match || drupal_match_path($url, $pages);
     }
     return $page_match;
   }
@@ -321,7 +327,7 @@ function device_geolocation_check_geolocation_attempt() {
   else {
     // Check if the current page is on the list of "Ask user's geolocation on specific Drupal native pages" then refresh user's location
     // or if user has allowed to share his/her location then refresh on specified frequency time.
-    if ((_device_geolocation_check_allowed_page($_GET['q']) && is_null(smart_ip_session_get('device_geolocation'))) || !is_null(smart_ip_session_get('device_geolocation'))) {
+    if ((_device_geolocation_check_allowed_page() && is_null(smart_ip_session_get('device_geolocation'))) || !is_null(smart_ip_session_get('device_geolocation'))) {
       if (is_null(smart_ip_session_get('device_geolocation_attempt')) || $device_geolocation_check_frequency < (REQUEST_TIME - smart_ip_session_get('device_geolocation_attempt'))) {
         smart_ip_session_set('device_geolocation_attempt', REQUEST_TIME);
         return TRUE;
