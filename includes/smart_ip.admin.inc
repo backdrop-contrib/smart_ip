@@ -251,6 +251,23 @@ function smart_ip_admin_settings($form, &$form_state) {
       ),
     ),
   );
+
+  // Form selection for Maxmind binary contry or full edition
+  $form['smart_ip_source_selection']['smart_ip_maxmind_bin_edition'] = array(
+    '#type'          => 'select',
+    '#title'         => t('Maxmind binary database edition'),
+    '#description'   => t('Select edition of Maxmind binary database.'),
+    '#options' => array(
+      SMART_IP_MAXMIND_BIN_EDITION_CITY => t('City'),
+      SMART_IP_MAXMIND_BIN_EDITION_COUNTRY => t('Country'),
+    ),
+    '#default_value' => variable_get('smart_ip_maxmind_bin_edition', SMART_IP_MAXMIND_BIN_EDITION_CITY),
+    '#states'      => array(
+      'visible' => array(
+        ':input[name="smart_ip_source"]' => array('value' => 'maxmind_bin'),
+      ),
+    ),
+  );
   
   // Form for Maxmind license key
   $form['smart_ip_source_selection']['smart_ip_maxmind_license'] = array(
@@ -408,6 +425,8 @@ function _smart_ip_lookup_submit($form, &$form_state) {
     $message = '<p>' . t('IP Address @ip is assigned to the following location details:', array('@ip' => $lookup)) . '</p><dl>' .
       '<dt>' . t('Country:') . '</dt>' .
       '<dd>' . t('%country', array('%country' => $location['country'])) . '</dd>' .
+      '<dt>' . t('Country code:') . '</dt>' .
+      '<dd>' . t('%country_code', array('%country_code' => $location['country_code'])) . '</dd>' .
       '<dt>' . t('Region:') . '</dt>' .
       '<dd>' . t('%region', array('%region' => $location['region'])) . '</dd>' .
       '<dt>' . t('City:') . '</dt>' .
@@ -477,13 +496,17 @@ function smart_ip_admin_settings_validate($form, &$form_state) {
   if ($form_state['values']['smart_ip_source'] == 'maxmind_bin' && empty($form_state['values']['smart_ip_maxmind_license']) && $form_state['values']['smart_ip_maxmind_bin_version'] == SMART_IP_MAXMIND_BIN_LICENSED_VERSION) {
     form_set_error('smart_ip_maxmind_license', t('Please provide Maxmind license key'));
   }
-  if ($form_state['values']['smart_ip_source'] == 'maxmind_bin' && $form_state['values']['smart_ip_maxmind_bin_version'] == SMART_IP_MAXMIND_BIN_LITE_VERSION) {
+  if ($form_state['values']['smart_ip_source'] == 'maxmind_bin') {
     $db_path = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
+    $file    = smart_ip_get_bin_source_filename($form_state['values']['smart_ip_maxmind_bin_version'], $form_state['values']['smart_ip_maxmind_bin_edition']) . '.dat';
     if (empty($db_path)) {
       form_set_error('smart_ip_maxmind_bin_version', t('Please define the "Private file system path" !here.', array('!here' => l(t('here'), 'admin/config/media/file-system'))));
     }
-    elseif (!file_exists($db_path . '/' . SMART_IP_MAXMIND_BIN_LITE_DB_NAME . '.dat')) {
-      form_set_error('smart_ip_maxmind_bin_version', t('Please upload the GeoLiteCity.dat at !path.', array('!path' => $db_path)));
+    elseif (!file_exists("$db_path/$file") && !$form_state['values']['smart_ip_maxmind_bin_db_auto_update']) {
+      form_set_error('smart_ip_maxmind_bin_db_auto_update', t('Please upload the @file at !path.', array(
+        '@file' => $file,
+        '!path' => $db_path,
+      )));
     }
   }
 }

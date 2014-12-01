@@ -412,25 +412,26 @@ function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force
     return FALSE;
   }
 
+  $version  = variable_get('smart_ip_maxmind_bin_version', SMART_IP_MAXMIND_BIN_LICENSED_VERSION);
+  $edition  = variable_get('smart_ip_maxmind_bin_edition', SMART_IP_MAXMIND_BIN_EDITION_CITY);
+  $filename = smart_ip_get_bin_source_filename($version, $edition);
   $path = file_stream_wrapper_uri_normalize('private://smart_ip');
-  $gz_name = $path . '/' . SMART_IP_MAXMIND_BIN_DB_NAME . '.tar.gz';
+  $gz_name = "$path/$filename.tar.gz";
 
   if (!file_prepare_directory($path, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS)) {
     // Private file system path not defined then stop the process
     drupal_set_message(t('Private file system path not defined. Please define the private file system path !here.',  array('!here' => l('here', 'admin/config/media/file-system'))), 'error');
     return FALSE;
   }
-  if (variable_get('smart_ip_maxmind_bin_version', SMART_IP_MAXMIND_BIN_LICENSED_VERSION) == SMART_IP_MAXMIND_BIN_LICENSED_VERSION) {
-    $dat_file = SMART_IP_MAXMIND_BIN_DB_NAME;
+  if ($version == SMART_IP_MAXMIND_BIN_LICENSED_VERSION) {
     $url = SMART_IP_MAXMIND_BIN_DOWNLOAD_BASE_URL . '?' . http_build_query(array(
-      'edition_id' => '133',
+      'edition_id' => $edition,
       'suffix' => 'tar.gz',
       'license_key' => $license ? $license : variable_get('smart_ip_maxmind_license', ''),
     ));
   }
   else {
-    $dat_file = SMART_IP_MAXMIND_BIN_LITE_DB_NAME;
-    $url = SMART_IP_MAXMIND_LITE_BIN_DOWNLOAD_BASE_URL . "/$dat_file.dat.gz";
+    $url = SMART_IP_MAXMIND_LITE_BIN_DOWNLOAD_BASE_URL . "/$filename.dat.gz";
   }
   
   if (file_put_contents($gz_name, fopen($url, 'r')) === FALSE) {
@@ -451,7 +452,7 @@ function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force
   catch (Exception $e) {
     drupal_mkdir('private://smart_ip/db_tmp');
     $source_fp = gzopen(drupal_realpath($gz_name), 'rb');
-    $target_fp  = fopen(drupal_realpath("$path/db_tmp/$dat_file.dat"), 'w');
+    $target_fp  = fopen(drupal_realpath("$path/db_tmp/$filename.dat"), 'w');
     while (!gzeof($source_fp)) {
       $string = gzread($source_fp, 4096);
       fwrite($target_fp, $string, strlen($string));
@@ -461,12 +462,12 @@ function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force
   }
 
   try { 
-    $files = file_scan_directory($path . '/db_tmp', '/^' . $dat_file . '.dat$/');
+    $files = file_scan_directory("$path/db_tmp", "/^$filename.*\.dat$/");
     if (count($files) !== 1) {
-      throw new Exception('Unable to determine the contents of the db_tmp directory (' . $path . '/db_tmp)');
+      throw new Exception("Unable to determine the contents of the db_tmp directory ($path/db_tmp)");
     }
     foreach ($files as $file) {
-      if (rename(drupal_realpath($file->uri), drupal_realpath("$path/$dat_file.dat")) === FALSE) {
+      if (rename(drupal_realpath($file->uri), drupal_realpath("$path/$filename.dat")) === FALSE) {
         throw new Exception('Failed to activate the downloaded database');
       }
     }
