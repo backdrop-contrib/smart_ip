@@ -63,7 +63,7 @@ function smart_ip_get_zip($src = NULL, &$context) {
   variable_set('smart_ip_get_zip_done', FALSE);
   if (empty($src)) {
     // Fallback zip file
-    $src = 'http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/GeoLiteCity_' . format_date(REQUEST_TIME, 'custom', 'Ym') . '01.zip';
+    $src = SMART_IP_MAXMIND_LITE_CSV_DOWNLOAD_BASE_URL . '/GeoLiteCity_' . format_date(REQUEST_TIME, 'custom', 'Ym') . '01.zip';
   }
   if (isset($context['results']['#zip_file'])) {
     // Don't download, use manually uploaded zip file then 
@@ -99,10 +99,10 @@ function smart_ip_extract_zip(&$context) {
     // Accumulate the previous extracted csv files.
     $csv_files = file_scan_directory($path, '/\.csv$/');
     foreach ($csv_files as $csv_file) {
-      if (strpos($csv_file->filename, SMART_IP_LOCATION_CSV) !== FALSE) {
+      if (strpos($csv_file->filename, SMART_IP_MAXMIND_LOCATION_CSV) !== FALSE) {
         $context['results']['#location_csv_file'] = $csv_file->uri;
       }
-      elseif (strpos($csv_file->filename, SMART_IP_BLOCKS_CSV) !== FALSE) {
+      elseif (strpos($csv_file->filename, SMART_IP_MAXMIND_BLOCKS_CSV) !== FALSE) {
         $context['results']['#blocks_csv_file'] = $csv_file->uri;
       }
     }
@@ -131,10 +131,10 @@ function smart_ip_extract_zip(&$context) {
     $csv_files = file_scan_directory($path, '/\.csv$/');
     foreach ($csv_files as $csv_file) {
       file_unmanaged_move($csv_file->uri, $path . '/' . $csv_file->filename, FILE_EXISTS_REPLACE);
-      if (strpos($csv_file->filename, SMART_IP_LOCATION_CSV) !== FALSE) {
+      if (strpos($csv_file->filename, SMART_IP_MAXMIND_LOCATION_CSV) !== FALSE) {
         $context['results']['#location_csv_file'] = drupal_realpath($path . '/' . $csv_file->filename);
       }
-      elseif (strpos($csv_file->filename, SMART_IP_BLOCKS_CSV) !== FALSE) {
+      elseif (strpos($csv_file->filename, SMART_IP_MAXMIND_BLOCKS_CSV) !== FALSE) {
         $context['results']['#blocks_csv_file'] = drupal_realpath($path . '/' . $csv_file->filename);
       }
     }
@@ -413,19 +413,25 @@ function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force
   }
 
   $path = file_stream_wrapper_uri_normalize('private://smart_ip');
-  $gz_name = $path . '/' . SMART_IP_BIN_DB_NAME . '.tar.gz';
+  $gz_name = $path . '/' . SMART_IP_MAXMIND_BIN_DB_NAME . '.tar.gz';
 
   if (!file_prepare_directory($path, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS)) {
     // Private file system path not defined then stop the process
     drupal_set_message(t('Private file system path not defined. Please define the private file system path !here.',  array('!here' => l('here', 'admin/config/media/file-system'))), 'error');
     return FALSE;
   }
-
-  $url = 'http://download.maxmind.com/app/geoip_download?' . http_build_query(array(
-    'edition_id' => '133',
-    'suffix' => 'tar.gz',
-    'license_key' => $license ? $license : variable_get('smart_ip_maxmind_license', ''),
-  ));
+  if (variable_get('smart_ip_maxmind_bin_version', SMART_IP_MAXMIND_BIN_LICENSED_VERSION) == SMART_IP_MAXMIND_BIN_LICENSED_VERSION) {
+    $dat_file = SMART_IP_MAXMIND_BIN_DB_NAME;
+    $url = SMART_IP_MAXMIND_BIN_DOWNLOAD_BASE_URL . '?' . http_build_query(array(
+      'edition_id' => '133',
+      'suffix' => 'tar.gz',
+      'license_key' => $license ? $license : variable_get('smart_ip_maxmind_license', ''),
+    ));
+  }
+  else {
+    $dat_file = SMART_IP_MAXMIND_BIN_LITE_DB_NAME;
+    $url = SMART_IP_MAXMIND_LITE_BIN_DOWNLOAD_BASE_URL . "/$dat_file.dat.gz";
+  }
   
   if (file_put_contents($gz_name, fopen($url, 'r')) === FALSE) {
   	variable_set('smart_ip_maxmind_bin_db_update_error', 'Maxmind bin DB download failed');
@@ -433,25 +439,34 @@ function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force
   	return FALSE;
   }
 
-  try {
+  try {   
 		if (class_exists('PharData')) {
 			$p = new PharData(drupal_realpath($gz_name));
-			$p->extractTo(drupal_realpath($path . '/db_tmp'));
+			$p->extractTo(drupal_realpath("$path/db_tmp"));
 		}
 		else {
-			$msg = 'Error extracting tar archive. Server does not have Phar extension installed.';
-			variable_set('smart_ip_maxmind_bin_db_update_error', $msg);
-			watchdog('smart_ip', $msg, array(), WATCHDOG_WARNING);
-			return FALSE;
+      throw new Exception('Server does not have Phar extension installed');
 		}
-    
-    $files = file_scan_directory($path . '/db_tmp', '/^' . SMART_IP_BIN_DB_NAME . '.dat$/');
+  }
+  catch (Exception $e) {
+    drupal_mkdir('private://smart_ip/db_tmp');
+    $source_fp = gzopen(drupal_realpath($gz_name), 'rb');
+    $target_fp  = fopen(drupal_realpath("$path/db_tmp/$dat_file.dat"), 'w');
+    while (!gzeof($source_fp)) {
+      $string = gzread($source_fp, 4096);
+      fwrite($target_fp, $string, strlen($string));
+    }
+    gzclose($source_fp);
+    fclose($target_fp);
+  }
+
+  try { 
+    $files = file_scan_directory($path . '/db_tmp', '/^' . $dat_file . '.dat$/');
     if (count($files) !== 1) {
       throw new Exception('Unable to determine the contents of the db_tmp directory (' . $path . '/db_tmp)');
     }
-
     foreach ($files as $file) {
-      if (rename(drupal_realpath($file->uri), drupal_realpath($path . '/' . SMART_IP_BIN_DB_NAME . '.dat')) === FALSE) {
+      if (rename(drupal_realpath($file->uri), drupal_realpath("$path/$dat_file.dat")) === FALSE) {
         throw new Exception('Failed to activate the downloaded database');
       }
     }

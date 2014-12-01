@@ -15,13 +15,16 @@
  *
  * @author Roland Michael dela Peña.
  */
-define('SMART_IP_LOCATION_CSV', 'Location.csv');
-define('SMART_IP_BLOCKS_CSV', 'Blocks.csv');
-define('SMART_IP_BIN_DB_NAME', 'GeoIPCity');
-define('SMART_IP_BIN_LITE_DB_NAME', 'GeoLiteCity');
-define('SMART_IP_BIN_LICENSED_VERSION', 0);
-define('SMART_IP_BIN_LITE_VERSION', 1);
-
+define('SMART_IP_MAXMIND_LITE_BIN_DOWNLOAD_BASE_URL', 'http://geolite.maxmind.com/download/geoip/database');
+define('SMART_IP_MAXMIND_LITE_CSV_DOWNLOAD_BASE_URL', 'http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV');
+define('SMART_IP_MAXMIND_GEOIP_BASE_URL', 'https://geoip.maxmind.com');
+define('SMART_IP_MAXMIND_BIN_DOWNLOAD_BASE_URL', 'http://download.maxmind.com/app/geoip_download');
+define('SMART_IP_MAXMIND_LOCATION_CSV', 'Location.csv');
+define('SMART_IP_MAXMIND_BLOCKS_CSV', 'Blocks.csv');
+define('SMART_IP_MAXMIND_BIN_DB_NAME', 'GeoIPCity');
+define('SMART_IP_MAXMIND_BIN_LITE_DB_NAME', 'GeoLiteCity');
+define('SMART_IP_MAXMIND_BIN_LICENSED_VERSION', 0);
+define('SMART_IP_MAXMIND_BIN_LITE_VERSION', 1);
 
 /******************************************************************************
  * Drupal Hooks                                                               *
@@ -139,7 +142,7 @@ function smart_ip_cron() {
       drupal_http_request($base_root . '/?q=smart_ip_batch', $options);
     }
   }
-  if (variable_get('smart_ip_maxmind_bin_db_auto_update', TRUE)) {
+  if (variable_get('smart_ip_maxmind_bin_db_auto_update', FALSE)) {
     module_load_include('inc', 'smart_ip', 'includes/smart_ip.utility');
     smart_ip_maxmind_bin_db_update(variable_get('smart_ip_maxmind_license', ''), TRUE);
   }
@@ -477,11 +480,11 @@ function smart_ip_get_location($ip_address) {
       module_load_include('inc', 'smart_ip', 'includes/geoipcity');
     }
     $db_path = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
-    if (variable_get('smart_ip_maxmind_bin_version', SMART_IP_BIN_LICENSED_VERSION) == SMART_IP_BIN_LICENSED_VERSION) {
-      $db_path = $db_path . '/' . SMART_IP_BIN_DB_NAME . '.dat';
+    if (variable_get('smart_ip_maxmind_bin_version', SMART_IP_MAXMIND_BIN_LICENSED_VERSION) == SMART_IP_MAXMIND_BIN_LICENSED_VERSION) {
+      $db_path = $db_path . '/' . SMART_IP_MAXMIND_BIN_DB_NAME . '.dat';
     }
     else {
-      $db_path = $db_path . '/' . SMART_IP_BIN_LITE_DB_NAME . '.dat';
+      $db_path = $db_path . '/' . SMART_IP_MAXMIND_BIN_LITE_DB_NAME . '.dat';
     }
     if (file_exists($db_path)) {
       require 'includes/geoipregionvars.php';
@@ -824,10 +827,10 @@ function smart_ip_get_maxmindgeoip_url($ip_address) {
   $maxmind_key = variable_get('smart_ip_maxmind_key', '');
   switch(variable_get('smart_ip_maxmind_service', 'country')){
     case 'country':
-      return "https://geoip.maxmind.com/a?l=$maxmind_key&i=$ip_address";
+      return SMART_IP_MAXMIND_GEOIP_BASE_URL . "/a?l=$maxmind_key&i=$ip_address";
       break;
     case 'city_isp_org':
-      return "https://geoip.maxmind.com/f?l=$maxmind_key&i=$ip_address";
+      return SMART_IP_MAXMIND_GEOIP_BASE_URL . "/f?l=$maxmind_key&i=$ip_address";
       break;
     case 'omni':
       return '';
@@ -844,7 +847,7 @@ function smart_ip_get_csv_source_filename() {
   
   if (!isset($maxmind_csv)) {
     // Get CSV list of zip files
-    $html = smart_ip_file_get_contents('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV');
+    $html = smart_ip_file_get_contents(SMART_IP_MAXMIND_LITE_CSV_DOWNLOAD_BASE_URL);
     $regex = '/GeoLiteCity_' . format_date(REQUEST_TIME, 'custom', 'Ym') . '.{2}\.zip/';
     preg_match($regex, $html, $match);
     // Check if Maxmind CSV file not updated, then fallback to the previous month
@@ -852,11 +855,11 @@ function smart_ip_get_csv_source_filename() {
       $regex = '/GeoLiteCity_' . format_date((REQUEST_TIME - 2764800), 'custom', 'Ym') . '.{2}\.zip/';
       preg_match($regex, $html, $match);
       if (isset($match[0])) {
-        $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/' . $match[0]);
+        $maxmind_csv = check_url(SMART_IP_MAXMIND_LITE_CSV_DOWNLOAD_BASE_URL . '/' . $match[0]);
         return $maxmind_csv;
       }
     }
-    $maxmind_csv = check_url('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/GeoLiteCity-latest.zip');
+    $maxmind_csv = check_url(SMART_IP_MAXMIND_LITE_CSV_DOWNLOAD_BASE_URL . '/GeoLiteCity-latest.zip');
   }
   return $maxmind_csv;
 }

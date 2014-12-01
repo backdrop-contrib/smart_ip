@@ -61,7 +61,7 @@ function smart_ip_admin_settings($form, &$form_state) {
       '#suffix'      => '<div class="messages warning">' . t('Caution: The "Reset update process" button above will reset (ongoing) update process and will erase the data stored in database came from maxmind CSV. Please use this function only if the update hanged. It will lead to abnormal update processing if misused.') . '</div></div>',
     );
   }
-  if ($smart_ip_source == 'maxmind_bin' && variable_get('smart_ip_maxmind_bin_version', SMART_IP_BIN_LICENSED_VERSION) == SMART_IP_BIN_LICENSED_VERSION) {
+  if ($smart_ip_source == 'maxmind_bin' && variable_get('smart_ip_maxmind_bin_version', SMART_IP_MAXMIND_BIN_LICENSED_VERSION) == SMART_IP_MAXMIND_BIN_LICENSED_VERSION) {
     $bin_update_error = variable_get('smart_ip_maxmind_bin_db_update_error', FALSE);
     $update_time = variable_get('smart_ip_maxmind_bin_db_last_update', 0);
     $last_updated = $update_time ? t('Database last updated on ') . format_date($update_time, 'custom', 'n/j/Y') . t(' at ') . format_date($update_time, 'custom', 'H:i:s T') : t('Database has not been updated');
@@ -241,10 +241,10 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#title'         => t('Maxmind binary database version'),
     '#description'   => t('Select version of Maxmind binary database.'),
     '#options' => array(
-       SMART_IP_BIN_LICENSED_VERSION => t('Licensed'),
-       SMART_IP_BIN_LITE_VERSION => t('Lite'),
+       SMART_IP_MAXMIND_BIN_LICENSED_VERSION => t('Licensed'),
+       SMART_IP_MAXMIND_BIN_LITE_VERSION => t('Lite'),
      ),
-    '#default_value' => variable_get('smart_ip_maxmind_bin_version', SMART_IP_BIN_LICENSED_VERSION),
+    '#default_value' => variable_get('smart_ip_maxmind_bin_version', SMART_IP_MAXMIND_BIN_LICENSED_VERSION),
     '#states'      => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmind_bin'),
@@ -264,7 +264,7 @@ function smart_ip_admin_settings($form, &$form_state) {
         ':input[name="smart_ip_source"]' => array('value' => 'maxmind_bin'),
       ),
       'visible' => array(
-        ':input[name="smart_ip_maxmind_bin_version"]' => array('value' => SMART_IP_BIN_LICENSED_VERSION),
+        ':input[name="smart_ip_maxmind_bin_version"]' => array('value' => SMART_IP_MAXMIND_BIN_LICENSED_VERSION),
       ),
     ),
   );
@@ -282,9 +282,6 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmind_bin'),
-      ),
-      'visible' => array(
-        ':input[name="smart_ip_maxmind_bin_version"]' => array('value' => SMART_IP_BIN_LICENSED_VERSION),
       ),
     ),
   );
@@ -477,15 +474,15 @@ function smart_ip_admin_settings_validate($form, &$form_state) {
   if ($form_state['values']['smart_ip_source'] == 'maxmindgeoip_service' && empty($form_state['values']['smart_ip_maxmind_key'])) {
     form_set_error('smart_ip_maxmind_key', t('Please provide Maxmind GeoIP developer key.'));
   }
-  if ($form_state['values']['smart_ip_source'] == 'maxmind_bin' && empty($form_state['values']['smart_ip_maxmind_license']) && $form_state['values']['smart_ip_maxmind_bin_version'] == SMART_IP_BIN_LICENSED_VERSION) {
+  if ($form_state['values']['smart_ip_source'] == 'maxmind_bin' && empty($form_state['values']['smart_ip_maxmind_license']) && $form_state['values']['smart_ip_maxmind_bin_version'] == SMART_IP_MAXMIND_BIN_LICENSED_VERSION) {
     form_set_error('smart_ip_maxmind_license', t('Please provide Maxmind license key'));
   }
-  if ($form_state['values']['smart_ip_source'] == 'maxmind_bin' && $form_state['values']['smart_ip_maxmind_bin_version'] == SMART_IP_BIN_LITE_VERSION) {
+  if ($form_state['values']['smart_ip_source'] == 'maxmind_bin' && $form_state['values']['smart_ip_maxmind_bin_version'] == SMART_IP_MAXMIND_BIN_LITE_VERSION) {
     $db_path = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
     if (empty($db_path)) {
       form_set_error('smart_ip_maxmind_bin_version', t('Please define the "Private file system path" !here.', array('!here' => l(t('here'), 'admin/config/media/file-system'))));
     }
-    elseif (!file_exists($db_path . '/' . SMART_IP_BIN_LITE_DB_NAME . '.dat')) {
+    elseif (!file_exists($db_path . '/' . SMART_IP_MAXMIND_BIN_LITE_DB_NAME . '.dat')) {
       form_set_error('smart_ip_maxmind_bin_version', t('Please upload the GeoLiteCity.dat at !path.', array('!path' => $db_path)));
     }
   }
@@ -526,7 +523,7 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
   );
 
   // Download the Maxmind binary database if necessary before proceeding
-  if ($form_state['values']['smart_ip_source'] == 'maxmind_bin' && $form_state['values']['smart_ip_maxmind_bin_version'] == SMART_IP_BIN_LICENSED_VERSION) {
+  if ($form_state['values']['smart_ip_source'] == 'maxmind_bin' && $form_state['values']['smart_ip_maxmind_bin_version'] == SMART_IP_MAXMIND_BIN_LICENSED_VERSION) {
     module_load_include('inc', 'smart_ip', 'includes/smart_ip.utility');
     smart_ip_maxmind_bin_db_update($form_state['values']['smart_ip_maxmind_license']);
   }
