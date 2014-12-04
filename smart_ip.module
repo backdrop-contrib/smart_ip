@@ -97,6 +97,11 @@ function smart_ip_permission() {
  * Allows geo location of anonymous users
  */
 function smart_ip_init(){
+  // Check to see if the page is one of those allowed for geolocation
+  if (!smart_ip_check_allowed_page()) {
+    // This page is not on the list to acquire/update user's geolocation
+    return;
+  }
   // Save a database hit. If there's already session data, 
   // don't check if we need to geolocate the anonymous role
   $smart_ip_session = smart_ip_session_get('smart_ip');
@@ -511,6 +516,13 @@ function smart_ip_get_location($ip_address) {
             $countries = country_get_predefined_list();
             $result['country_code'] = strtoupper($rec);
             $result['country']      = $countries[$result['country_code']];
+            $result['region']       = '';
+            $result['region_code']  = '';
+            $result['city']         = '';
+            $result['zip']          = '';
+            $result['latitude']     = '';
+            $result['longitude']    = '';
+            $result['time_zone']    = '';
           }
           break;
       }
@@ -810,6 +822,33 @@ function smart_ip_session_get($key) {
     }
   }
   return $smart_ip_session;
+}
+
+/**
+ * Check page URL in allowed geolocate list.
+ */
+function smart_ip_check_allowed_page() {
+  $pages = variable_get('smart_ip_allowed_pages', '');
+  if (empty($pages)) {
+    // No pages specified then all pages are allowed
+    return TRUE;
+  }
+  else {
+    if (isset($_GET['uri'])) {
+      $url = $_GET['uri'];
+    }
+    else {
+      $url = $_GET['q'];
+    }
+    // Convert the Drupal path to lowercase
+    $path = drupal_strtolower(drupal_get_path_alias($url));
+    // Compare the lowercase internal and lowercase path alias (if any).
+    $page_match = drupal_match_path($path, $pages);
+    if ($path != $url) {
+      $page_match = $page_match || drupal_match_path($url, $pages);
+    }
+    return $page_match;
+  }
 }
 
 /******************************************************************************

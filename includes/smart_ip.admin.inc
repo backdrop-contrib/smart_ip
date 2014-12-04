@@ -359,6 +359,13 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#title'         => t('IP address to use for testing'),
     '#default_value' => variable_get('smart_ip_test_ip_address', ip_address()),
   );
+  $form['smart_ip_preferences']['smart_ip_allowed_pages'] = array(
+    '#title'         => t("Acquire/update user's geolocation on specific Drupal native pages"),
+    '#type'          => 'textarea',
+    '#rows'          => 5,
+    '#description'   => t("Specify pages by using their paths (not the aliased path). Enter one path per line. The '*' character is a wildcard. Example paths are blog for the blog page and blog/* for every personal blog. &lt;front&gt; is the front page. Leave blank if all pages."),
+    '#default_value' => variable_get('smart_ip_allowed_pages', ''),
+  );
   return system_settings_form($form);
 }
 
@@ -449,6 +456,8 @@ function _smart_ip_lookup_submit($form, &$form_state) {
 }
 
 function smart_ip_admin_settings_validate($form, &$form_state) {
+  $list = check_plain($form_state['values']['smart_ip_allowed_pages']);
+  $form_state['values']['smart_ip_allowed_pages'] = str_replace('&lt;front&gt;', '<front>', $list);
   if ($form_state['values']['smart_ip_source'] == 'mod_geoip' && !isset($_SERVER['GEOIP_COUNTRY_NAME'])) {
     form_set_error('smart_ip_source', t("Maxmind's Apache module mod_geoip is not installed in your server."));
   }

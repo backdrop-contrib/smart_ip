@@ -122,13 +122,7 @@ function device_geolocation_help($path, $arg) {
 function device_geolocation_form_alter(&$form, &$form_state, $form_id) {
   // Add additional textarea form field for "Geolocate on specific pages"
   if ($form_id == 'smart_ip_admin_settings') {
-    $form['smart_ip_preferences']['device_geolocation_allowed_pages'] = array(
-      '#title'         => t("Ask user's geolocation on specific Drupal native pages"),
-      '#type'          => 'textarea',
-      '#rows'          => 5,
-      '#description'   => t("Specify pages by using their paths (not the aliased path). Enter one path per line. The '*' character is a wildcard. Example paths are blog for the blog page and blog/* for every personal blog. &lt;front&gt; is the front page. Leave blank if all pages."),
-      '#default_value' => variable_get('device_geolocation_allowed_pages', ''),
-    );
+    $form['smart_ip_preferences']['smart_ip_allowed_pages']['#title'] = t("Ask or acquire/update user's geolocation on specific Drupal native pages");
     $form['smart_ip_preferences']['device_geolocation_ajax_check'] = array(
       '#type'          => 'checkbox',
       '#title'         => t("Use AJAX in user's geolocation checking (useful if the site or pages listed above are cached)"),
@@ -143,16 +137,14 @@ function device_geolocation_form_alter(&$form, &$form_state, $form_id) {
       '#default_value' => $device_geolocation_check_frequency === NULL ? '' : $device_geolocation_check_frequency / 3600,
       '#field_suffix'  => t('hours'),
     );
-    $form['#validate'][] = '_device_geolocation_allowed_pages_validate';
+    $form['#validate'][] = '_device_geolocation_check_frequency_validate';
   }
 }
 
 /**
  * Validation handler to update the "Geolocate on specific pages".
  */
-function _device_geolocation_allowed_pages_validate($form, &$form_state) {
-  $list = check_plain($form_state['values']['device_geolocation_allowed_pages']);
-  $form_state['values']['device_geolocation_allowed_pages'] = str_replace('&lt;front&gt;', '<front>', $list);
+function _device_geolocation_check_frequency_validate($form, &$form_state) {
   $value = $form_state['values']['device_geolocation_check_frequency'];
   if ($value == '') {
     $form_state['values']['device_geolocation_check_frequency'] = NULL;
@@ -240,6 +232,7 @@ function device_geolocation_get_coordinates() {
   $latitude  = 0;
   $longitude = 0;
   $smart_ip_session = smart_ip_session_get('smart_ip');
+  $is_allowed_page  = smart_ip_check_allowed_page();
   // Smart IP user $_SESSION
   if (!is_null($smart_ip_session) && !empty($smart_ip_session['location']['latitude'])) {
     $latitude  = $smart_ip_session['location']['latitude'];
@@ -250,12 +243,16 @@ function device_geolocation_get_coordinates() {
     $smart_ip_session['location'] = $user->data['geoip_location'];
     $latitude  = $smart_ip_session['location']['latitude'];
     $longitude = $smart_ip_session['location']['longitude'];
-    smart_ip_session_set('smart_ip', $smart_ip_session);
+    if ($is_allowed_page) {
+      smart_ip_session_set('smart_ip', $smart_ip_session);
+    }
   }
   // None, then determine user's geo location via smart_ip_get_current_visitor_location_data()
   else {
     $smart_ip_session['location'] = smart_ip_get_current_visitor_location_data();
-    smart_ip_session_set('smart_ip', $smart_ip_session);
+    if ($is_allowed_page) {
+      smart_ip_session_set('smart_ip', $smart_ip_session);
+    }
     if ($user->uid) {
       $user_obj = user_load($user->uid);
       user_save($user_obj, array('data' => array('geoip_location' => $smart_ip_session['location'])));
@@ -264,7 +261,7 @@ function device_geolocation_get_coordinates() {
       $latitude  = $smart_ip_session['location']['latitude'];
       $longitude = $smart_ip_session['location']['longitude'];
     }
-    else {
+    elseif ($is_allowed_page) {
       smart_ip_session_set('smart_ip', NULL);
     }
   }
@@ -276,33 +273,6 @@ function device_geolocation_get_coordinates() {
   // Send also to javascript
   drupal_add_js(array('device_geolocation' => $coordinates), 'setting');
   return $coordinates;
-}
-
-/**
- * Check page URL in allowed geolocate list.
- */
-function _device_geolocation_check_allowed_page() {
-  $pages = variable_get('device_geolocation_allowed_pages', '');
-  if (empty($pages)) {
-    // No pages specified then all pages are allowed
-    return TRUE;
-  }
-  else {
-    if (isset($_GET['uri'])) {
-      $url = $_GET['uri'];
-    }
-    else {
-      $url = $_GET['q'];
-    }
-    // Convert the Drupal path to lowercase
-    $path = drupal_strtolower(drupal_get_path_alias($url));
-    // Compare the lowercase internal and lowercase path alias (if any).
-    $page_match = drupal_match_path($path, $pages);
-    if ($path != $url) {
-      $page_match = $page_match || drupal_match_path($url, $pages);
-    }
-    return $page_match;
-  }
 }
 
 /**
@@ -321,17 +291,16 @@ function device_geolocation_check_geolocation_attempt_ajax() {
  */
 function device_geolocation_check_geolocation_attempt() {
   $device_geolocation_check_frequency = variable_get('device_geolocation_check_frequency', NULL);
+  // Check if the current page is on the list of "Ask user's geolocation on specific Drupal native pages"
+  // then refresh user's location or if user has allowed to share his/her location then refresh on
+  // specified frequency time.
   if ($device_geolocation_check_frequency === NULL) {
     return FALSE;
   }
-  else {
-    // Check if the current page is on the list of "Ask user's geolocation on specific Drupal native pages" then refresh user's location
-    // or if user has allowed to share his/her location then refresh on specified frequency time.
-    if ((_device_geolocation_check_allowed_page() && is_null(smart_ip_session_get('device_geolocation'))) || !is_null(smart_ip_session_get('device_geolocation'))) {
-      if (is_null(smart_ip_session_get('device_geolocation_attempt')) || $device_geolocation_check_frequency < (REQUEST_TIME - smart_ip_session_get('device_geolocation_attempt'))) {
-        smart_ip_session_set('device_geolocation_attempt', REQUEST_TIME);
-        return TRUE;
-      }
+  elseif ((smart_ip_check_allowed_page() && is_null(smart_ip_session_get('device_geolocation'))) || !is_null(smart_ip_session_get('device_geolocation'))) {
+    if (is_null(smart_ip_session_get('device_geolocation_attempt')) || $device_geolocation_check_frequency < (REQUEST_TIME - smart_ip_session_get('device_geolocation_attempt'))) {
+      smart_ip_session_set('device_geolocation_attempt', REQUEST_TIME);
+      return TRUE;
     }
   }
 }
