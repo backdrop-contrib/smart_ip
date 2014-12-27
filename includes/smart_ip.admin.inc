@@ -458,6 +458,13 @@ function _smart_ip_lookup_submit($form, &$form_state) {
 function smart_ip_admin_settings_validate($form, &$form_state) {
   $list = check_plain($form_state['values']['smart_ip_allowed_pages']);
   $form_state['values']['smart_ip_allowed_pages'] = str_replace('&lt;front&gt;', '<front>', $list);
+  
+  if ($form_state['values']['smart_ip_source'] == 'local_db') {
+    $db_path = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
+    if (empty($db_path)) {
+      form_set_error('smart_ip_source', t('Please define the "Private file system path" !here.', array('!here' => l(t('here'), 'admin/config/media/file-system'))));
+    }
+  }
   if ($form_state['values']['smart_ip_source'] == 'mod_geoip' && !isset($_SERVER['GEOIP_COUNTRY_NAME'])) {
     form_set_error('smart_ip_source', t("Maxmind's Apache module mod_geoip is not installed in your server."));
   }
