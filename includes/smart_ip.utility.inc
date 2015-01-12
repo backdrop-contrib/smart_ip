@@ -501,16 +501,15 @@ function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force
  * prior to the most recently available version.
  */
 function smart_ip_maxmind_bin_db_up_to_date() {
-  // backtrack our time calculations
-  $time = strtotime('midnight');
-  $dow = date('w', $time) - 3; // D-day (download day)
-  if ($dow > 0) {
-    $dow += 4;
+  $time_now = strtotime('midnight');
+  $bin_last_update_time   = strtotime('midnight', variable_get('smart_ip_maxmind_bin_db_last_update', 0));
+  $time_of_most_recent_db = $bin_last_update_time + (7 * 86400);
+  $day_now = date('w', $time_now);
+  $is_download_day = FALSE;
+  if ($bin_last_update_time == 0 || $day_now == 3) {
+    $is_download_day = TRUE;
   }
-  $time_of_most_recent_db = $time - ($dow * 86400);
-  $bin_last_update_time = strtotime('midnight', variable_get('smart_ip_maxmind_bin_db_last_update', 0));
-
-  if ($bin_last_update_time < $time_of_most_recent_db) {
+  if (($time_now - $time_of_most_recent_db) >= 0 && $is_download_day) {
     return FALSE;
   }
   return TRUE;
