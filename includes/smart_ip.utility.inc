@@ -225,7 +225,7 @@ function smart_ip_store_location_csv(&$context) {
       $estimated_progress = floor(100 * ($current_pointer / $last_pointer));
       // Update our progress information.
       $context['finished'] = $estimated_progress / 100;
-      $context['message']  = t('Parsing %location at line number: @value of @end', array(
+      $context['message']  = t('Parsing %location at file pointer number: @value of @end', array(
         '%location' => basename($context['results']['#location_csv_file']), 
         '@value'    => $current_pointer,
         '@end'      => $last_pointer,
@@ -309,7 +309,7 @@ function smart_ip_update_database(&$context) {
       $estimated_progress = floor(100 * ($current_pointer / $last_pointer)) - 2;
       // Update our progress information.
       $context['finished'] = $estimated_progress / 100;
-      $context['message']  = t('Parsing %blocks at line number: @value of @end', array(
+      $context['message']  = t('Parsing %blocks at file pointer number: @value of @end', array(
         '%blocks' => basename($context['results']['#blocks_csv_file']),
         '@value'  => $current_pointer,
         '@end'    => $last_pointer,
