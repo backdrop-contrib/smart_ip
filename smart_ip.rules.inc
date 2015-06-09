@@ -74,7 +74,7 @@ function smart_ip_country_list() {
  */
 function smart_ip_condition_in_country($countries) {
   $location = smart_ip_get_current_visitor_location_data();
-  if (isset($countries[$location['country_code']])) {
+  if (isset($location['country_code']) && isset($countries[$location['country_code']])) {
     return TRUE;
   }
   return FALSE;
