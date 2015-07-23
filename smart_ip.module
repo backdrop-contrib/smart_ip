@@ -802,6 +802,7 @@ function smart_ip_set_session_data($location) {
 function smart_ip_set_user_data($account, $location) {
   if ($account->uid != 0) {
     $user_obj = user_load($account->uid);
+    drupal_alter('smart_ip_user_save', $user_obj, $location);
     user_save($user_obj, array('data' => array('geoip_location' => $location)));
   }
 }
