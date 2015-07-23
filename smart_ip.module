@@ -828,7 +828,7 @@ function smart_ip_session_get($key) {
   else {
     $smart_ip_session = isset($_SESSION) && isset($_SESSION[$key]) ? $_SESSION[$key] : NULL;
   }
-  if ($key == 'smart_ip') {
+  if ($key == 'smart_ip' && !variable_get('smart_ip_debug', FALSE)) {
     $ip = ip_address();
     if (!isset($smart_ip_session['location']['ip_address']) || $smart_ip_session['location']['ip_address'] != $ip) {
       global $user;
