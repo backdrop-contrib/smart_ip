@@ -896,13 +896,13 @@ function smart_ip_get_ipinfodb_url($ipinfodb_key, $ip_address, $version = 3) {
  * @param String $ip_adress IP address to geolocate
  */
 function smart_ip_get_maxmindgeoip_url($ip_address) {
-  $maxmind_key = variable_get('smart_ip_maxmind_key', '');
+  $maxmind_license = variable_get('smart_ip_maxmind_license', '');
   switch(variable_get('smart_ip_maxmind_service', 'country')){
     case 'country':
-      return SMART_IP_MAXMIND_GEOIP_BASE_URL . "/a?l=$maxmind_key&i=$ip_address";
+      return SMART_IP_MAXMIND_GEOIP_BASE_URL . "/a?l=$maxmind_license&i=$ip_address";
       break;
     case 'city_isp_org':
-      return SMART_IP_MAXMIND_GEOIP_BASE_URL . "/f?l=$maxmind_key&i=$ip_address";
+      return SMART_IP_MAXMIND_GEOIP_BASE_URL . "/f?l=$maxmind_license&i=$ip_address";
       break;
     case 'omni':
       return '';
