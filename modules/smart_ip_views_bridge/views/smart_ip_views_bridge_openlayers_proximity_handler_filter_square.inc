@@ -42,6 +42,10 @@ class smart_ip_views_bridge_openlayers_proximity_handler_filter_square extends o
    * Validate the exposed filter form
    */
   function exposed_validate(&$form, &$form_state) {
+    // This Smart IP views filter doesn't support exposed filter form. Thus, we don't need exposed 
+    // filter form validation here (it just causes issues with other exposed filter form if enabled).
+    // This handler inherits the parent's filter form validation, to disable it, this function should
+    // be present and the parent validation code below should be commented.
     //parent::exposed_validate($form, $form_state);
   }
 }
