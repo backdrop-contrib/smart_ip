@@ -644,6 +644,7 @@ function smart_ip_get_location($ip_address) {
     module_load_include('inc', 'smart_ip', 'includes/smart_ip.country_list');
     $countries = country_get_predefined_list();
     $result['country_code'] = isset($_SERVER['HTTP_CF_IPCOUNTRY']) ? $_SERVER['HTTP_CF_IPCOUNTRY'] : '';
+    $result['country_code'] = strtoupper($result['country_code']);
     $result['country']      = empty($result['country_code']) ? '' : $countries[$result['country_code']];
     $result['region']       = '';
     $result['region_code']  = '';
