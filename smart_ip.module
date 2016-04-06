@@ -293,7 +293,7 @@ function smart_ip_user_login(&$edit, $account) {
 function smart_ip_addressfield_default_values_alter(&$default_values, $context) {
   // If no other default country was provided, set it to one retrieved from SmartIP.
   $smart_ip_session = smart_ip_session_get('smart_ip');
-  if (empty($default_values['country']) && $smart_ip_session['location']['country_code']) {
+  if (empty($default_values['country']) && !empty($smart_ip_session['location']['country_code'])) {
     $default_values['country'] = $smart_ip_session['location']['country_code'];
   }
 }
