@@ -338,7 +338,9 @@ function smart_ip_tokens($type, $tokens, array $data = array(), array $options =
     $smart_ip_session = smart_ip_session_get('smart_ip');
     if (!empty($smart_ip_session['location'])) {
       foreach ($tokens as $name => $original) {
-        $replacements[$original] = $smart_ip_session['location'][$name];
+        if (!empty($smart_ip_session['location'][$name])) {
+          $replacements[$original] = $smart_ip_session['location'][$name];
+        }
       }
     }
   }
