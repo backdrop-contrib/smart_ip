@@ -210,9 +210,10 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#description'   => t('Choose service.'),
     '#options' => array(
         'country' => t('Country Web Service'),
+        //@TODO Use city
+        /*'city' => t('City Web Service'),*/
         'city_isp_org' => t('City/ISP/Organization Web Service'),
-        //@TODO Use omni
-        /*'omni' => t('Omni Web Service'),*/
+        'omni' => t('Insights (formerly Omni) Web Service'),
     ),
     '#default_value' => variable_get('smart_ip_maxmind_service', 'country'),
     '#states'        => array(
