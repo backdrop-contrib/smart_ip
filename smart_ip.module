@@ -527,7 +527,10 @@ function smart_ip_get_location($ip_address) {
   if ($smart_ip_source == 'maxmind_bin') {
     // Maxmind binary database
     module_load_include('inc', 'smart_ip', 'includes/geoipcity');
-    $db_path  = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
+    $db_path = variable_get('smart_ip_maxmind_bin_custom_path', '');
+    if (empty($db_path)) {
+      $db_path = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
+    }
     $version  = variable_get('smart_ip_maxmind_bin_version', SMART_IP_MAXMIND_BIN_LICENSED_VERSION);
     $edition  = variable_get('smart_ip_maxmind_bin_edition', SMART_IP_MAXMIND_BIN_EDITION_CITY);
     $filename = smart_ip_get_bin_source_filename($version, $edition);

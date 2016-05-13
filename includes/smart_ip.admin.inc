@@ -138,7 +138,7 @@ function smart_ip_admin_settings($form, &$form_state) {
       'maxmindgeoip_service' => t('Use Maxmind service, geoip.maxmind.com service will be used to query Geo IP information. For using this, you need to buy a developer key.'),
       'mod_geoip'            => t("Use Maxmind's Apache module mod_geoip... !read_more.", array('!read_more' => l(t('read more'), 'http://dev.maxmind.com/geoip/legacy/mod_geoip2'))),
       'local_db'             => t("Use Smart IP database, the site's local database populated from Maxmind's CSV will be used to query Geo IP information. Note: this option is very expensive to run and it requires about 450MB database and 600MB additional database space for temporary working table."),
-      'maxmind_bin'          => t("Use Maxmind binary database. Licensed purchased from maxmind.com; you will need to enter your license below. Maxmind's binary database uses \"a custom binary format to maximize lookup speed\", made accessible via their !api. The binary database is roughly 40MB, and will be downloaded and extracted automatically. Lite version binary database can be downloaded !here. The downloaded GeoLiteCity.dat must be uploaded to your server at !path.", array('!api' => l(t('custom API'), 'https://github.com/maxmind/geoip-api-php/blob/master/README.md'), '!here' => l(t('here'), 'http://dev.maxmind.com/geoip/legacy/geolite'), '!path' => drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip')))),
+      'maxmind_bin'          => t("Use Maxmind binary database. Licensed purchased from maxmind.com; you will need to enter your license below. Maxmind's binary database uses \"a custom binary format to maximize lookup speed\", made accessible via their !api. The binary database is roughly 40MB, and will be downloaded and extracted automatically. Lite version binary database can be downloaded !here.", array('!api' => l(t('custom API'), 'https://github.com/maxmind/geoip-api-php/blob/master/README.md'), '!here' => l(t('here'), 'http://dev.maxmind.com/geoip/legacy/geolite'))),
       'x_header'             => t('Use the X-GeoIP-Country: XX header, set by e.g. nginx'),
       'cf_header'            => t('Use Cloudflare IP Geolocation: your website must be using Cloudflare CDN and "IP Geolocation" option must be enabled at your !settings.', array('!settings' => l(t('Cloudflare settings'), 'https://www.cloudflare.com/cloudflare-settings'))),
     ),
@@ -300,6 +300,22 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmind_bin'),
+      ),
+    ),
+  );
+
+  // Form for entering Maxmind binary database custom path
+  $form['smart_ip_source_selection']['smart_ip_maxmind_bin_custom_path'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Maxmind binary database custom path'),
+    '#description'   => t('Define the path where the Maxmind binary database file is located in your server (Note: it is your responsibility to add security on this path. See the online handbook for !secure). Do not include preceding or trailing slashes. This is useful for multi Drupal sites with each of their Smart IP module looks to a common Maxmind binary database and it can be also useful for server with installed GeoIPLookup CLI tool where its Maxmind binary database file can be used here (usually its path is located at /usr/share/GeoIP). This path will be ignored if "Automatic Maxmind binary database update" is which uses the Drupal private file system path. Leave it blank if you prefer the Drupal private file system path. The downloaded GeoLiteCity.dat must be uploaded to your server at !path.', array('!secure' => l(t('more information about securing private files'), 'http://drupal.org/documentation/modules/file'), '!path' => drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip')))),
+    '#default_value' => variable_get('smart_ip_maxmind_bin_custom_path', ''),
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="smart_ip_source"]' => array('value' => 'maxmind_bin'),
+      ),
+      'visible' => array(
+        ':input[name="smart_ip_maxmind_bin_db_auto_update"]' => array('value' => '0'),
       ),
     ),
   );
@@ -517,16 +533,27 @@ function smart_ip_admin_settings_validate($form, &$form_state) {
     form_set_error('smart_ip_maxmind_license', t('Please provide Maxmind license key'));
   }
   if ($form_state['values']['smart_ip_source'] == 'maxmind_bin') {
-    $db_path = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
     $file    = smart_ip_get_bin_source_filename($form_state['values']['smart_ip_maxmind_bin_version'], $form_state['values']['smart_ip_maxmind_bin_edition']) . '.dat';
-    if (empty($db_path)) {
-      form_set_error('smart_ip_maxmind_bin_version', t('Please define the "Private file system path" !here.', array('!here' => l(t('here'), 'admin/config/media/file-system'))));
+    if (empty($form_state['values']['smart_ip_maxmind_bin_custom_path'])) {
+      $db_path = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
+      if (empty($db_path)) {
+        form_set_error('smart_ip_maxmind_bin_version', t('Please define the "Private file system path" !here.', array('!here' => l(t('here'), 'admin/config/media/file-system'))));
+      }
+      elseif (!file_exists("$db_path/$file") && !$form_state['values']['smart_ip_maxmind_bin_db_auto_update']) {
+        form_set_error('smart_ip_maxmind_bin_db_auto_update', t('Please upload the @file at !path.', array(
+          '@file' => $file,
+          '!path' => $db_path,
+        )));
+      }
     }
-    elseif (!file_exists("$db_path/$file") && !$form_state['values']['smart_ip_maxmind_bin_db_auto_update']) {
-      form_set_error('smart_ip_maxmind_bin_db_auto_update', t('Please upload the @file at !path.', array(
-        '@file' => $file,
-        '!path' => $db_path,
-      )));
+    else {
+      $db_path = $form_state['values']['smart_ip_maxmind_bin_custom_path'];
+      if (!file_exists("$db_path/$file")) {
+        form_set_error('smart_ip_maxmind_bin_custom_path', t('Please upload the @file at !path.', array(
+          '@file' => $file,
+          '!path' => $db_path,
+        )));
+      }
     }
   }
 }
