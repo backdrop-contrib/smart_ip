@@ -7,7 +7,7 @@
  * Google Geocoding service.
  */
 
-define('DEVICE_GEOLOCATION_MAXMIND', 1);
+define('DEVICE_GEOLOCATION_SMART_IP', 1);
 define('DEVICE_GEOLOCATION_W3C', 2);
 
 /**
@@ -21,7 +21,7 @@ function device_geolocation_init() {
     if (!$ajax_check) {
       drupal_add_js(array('device_geolocation' => array('ask_geolocate' => TRUE)), 'setting');
     }
-    drupal_add_js('//maps.googleapis.com/maps/api/js?sensor=false', 'external');
+    drupal_add_js('//maps.googleapis.com/maps/api/js', 'external');
     drupal_add_js(drupal_get_path('module', 'device_geolocation') . '/js/device_geolocation.js', array('scope' => 'footer', 'weight' => 1));
   }
   if ($ajax_check) {

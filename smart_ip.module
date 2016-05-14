@@ -686,6 +686,7 @@ function smart_ip_get_location($ip_address) {
       $result['longitude'] = NULL;
     }
   }
+  $result['source'] = 0;
   $result['ip_address'] = $ip_address;
   $result['timestamp']  = REQUEST_TIME;
   // Make sure external data in UTF-8.
