@@ -512,11 +512,20 @@ function smart_ip_get_location($ip_address) {
           $result['latitude']     = $response[5];
           $result['longitude']    = $response[6];
           $result['time_zone']    = $response[9];
+          $result['metro_code']   = $response[7];
           $result['area_code']    = $response[8];
+          $result['isp_name']     = $response[12];
           $result['domain']       = $response[14];
-          $result['isp_name']     = $response[15];
-          $result['net_speed']    = $response[16];
-          $result['area_type']    = $response[17];
+          $result['as_number']    = $response[15];
+          $result['netspeed']     = $response[16];
+          $result['user_type']    = $response[17];
+          $result['country_confidence_factor'] = $response[19];
+          $result['city_confidence_factor']    = $response[20];
+          $result['region_confidence_factor']  = $response[21];
+          $result['zip_confidence_factor']     = $response[22];
+          $result['accuracy_radius']   = $response[18];
+          $result['continent_code']    = $response[10];
+          $result['organization_name'] = $response[13];
           break;
       }
     }
