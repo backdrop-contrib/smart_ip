@@ -528,9 +528,9 @@ function smart_ip_get_location($ip_address) {
           $result['area_code']    = $response[8];
           $result['isp_name']     = $response[12];
           $result['domain']       = $response[14];
-          $result['as_number']    = $response[15];
-          $result['netspeed']     = $response[16];
-          $result['user_type']    = $response[17];
+          $result['autonomous_system_number'] = $response[15];
+          $result['netspeed']  = $response[16];
+          $result['user_type'] = $response[17];
           $result['country_confidence_factor'] = $response[19];
           $result['city_confidence_factor']    = $response[20];
           $result['region_confidence_factor']  = $response[21];
@@ -542,7 +542,103 @@ function smart_ip_get_location($ip_address) {
       }
     }
     else {
-      watchdog('smart_ip', 'The web service request from %site seems to be broken, due to "%error".', array('%site' => $smart_ip_source, '%error' => "$result->code $result->error"), WATCHDOG_WARNING);
+      watchdog('smart_ip', 'The Maxmind GeoIP Legacy Web Service request from %site seems to be broken, due to "%error".', array('%site' => $smart_ip_source, '%error' => "$result->code $result->error"), WATCHDOG_WARNING);
+    }
+  }
+  if ($smart_ip_source == 'maxmindgeoip2_service') {
+    // Maxmind GeoIP2 Precision Web Services
+    global $language;
+    $lang = $language->language;
+    $request  = drupal_http_request(smart_ip_get_maxmindgeoip2_url($ip_address));
+    $response = drupal_json_decode($request->data);
+    if (!empty($request->code) && $request->code == 200 && !empty($request->data)) {
+      $result['country_code'] = isset($response['country']['iso_code']) ? $response['country']['iso_code'] : '';
+      if (isset($response['country']['names']['en'])) {
+        $result['country'] = isset($response['country']['names'][$lang]) ? $response['country']['names'][$lang] : $response['country']['names']['en'];
+      }
+      else {
+        $result['country'] = '';
+      }
+      if (isset($response['subdivisions']['names']['en'])) {
+        $result['region'] = isset($response['subdivisions']['names'][$lang]) ? $response['subdivisions']['names'][$lang] : $response['subdivisions']['names']['en'];
+      }
+      else {
+        $result['region'] = '';
+      }
+      $result['region_code'] = isset($response['subdivisions']['iso_code']) ? $response['subdivisions']['iso_code'] : '';
+      if (isset($response['city']['names']['en'])) {
+        $result['city'] = isset($response['city']['names'][$lang]) ? $response['city']['names'][$lang] : $response['city']['names']['en'];
+      }
+      else {
+        $result['city'] = '';
+      }
+      $result['zip'] = isset($response['postal']['code']) ? $response['postal']['code'] : '';
+      $result['latitude']  = isset($response['location']['latitude']) ? $response['location']['latitude'] : '';
+      $result['longitude'] = isset($response['location']['longitude']) ? $response['location']['longitude'] : '';
+      $result['time_zone'] = isset($response['location']['time_zone']) ? $response['location']['time_zone'] : '';
+      if (isset($response['location']['metro_code'])) {
+        $result['metro_code'] = $response['location']['metro_code'];
+      }
+      if (isset($response['location']['accuracy_radius'])) {
+        $result['accuracy_radius'] = $response['location']['accuracy_radius'];
+      }
+      if (isset($response['location']['average_income'])) {
+        $result['average_income'] = $response['location']['average_income'];
+      }
+      if (isset($response['location']['population_density'])) {
+        $result['population_density'] = $response['location']['population_density'];
+      }
+      if (isset($response['continent']['names'][$lang])) {
+        $result['continent'] = $response['continent']['names'][$lang];
+      }
+      elseif (isset($response['continent']['names']['en'])) {
+        $result['continent'] = $response['continent']['names']['en'];
+      }
+      if (isset($response['continent']['code'])) {
+        $result['continent'] = $response['continent']['code'];
+      }
+      if (isset($response['traits']['isp'])) {
+        $result['isp_name'] = $response['traits']['isp'];
+      }
+      if (isset($response['traits']['domain'])) {
+        $result['domain'] = $response['traits']['domain'];
+      }
+      if (isset($response['traits']['netspeed'])) {
+        $result['netspeed'] = $response['traits']['netspeed'];
+      }
+      if (isset($response['traits']['user_type'])) {
+        $result['user_type'] = $response['traits']['user_type'];
+      }
+      if (isset($response['traits']['organization'])) {
+        $result['organization_name'] = $response['traits']['organization'];
+      }
+      if (isset($response['traits']['autonomous_system_number'])) {
+        $result['autonomous_system_number'] = $response['traits']['autonomous_system_number'];
+      }
+      if (isset($response['traits']['autonomous_system_organization'])) {
+        $result['autonomous_system_organization'] = $response['traits']['autonomous_system_organization'];
+      }
+      if (isset($response['traits']['is_anonymous_proxy'])) {
+        $result['is_anonymous_proxy'] = $response['traits']['is_anonymous_proxy'];
+      }
+      if (isset($response['traits']['is_satellite_provider'])) {
+        $result['is_satellite_provider'] = $response['traits']['is_satellite_provider'];
+      }
+      if (isset($response['country']['confidence'])) {
+        $result['country_confidence_factor'] = $response['country']['confidence'];
+      }
+      if (isset($response['city']['confidence'])) {
+        $result['city_confidence_factor'] = $response['city']['confidence'];
+      }
+      if (isset($response['postal']['confidence'])) {
+        $result['zip_confidence_factor'] = $response['postal']['confidence'];
+      }
+      if (isset($response['subdivisions']['confidence'])) {
+        $result['region_confidence_factor'] = $response['subdivisions']['confidence'];
+      }
+    }
+    else {
+      watchdog('smart_ip', 'The Maxmind GeoIP2 Precision Web Service request from %site seems to be broken, due to "%error".', array('%site' => $smart_ip_source, '%error' => "$result->code $result->error"), WATCHDOG_WARNING);
     }
   }
   if ($smart_ip_source == 'maxmind_bin') {
@@ -967,6 +1063,19 @@ function smart_ip_get_maxmindgeoip_url($ip_address) {
       break;
   }
   return '';
+}
+
+/**
+ * Get Maxmind GeoIP2 Precision Web Services URL
+ * Reference: http://dev.maxmind.com/geoip/geoip2/web-services
+ * @param String $ip_adress IP address to geolocate
+ */
+function smart_ip_get_maxmindgeoip2_url($ip_address) {
+  $maxmind_uid     = variable_get('smart_ip_maxmind_geoip_uid', '');
+  $maxmind_license = variable_get('smart_ip_maxmind_geoip_license', '');
+  $service_type    = variable_get('smart_ip_maxmind_geoip_service', 'country');
+  $url = str_replace('://', "://$maxmind_uid:$maxmind_license@", SMART_IP_MAXMIND_GEOIP_BASE_URL) . "/geoip/v2.1/$service_type/$ip_address";  
+  return $url;
 }
 
 /**
