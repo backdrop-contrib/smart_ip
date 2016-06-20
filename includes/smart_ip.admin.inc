@@ -280,8 +280,6 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#states'      => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmind_bin'),
-      ),
-      'visible' => array(
         ':input[name="smart_ip_maxmind_bin_version"]' => array('value' => SMART_IP_MAXMIND_BIN_LICENSED_VERSION),
       ),
     ),
@@ -313,8 +311,6 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmind_bin'),
-      ),
-      'visible' => array(
         ':input[name="smart_ip_maxmind_bin_db_auto_update"]' => array('value' => '0'),
       ),
     ),
