@@ -14,6 +14,11 @@ define('DEVICE_GEOLOCATION_W3C', 2);
  * Implements hook_init().
  */
 function device_geolocation_init() {
+  // Check to see if the page is one of those allowed for geolocation
+  if (!smart_ip_check_allowed_page()) {
+    // This page is not on the list to acquire/update user's geolocation
+    return;
+  }
   $user_allowed = !is_null(smart_ip_session_get('device_geolocation')); // If true, the user has allowed to share his/her location
   $ajax_check   = !$user_allowed && variable_get('device_geolocation_ajax_check', FALSE);
   if ($ajax_check || device_geolocation_check_geolocation_attempt()) {
