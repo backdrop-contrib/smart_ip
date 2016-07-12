@@ -21,7 +21,7 @@ function device_geolocation_init() {
     if (!$ajax_check) {
       drupal_add_js(array('device_geolocation' => array('ask_geolocate' => TRUE)), 'setting');
     }
-    drupal_add_js('//maps.googleapis.com/maps/api/js', 'external');
+    drupal_add_js('//maps.googleapis.com/maps/api/js?key=' . variable_get('device_geolocation_google_map_api', NULL), 'external');
     drupal_add_js(drupal_get_path('module', 'device_geolocation') . '/js/device_geolocation.js', array('scope' => 'footer', 'weight' => 1));
   }
   if ($ajax_check) {
@@ -136,6 +136,12 @@ function device_geolocation_form_alter(&$form, &$form_state, $form_id) {
       '#description'   => t('Specify number of hours will prompt the user for geolocation. Leave it empty to disable.'),
       '#default_value' => $device_geolocation_check_frequency === NULL ? '' : $device_geolocation_check_frequency / 3600,
       '#field_suffix'  => t('hours'),
+    );
+    $form['smart_ip_preferences']['device_geolocation_google_map_api'] = array(
+      '#title'         => t('Google map API key'),
+      '#type'          => 'textfield',
+      '#description'   => t('The use of Google map service requires API key. Get your API key !here.', array('!here' => l(t('here'), 'https://developers.google.com/maps/documentation/javascript/get-api-key'))),
+      '#default_value' => variable_get('device_geolocation_google_map_api', NULL),
     );
     $form['#validate'][] = '_device_geolocation_check_frequency_validate';
   }
