@@ -1005,7 +1005,13 @@ function smart_ip_check_allowed_page() {
   }
   else {
     if (isset($_GET['uri'])) {
-      $url = $_GET['uri'];
+      // Handle "uri" from ajax request
+      if (empty($_GET['uri'])) {
+        $url = variable_get('site_frontpage', 'node');
+      }
+      else {      
+        $url = $_GET['uri'];
+      }
     }
     else {
       $url = $_GET['q'];
@@ -1015,6 +1021,10 @@ function smart_ip_check_allowed_page() {
     // Compare the lowercase internal and lowercase path alias (if any).
     $page_match = drupal_match_path($path, $pages);
     if ($path != $url) {
+      $page_match = $page_match || drupal_match_path($url, $pages);
+    }
+    elseif ($path == $url) {
+      $url = drupal_get_normal_path($url);
       $page_match = $page_match || drupal_match_path($url, $pages);
     }
     return $page_match;
