@@ -405,25 +405,34 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#description'   => t("One time storing of user's location details upon registration."),
   );
   
-  // Form to turn on debugging
-  $form['smart_ip_preferences']['smart_ip_debug'] = array(
-    '#type'          => 'checkbox',
-    '#title'         => t('Admin debug'),
-    '#default_value' => variable_get('smart_ip_debug', FALSE),
-    '#description'   => t('Enables administrator to spoof an IP Address for debugging purposes.'),
-  );
-
-  $form['smart_ip_preferences']['smart_ip_test_ip_address'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('IP address to use for testing'),
-    '#default_value' => variable_get('smart_ip_test_ip_address', ip_address()),
-  );
   $form['smart_ip_preferences']['smart_ip_allowed_pages'] = array(
     '#title'         => t("Acquire/update user's geolocation on specific Drupal native pages"),
     '#type'          => 'textarea',
     '#rows'          => 5,
     '#description'   => t("Specify pages by using their paths (not the aliased path). Enter one path per line. The '*' character is a wildcard. Example paths are blog for the blog page and blog/* for every personal blog. &lt;front&gt; is the front page. Leave blank if all pages."),
     '#default_value' => variable_get('smart_ip_allowed_pages', ''),
+  );
+
+  // Container for Smart IP debug tool
+  $form['smart_ip_debug_tool'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Smart IP debug tool'),
+    '#collapsible' => FALSE,
+    '#collapsed'   => FALSE,
+  );
+
+  // Form to turn on debugging
+  $form['smart_ip_debug_tool']['smart_ip_debug'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t('Admin debug'),
+    '#default_value' => variable_get('smart_ip_debug', FALSE),
+    '#description'   => t('Enables administrator to spoof an IP Address for debugging purposes.'),
+  );
+
+  $form['smart_ip_debug_tool']['smart_ip_test_ip_address'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('IP address to use for testing'),
+    '#default_value' => variable_get('smart_ip_test_ip_address', ip_address()),
   );
   return system_settings_form($form);
 }
@@ -604,6 +613,9 @@ function smart_ip_admin_settings_validate($form, &$form_state) {
       }
     }
   }
+  if ($form_state['values']['smart_ip_debug'] == TRUE && empty($form_state['values']['smart_ip_test_ip_address'])) {
+    form_set_error('smart_ip_test_ip_address', t('Please enter the IP address to use for testing.'));
+  }  
 }
 
 /**
