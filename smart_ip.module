@@ -240,7 +240,7 @@ function smart_ip_user_presave(&$edit, $account, $category) {
 /**
  * Implements hook_user_login().
  *
- * Detects IP and geo location upon user login.
+ * Save new user's geolocation upon registration.
  */
 function smart_ip_user_login(&$edit, $account) {
   // Now check to see if this user has "administer smart_ip" permission
