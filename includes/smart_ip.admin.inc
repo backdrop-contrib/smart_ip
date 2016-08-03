@@ -668,15 +668,17 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
     $location = smart_ip_get_location($ip);
     // Immediately set the debug mode
     variable_set('smart_ip_debug', TRUE);
+    $type = t('debug');
   }
   else {
     // Debug off - make sure we set/reset to their real values
     $location = smart_ip_get_current_visitor_location_data();
-    $ip = $location['ip_address'];
+    $ip   = $location['ip_address'];
+    $type = t('actual');
   }
   if ($location) {
     drupal_set_message(t('Using @type IP: %ip / Country: %country / Region: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat / Time zone: %time_zone', array(
-      '@type'      => $form_state['values']['smart_ip_debug'] ? 'debug' : 'actual',
+      '@type'      => $type,
       '%ip'        => $ip, 
       '%country'   => isset($location['country']) ? $location['country'] : '',
       '%region'    => isset($location['region']) ? $location['region'] : '',
