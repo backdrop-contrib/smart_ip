@@ -802,9 +802,9 @@ function smart_ip_get_location($ip_address = NULL) {
     $result['longitude']    = '';
     $result['time_zone']    = '';
   }
-  if (!empty($result)) {
+  if (isset($result['latitude']) && isset($result['longitude'])) {
     // If coordinates are (0, 0) there was no match
-    if ($result['latitude'] == 0 && $result['longitude'] == 0) {
+    if ($result['latitude'] === 0 && $result['longitude'] === 0) {
       $result['latitude']  = NULL;
       $result['longitude'] = NULL;
     }
@@ -1127,9 +1127,13 @@ function smart_ip_get_bin_source_filename($version, $edition) {
     $file = SMART_IP_MAXMIND_BIN_LITE_DB_NAME;
   }
   else {
+    // Filename of licensed country edition can be verified at:
+    // http://updates.maxmind.com/app/update_getfilename?product_id=106
     $file = SMART_IP_MAXMIND_BIN_DB_NAME;
   }
   if ($edition == SMART_IP_MAXMIND_BIN_EDITION_CITY) {
+    // Filename of licensed city edition can be verified at:
+    // http://updates.maxmind.com/app/update_getfilename?product_id=132
     $file .= 'City';
   }
   return $file;

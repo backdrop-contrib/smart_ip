@@ -496,21 +496,27 @@ function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force
 }
 
 /**
- * Maxmind updates the DB every Tuesday, and we download every Wednesday.
- * That means that we only want to download if the current DB was downloaded
- * prior to the most recently available version.
+ * MaxMind updates the binary database every Tuesday, and we download
+ * every Wednesday for licensed version. Every first Tuesday of the month for
+ * lite or free version, and we download every first Wednesday of the month.
+ * That means that we only want to download if the current database was
+ * downloaded prior to the most recently available version.
  */
 function smart_ip_maxmind_bin_db_up_to_date() {
-  $time_now = strtotime('midnight');
-  $bin_last_update_time   = strtotime('midnight', variable_get('smart_ip_maxmind_bin_db_last_update', 0));
-  $time_of_most_recent_db = $bin_last_update_time + (7 * 86400);
-  $day_now = date('w', $time_now);
-  $is_download_day = FALSE;
-  if ($bin_last_update_time == 0 || $day_now == 3) {
-    $is_download_day = TRUE;
+  $version  = variable_get('smart_ip_maxmind_bin_version', SMART_IP_MAXMIND_BIN_LICENSED_VERSION);
+  $time_now = strtotime('midnight', REQUEST_TIME);
+  $last_update_time = strtotime('midnight', variable_get('smart_ip_maxmind_bin_db_last_update', 0));
+  if ($version == SMART_IP_MAXMIND_BIN_LICENSED_VERSION) {
+    $wednesday = strtotime('first Wednesday', $time_now);
+    if ($wednesday <= $time_now && $wednesday > $last_update_time) {
+      return TRUE;
+    }
   }
-  if (($time_now - $time_of_most_recent_db) >= 0 && $is_download_day) {
-    return FALSE;
+  elseif ($version == SMART_IP_MAXMIND_BIN_LITE_VERSION) {
+    $first_wed = strtotime('first Wednesday of this month', $time_now);
+    if ($first_wed <= $time_now && $first_wed > $last_update_time) {
+      return TRUE;
+    }
   }
-  return TRUE;
+  return FALSE;  
 }
