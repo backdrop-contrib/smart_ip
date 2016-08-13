@@ -16,6 +16,15 @@ function smart_ip_admin_settings($form, &$form_state) {
   $form['#submit'][] = 'smart_ip_admin_settings_submit';
   $form['#validate'][] = 'smart_ip_admin_settings_validate';
   $smart_ip_source = variable_get('smart_ip_source', 'ipinfodb_service');
+  
+  // MaxMind's Apache module mod_geoip, X-GeoIP-Country: XX header and Cloudflare IP Geolocation don't support manual lookup and admin debug
+  if ($smart_ip_source == 'mod_geoip' || $smart_ip_source == 'x_header' || $smart_ip_source == 'cf_header') {
+    $can_query_ip = FALSE;
+  }
+  else {
+    $can_query_ip = TRUE;
+  }
+
   if ($smart_ip_source == 'local_db') {
     $recover = !variable_get('smart_ip_db_update_busy', FALSE) & (variable_get('smart_ip_get_zip_done', FALSE) | variable_get('smart_ip_extract_zip_done', FALSE) | variable_get('smart_ip_store_location_csv_done', FALSE));
     // Container for database update preference forms 
@@ -96,7 +105,7 @@ function smart_ip_admin_settings($form, &$form_state) {
       '#suffix' => $bin_update_error ? '<div class="messages error">' . t('The previous attempt of updating MaxMind binary database has failed with the error: ') . $bin_update_error . '</div>' : '',
     );
   }
-  
+
   // Container for manual lookup
   $form['smart_ip_manual_lookup'] = array(
     '#type'        => 'fieldset',
@@ -104,6 +113,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#description' => t('Examine database values'),
     '#collapsible' => FALSE,
     '#collapsed'   => FALSE,
+    '#access' => $can_query_ip,
   );
 
   // Form for manual lookups
@@ -144,10 +154,10 @@ function smart_ip_admin_settings($form, &$form_state) {
       'ip2location_bin'       => t('IP2Location binary will be used to query Geo IP information. For using this, you need to register at !ip2location (its free) to download the binary file (lite and paid versions are available) and upload it to your server.', array('!ip2location' => l(t('IP2Location website'), 'http://ip2location.com'))),
       'maxmindgeoip_service'  => t('Use GeoIP Legacy Web Services, geoip.maxmind.com service will be used to query Geo IP information. To use this, you need to buy a developer key.'),
       'maxmindgeoip2_service' => t('Use GeoIP2 Precision Web Services, this is the next version of GeoIP Legacy Web Services. The geoip.maxmind.com service will be used to query Geo IP information. To use this, you need to buy their service(s).'),
-      'mod_geoip'             => t("Use MaxMind's Apache module mod_geoip... !read_more.", array('!read_more' => l(t('read more'), 'http://dev.maxmind.com/geoip/legacy/mod_geoip2'))),
       'local_db'              => t("Use Smart IP database, the site's local database populated from Maxmind's CSV will be used to query Geo IP information. Note: this option is very expensive to run and it requires about 450MB database and 600MB additional database space for temporary working table."),
       'maxmind_bin'           => t("Use MaxMind GeoIP Legacy binary database. Licensed purchased from maxmind.com; you will need to enter your license below. MaxMind GeoIP Legacy's binary database uses \"a custom binary format to maximize lookup speed\", made accessible via their !api. The binary database is roughly 40MB, and will be downloaded and extracted automatically. Lite version binary database can be downloaded !here. The downloaded GeoLiteCity.dat must be uploaded to your server at !path (default) or to your defined custom path.", array('!api' => l(t('custom API'), 'https://github.com/maxmind/geoip-api-php/blob/master/README.md'), '!here' => l(t('here'), 'http://dev.maxmind.com/geoip/legacy/geolite'), '!path' => $private_folder)),
       'maxmindgeoip2_bin'     => t("Use MaxMind GeoIP2 binary database. It is the evolution of MaxMind's original GeoIP binary database or now called GeoIP Legacy. This MaxMind's binary database uses a custom binary format to maximize lookup speed and accessible via two available APIs: !maxmind_db_reader_api which includes an optional C extension that you may install to dramatically increase the performance of lookups in GeoIP2 binary database and the default !geoip2_api. Lite version binary database can be downloaded !here. For licensed version, you will need to enter your license below and the binary database file can be downloaded !here2 (you will need to login to your MaxMind account first). The binary database is roughly 130MB, and there's       an option below to enable the automatic download/extraction of it. The downloaded file %file_lite_city (if Lite version City edition) or %file_licensed_city (if Licensed version City edition) or %file_lite_country (if Lite version Country edition) or %file_licensed_country (if Licensed version Country edition) must be uploaded to your server at !path or to your defined custom path.", array('!maxmind_db_reader_api' => l(t('MaxMind DB Reader PHP API'), 'https://github.com/maxmind/MaxMind-DB-Reader-php'), '!geoip2_api' => l(t('GeoIP2 PHP API'), 'http://maxmind.github.io/GeoIP2-php'), '!here' => l(t('here'), 'https://dev.maxmind.com/geoip/geoip2/geolite2'), '!here2'      => l(t('here'), 'https://www.maxmind.com/en/download_files'), '%file_lite_city' => SMART_IP_MAXMIND_GEOIP2_FILENAME_LITE_CITY, '%file_licensed_city' => SMART_IP_MAXMIND_GEOIP2_FILENAME_LINCENSED_CITY, '%file_lite_country' => SMART_IP_MAXMIND_GEOIP2_FILENAME_LITE_COUNTRY, '%file_licensed_country' => SMART_IP_MAXMIND_GEOIP2_FILENAME_LINCENSED_COUNTRY, '!path' => $private_folder,)),
+      'mod_geoip'             => t("Use MaxMind's Apache module mod_geoip... !read_more.", array('!read_more' => l(t('read more'), 'http://dev.maxmind.com/geoip/legacy/mod_geoip2'))),
       'x_header'              => t('Use the X-GeoIP-Country: XX header, set by e.g. nginx'),
       'cf_header'             => t('Use Cloudflare IP Geolocation: your website must be using Cloudflare CDN and "IP Geolocation" option must be enabled at your !settings.', array('!settings' => l(t('Cloudflare settings'), 'https://www.cloudflare.com/cloudflare-settings'))),
     ),
@@ -507,6 +517,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#title'       => t('Smart IP debug tool'),
     '#collapsible' => FALSE,
     '#collapsed'   => FALSE,
+    '#access' => $can_query_ip,
   );
 
   // Form to turn on debugging
