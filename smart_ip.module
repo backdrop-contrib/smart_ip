@@ -762,30 +762,32 @@ function smart_ip_get_location($ip_address = NULL) {
     }
     elseif ($ip_ver == 6) {
       $custom_path = variable_get('smart_ip_ip2location_ipv6_bin_path', '');
+    }    
+    if (!empty($custom_path)) {
+      switch (variable_get('smart_ip_ip2location_bin_cache', 'no_cache')) {
+        case 'shared_memory':
+          $location_data = new IP2Location\Database($custom_path, IP2Location\Database::SHARED_MEMORY);
+          break;
+        case 'memory_cache':
+          $location_data = new IP2Location\Database($custom_path, IP2Location\Database::MEMORY_CACHE);
+          break;
+        case 'no_cache':
+        default:
+          $location_data = new IP2Location\Database($custom_path, IP2Location\Database::FILE_IO);
+          break;
+      }
+      $record = $location_data->lookup($ip_address, IP2Location\Database::ALL);
+      $result['original_data'] = $record;
+      $result['country_code']  = isset($record['countryCode']) ? strtoupper($record['countryCode']) : '';
+      $result['country']       = isset($record['countryName']) ? $record['countryName'] : '';
+      $result['region']        = isset($record['regionName']) ? $record['regionName'] : '';
+      $result['region_code']   = '';
+      $result['city']          = isset($record['cityName']) ? $record['cityName'] : '';
+      $result['zip']           = isset($record['zipCode']) ? $record['zipCode'] : '';
+      $result['latitude']      = isset($record['latitude']) ? $record['latitude'] : '';
+      $result['longitude']     = isset($record['longitude']) ? $record['longitude'] : '';
+      $result['time_zone']     = isset($record['timeZone']) ? $record['timeZone'] : '';
     }
-    switch (variable_get('smart_ip_ip2location_bin_cache', 'no_cache')) {
-      case 'shared_memory':
-        $location_data = new IP2Location\Database($custom_path, IP2Location\Database::SHARED_MEMORY);
-        break;
-      case 'memory_cache':
-        $location_data = new IP2Location\Database($custom_path, IP2Location\Database::MEMORY_CACHE);
-        break;
-      case 'no_cache':
-      default:
-        $location_data = new IP2Location\Database($custom_path, IP2Location\Database::FILE_IO);
-        break;
-    }
-    $record = $location_data->lookup($ip_address, IP2Location\Database::ALL);
-    $result['original_data'] = $record;
-    $result['country_code']  = isset($record['countryCode']) ? strtoupper($record['countryCode']) : '';
-    $result['country']       = isset($record['countryName']) ? $record['countryName'] : '';
-    $result['region']        = isset($record['regionName']) ? $record['regionName'] : '';
-    $result['region_code']   = '';
-    $result['city']          = isset($record['cityName']) ? $record['cityName'] : '';
-    $result['zip']           = isset($record['zipCode']) ? $record['zipCode'] : '';
-    $result['latitude']      = isset($record['latitude']) ? $record['latitude'] : '';
-    $result['longitude']     = isset($record['longitude']) ? $record['longitude'] : '';
-    $result['time_zone']     = isset($record['timeZone']) ? $record['timeZone'] : '';
   }
   elseif ($smart_ip_source == 'ipinfodb_service') {
     // IPInfoDB.com service
