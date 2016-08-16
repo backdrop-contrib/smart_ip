@@ -135,33 +135,36 @@ function smart_ip_init(){
  */
 function smart_ip_cron() {
   $time = REQUEST_TIME;
-  if ((variable_get('smart_ip_db_update_busy_timeout', 0) <= ($time - 3600)) && variable_get('smart_ip_db_update_busy', FALSE)) {
-    // Reset busy flag after 1 hour
-    variable_set('smart_ip_db_update_busy', FALSE);
-  }
-  if (variable_get('smart_ip_auto_update', TRUE) && !variable_get('smart_ip_db_update_busy', FALSE)) {
-    // One month and interval. Maxmind updates every first day of a month.
-    if (variable_get('smart_ip_last_update', 0) <= ($time - 2678400)) {
-      global $base_root;
-      if (!variable_get('smart_ip_extract_zip_done', FALSE) && !variable_get('smart_ip_get_zip_done', FALSE)) {
-        // Set an indicator that Smart IP database update has been started by cron
-        variable_set('smart_ip_db_update_busy', TRUE);
-        variable_set('smart_ip_db_update_busy_timeout', $time);
+  $data_source = variable_get('smart_ip_source', 'ipinfodb_service');
+  if ($data_source == 'local_db') {
+    if ((variable_get('smart_ip_db_update_busy_timeout', 0) <= ($time - 3600)) && variable_get('smart_ip_db_update_busy', FALSE)) {
+      // Reset busy flag after 1 hour
+      variable_set('smart_ip_db_update_busy', FALSE);
+    }
+    if (variable_get('smart_ip_auto_update', TRUE) && !variable_get('smart_ip_db_update_busy', FALSE)) {
+      // One month and interval. Maxmind updates every first day of a month.
+      if (variable_get('smart_ip_last_update', 0) <= ($time - 2678400)) {
+        global $base_root;
+        if (!variable_get('smart_ip_extract_zip_done', FALSE) && !variable_get('smart_ip_get_zip_done', FALSE)) {
+          // Set an indicator that Smart IP database update has been started by cron
+          variable_set('smart_ip_db_update_busy', TRUE);
+          variable_set('smart_ip_db_update_busy_timeout', $time);
+        }
+        $options = array(
+          'headers' => array('Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8'),
+          'method'  => 'POST',
+          'data'    => 'smart_ip_cron_key=' . rawurlencode(trim(variable_get('cron_key', 'drupal'))),
+          'timeout' => 30,
+        );
+        drupal_http_request($base_root . '/?q=smart_ip_batch', $options);
       }
-      $options = array(
-        'headers' => array('Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8'),
-        'method'  => 'POST',
-        'data'    => 'smart_ip_cron_key=' . rawurlencode(trim(variable_get('cron_key', 'drupal'))),
-        'timeout' => 30,
-      );
-      drupal_http_request($base_root . '/?q=smart_ip_batch', $options);
     }
   }
-  if (variable_get('smart_ip_maxmind_bin_db_auto_update', TRUE)) {
+  if ($data_source == 'maxmind_bin' && variable_get('smart_ip_maxmind_bin_db_auto_update', TRUE)) {
     module_load_include('inc', 'smart_ip', 'includes/smart_ip.utility');
     smart_ip_maxmind_bin_db_update(variable_get('smart_ip_maxmind_license', ''), TRUE);
   }
-  if (variable_get('smart_ip_maxmind_geoip2_bin_db_auto_update', TRUE)) {
+  if ($data_source == 'maxmindgeoip2_bin' && variable_get('smart_ip_maxmind_geoip2_bin_db_auto_update', TRUE)) {
     module_load_include('inc', 'smart_ip', 'includes/smart_ip.utility');
     smart_ip_maxmind_bin_db_update(variable_get('smart_ip_maxmind_geoip2_license', ''), TRUE);
   }
