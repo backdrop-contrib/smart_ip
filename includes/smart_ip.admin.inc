@@ -33,6 +33,7 @@ function smart_ip_admin_settings($form, &$form_state) {
       '#title'       => t('Manual database update'),
       '#collapsible' => FALSE,
       '#collapsed'   => FALSE,
+      '#weight'      => 0,
       '#states'      => array(
         'visible' => array(
           ':input[name="smart_ip_source"]' => array('value' => 'local_db'),
@@ -86,6 +87,7 @@ function smart_ip_admin_settings($form, &$form_state) {
       '#title'       => t('Database Update Status'),
       '#collapsible' => FALSE,
       '#collapsed'   => FALSE,
+      '#weight'      => 0,
       '#states'      => array(
         'visible' => array(
           ':input[name="smart_ip_source"]' => array('value' => $smart_ip_source),
@@ -113,7 +115,8 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#description' => t('Examine database values'),
     '#collapsible' => FALSE,
     '#collapsed'   => FALSE,
-    '#access' => $can_query_ip,
+    '#weight'      => 1,
+    '#access'      => $can_query_ip,
   );
 
   // Form for manual lookups
@@ -141,6 +144,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#description'   => t('Please select only one source:'),
     '#collapsible' => FALSE,
     '#collapsed'   => FALSE,
+    '#weight'      => 2,
   );
   
   // Form for Smart IP source selection
@@ -496,6 +500,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#title'       => t('Smart IP settings'),
     '#collapsible' => FALSE,
     '#collapsed'   => FALSE,
+    '#weight'      => 3,
   );
   
   // Form to select user roles to geolocate
@@ -530,7 +535,8 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#title'       => t('Smart IP debug tool'),
     '#collapsible' => FALSE,
     '#collapsed'   => FALSE,
-    '#access' => $can_query_ip,
+    '#weight'      => 5,
+    '#access'      => $can_query_ip,
   );
 
   // Form to turn on debugging
@@ -546,7 +552,9 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#title'         => t('IP address to use for testing'),
     '#default_value' => variable_get('smart_ip_test_ip_address', ip_address()),
   );
-  return system_settings_form($form);
+  $form = system_settings_form($form);
+  $form['actions']['#weight'] = 100;
+  return $form;
 }
 
 /**
