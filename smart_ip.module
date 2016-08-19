@@ -15,6 +15,9 @@
  *
  * @author Roland Michael dela Peña.
  */
+define('SMART_IP_SOURCE_SMART_IP', 'smart_ip');
+define('SMART_IP_SOURCE_GEOCODED_SMART_IP', 'geocoded_smart_ip');
+define('SMART_IP_SOURCE_W3C', 'w3c');
 define('SMART_IP_MAXMIND_GEOIP2_LITE_BIN_DOWNLOAD_BASE_URL', 'http://geolite.maxmind.com/download/geoip/database');
 define('SMART_IP_MAXMIND_LITE_BIN_DOWNLOAD_BASE_URL', 'http://geolite.maxmind.com/download/geoip/database');
 define('SMART_IP_MAXMIND_LITE_CSV_DOWNLOAD_BASE_URL', 'http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV');
@@ -124,7 +127,14 @@ function smart_ip_init(){
   }
   if (isset($smart_ip_session['location'])) {
     // Make user geolocation available to javascript
-    drupal_add_js(array('smart_ip' => $smart_ip_session), 'setting');
+    drupal_add_js(array(
+      'smart_ip' => $smart_ip_session,
+      'smart_ip_src' => array(
+        'smart_ip' => SMART_IP_SOURCE_SMART_IP,
+        'geocoded_smart_ip' => SMART_IP_SOURCE_GEOCODED_SMART_IP,
+        'w3c' => SMART_IP_SOURCE_W3C,
+      ),
+    ), 'setting');
   }
 }
 
@@ -421,9 +431,10 @@ function theme_smart_ip_longitude_dms($variable) {
  *   Geolocation details of queried IP address
  */
 function smart_ip_get_location($ip_address = NULL) {
+  $ip_address = trim($ip_address);
   if (empty($ip_address)) {
-    $ip = ip_address();
-  }
+    $ip_address = ip_address();
+  }  
   // Use a static cache if this function is called more often
   // for the same ip on the same page.
   $results = &drupal_static(__FUNCTION__);
@@ -727,17 +738,25 @@ function smart_ip_get_location($ip_address = NULL) {
     }
     $db_path  = "$db_path/$filename";
     if (file_exists($db_path)) {
-      $reader = new GeoIp2\Database\Reader($db_path);
-      if ($edition == SMART_IP_MAXMIND_GEOIP2_BIN_EDITION_CITY) {
-        $record = $reader->city($ip_address);
+      if (class_exists('MaxMind\Db\Reader')) {
+        $reader = new MaxMind\Db\Reader($db_path);
+        $raw    = $reader->get($ip_address);
       }
-      elseif ($edition == SMART_IP_MAXMIND_GEOIP2_BIN_EDITION_COUNTRY) {
-        $record = $reader->country($ip_address);
+      else {
+        $reader = new GeoIp2\Database\Reader($db_path);
+        if ($edition == SMART_IP_MAXMIND_GEOIP2_BIN_EDITION_CITY) {
+          $record = $reader->city($ip_address);
+        }
+        elseif ($edition == SMART_IP_MAXMIND_GEOIP2_BIN_EDITION_COUNTRY) {
+          $record = $reader->country($ip_address);
+        }
+        if (!empty($record)) {
+          $raw = $record->jsonSerialize();
+        }
       }
-      if (!empty($record)) {
+      if (!empty($raw)) {
         global $language;
         $lang = $language->language;
-        $raw = $record->jsonSerialize();
         if (!isset($raw['country']['names'][$lang])) {
           // The current language is not yet supported by MaxMind, use English as
           // default language.
@@ -875,7 +894,7 @@ function smart_ip_get_location($ip_address = NULL) {
       $result['longitude'] = NULL;
     }
   }
-  $result['source'] = 0;
+  $result['source'] = SMART_IP_SOURCE_SMART_IP;
   $result['ip_address'] = $ip_address;
   $result['timestamp']  = REQUEST_TIME;
   // Make sure external data in UTF-8.
