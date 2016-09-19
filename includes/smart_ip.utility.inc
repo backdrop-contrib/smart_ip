@@ -409,15 +409,17 @@ function smart_ip_update_db_batch_finished($success, $results, $operations, $ela
 function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force = FALSE) {
   $data_source = variable_get('smart_ip_source', 'ipinfodb_service');
   if ($data_source == 'maxmind_bin') {
-    $license = !empty($license) ? $license : variable_get('smart_ip_maxmind_license', '');
-    $version = variable_get('smart_ip_maxmind_bin_version', SMART_IP_MAXMIND_BIN_LICENSED_VERSION);  
-    $edition = variable_get('smart_ip_maxmind_bin_edition', SMART_IP_MAXMIND_BIN_EDITION_CITY);
+    $license  = !empty($license) ? $license : variable_get('smart_ip_maxmind_license', '');
+    $version  = variable_get('smart_ip_maxmind_bin_version', SMART_IP_MAXMIND_BIN_LICENSED_VERSION);  
+    $edition  = variable_get('smart_ip_maxmind_bin_edition', SMART_IP_MAXMIND_BIN_EDITION_CITY);
+    $filename = smart_ip_get_bin_source_filename($version, $edition);
     $last_update_time = strtotime('midnight', variable_get('smart_ip_maxmind_bin_db_last_update', 0));
   }
   elseif ($data_source == 'maxmindgeoip2_bin') {
-    $license = !empty($license) ? $license : variable_get('smart_ip_maxmind_geoip2_license', '');
-    $version = variable_get('smart_ip_maxmind_geoip2_bin_version', SMART_IP_MAXMIND_BIN_LICENSED_VERSION);  
-    $edition = variable_get('smart_ip_maxmind_geoip2_bin_edition', SMART_IP_MAXMIND_GEOIP2_BIN_EDITION_CITY);
+    $license  = !empty($license) ? $license : variable_get('smart_ip_maxmind_geoip2_license', '');
+    $version  = variable_get('smart_ip_maxmind_geoip2_bin_version', SMART_IP_MAXMIND_BIN_LICENSED_VERSION);  
+    $edition  = variable_get('smart_ip_maxmind_geoip2_bin_edition', SMART_IP_MAXMIND_GEOIP2_BIN_EDITION_CITY);
+    $filename = smart_ip_get_geoip2_bin_source_filename($version, $edition);
     $last_update_time = strtotime('midnight', variable_get('smart_ip_maxmind_geoip2_bin_db_last_update', 0));
   }
   
@@ -426,10 +428,7 @@ function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force
     return FALSE;
   }
 
-  $filename = smart_ip_get_bin_source_filename($version, $edition);
   $path = file_stream_wrapper_uri_normalize('private://smart_ip');
-  $gz_name = "$path/$filename.tar.gz";
-
   if (!file_prepare_directory($path, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS)) {
     // Private file system path not defined then stop the process
     drupal_set_message(t('Private file system path not defined. Please define the private file system path !here.',  array('!here' => l('here', 'admin/config/media/file-system'))), 'error');
@@ -441,13 +440,16 @@ function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force
       'suffix' => 'tar.gz',
       'license_key' => $license,
     ));
+    $gz_name = "$path/$filename.tar.gz";
   }
   else {
     if ($data_source == 'maxmind_bin') {
       $url = SMART_IP_MAXMIND_LITE_BIN_DOWNLOAD_BASE_URL . "/$filename.dat.gz";
+      $gz_name = "$path/$filename.dat.gz";
     }
     elseif ($data_source == 'maxmindgeoip2_bin') {
       $url = SMART_IP_MAXMIND_GEOIP2_LITE_BIN_DOWNLOAD_BASE_URL . "/$filename.gz";
+      $gz_name = "$path/$filename.gz";
     }
   }
   
@@ -475,7 +477,12 @@ function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force
   catch (Exception $e) {
     drupal_mkdir('private://smart_ip/db_tmp');
     $source_fp = gzopen(drupal_realpath($gz_name), 'rb');
-    $target_fp = fopen(drupal_realpath("$path/db_tmp/$filename.dat"), 'w');
+    if ($data_source == 'maxmind_bin') {
+      $target_fp = fopen(drupal_realpath("$path/db_tmp/$filename.dat"), 'w');
+    }
+    elseif ($data_source == 'maxmindgeoip2_bin') {
+      $target_fp = fopen(drupal_realpath("$path/db_tmp/$filename"), 'w');
+    }
     while (!gzeof($source_fp)) {
       $string = gzread($source_fp, 4096);
       fwrite($target_fp, $string, strlen($string));
@@ -484,13 +491,20 @@ function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force
     fclose($target_fp);
   }
 
-  try { 
-    $files = file_scan_directory("$path/db_tmp", "/^$filename.*\.dat$/");
-    if (count($files) !== 1) {
+  try {
+    if ($data_source == 'maxmind_bin') {
+      $files = file_scan_directory("$path/db_tmp", "/^$filename.*\.dat$/");
+      $target_filename = "$filename.dat";
+    }
+    elseif ($data_source == 'maxmindgeoip2_bin') {
+      $files = file_scan_directory("$path/db_tmp", "/^$filename$/");
+      $target_filename = "$filename";
+    }
+    if (empty($files) || count($files) !== 1) {
       throw new Exception("Unable to determine the contents of the db_tmp directory ($path/db_tmp)");
     }
     foreach ($files as $file) {
-      if (rename(drupal_realpath($file->uri), drupal_realpath("$path/$filename.dat")) === FALSE) {
+      if (rename(drupal_realpath($file->uri), drupal_realpath("$path/$target_filename")) === FALSE) {
         throw new Exception('Failed to activate the downloaded database');
       }
     }
