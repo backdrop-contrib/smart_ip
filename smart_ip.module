@@ -591,13 +591,13 @@ function smart_ip_get_location($ip_address = NULL) {
       else {
         $result['country'] = '';
       }
-      if (isset($response['subdivisions']['names']['en'])) {
-        $result['region'] = isset($response['subdivisions']['names'][$lang]) ? $response['subdivisions']['names'][$lang] : $response['subdivisions']['names']['en'];
+      if (isset($response['subdivisions'][0]['names']['en'])) {
+        $result['region'] = isset($response['subdivisions'][0]['names'][$lang]) ? $response['subdivisions'][0]['names'][$lang] : $response['subdivisions'][0]['names']['en'];
       }
       else {
         $result['region'] = '';
       }
-      $result['region_code'] = isset($response['subdivisions']['iso_code']) ? $response['subdivisions']['iso_code'] : '';
+      $result['region_code'] = isset($response['subdivisions'][0]['iso_code']) ? $response['subdivisions'][0]['iso_code'] : '';
       if (isset($response['city']['names']['en'])) {
         $result['city'] = isset($response['city']['names'][$lang]) ? $response['city']['names'][$lang] : $response['city']['names']['en'];
       }
@@ -665,8 +665,8 @@ function smart_ip_get_location($ip_address = NULL) {
       if (isset($response['postal']['confidence'])) {
         $result['zip_confidence_factor'] = $response['postal']['confidence'];
       }
-      if (isset($response['subdivisions']['confidence'])) {
-        $result['region_confidence_factor'] = $response['subdivisions']['confidence'];
+      if (isset($response['subdivisions'][0]['confidence'])) {
+        $result['region_confidence_factor'] = $response['subdivisions'][0]['confidence'];
       }
     }
     else {
