@@ -12,9 +12,6 @@
  *   Forms for store administrator to set configuration options.
  */
 function smart_ip_admin_settings($form, &$form_state) {
-  // Define submit handler function
-  $form['#submit'][] = 'smart_ip_admin_settings_submit';
-  $form['#validate'][] = 'smart_ip_admin_settings_validate';
   $smart_ip_source = variable_get('smart_ip_source', 'ipinfodb_service');
   
   // MaxMind's Apache module mod_geoip, X-GeoIP-Country: XX header and Cloudflare IP Geolocation don't support manual lookup and admin debug
@@ -554,6 +551,11 @@ function smart_ip_admin_settings($form, &$form_state) {
   );
   $form = system_settings_form($form);
   $form['actions']['#weight'] = 100;
+
+  // Define submit handler function
+  $form['#submit'][] = 'smart_ip_admin_settings_submit';
+  $form['#validate'][] = 'smart_ip_admin_settings_validate';
+
   return $form;
 }
 
