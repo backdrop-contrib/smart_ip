@@ -2,6 +2,7 @@ name = Smart IP
 description = Smart IP identify visitor's geographical location (longitude/latitude), country, region, city and postal code based on the IP address of the visitor
 package = Location
 core = 7.x
+php = 5.4
 files[] = smart_ip.install
 files[] = smart_ip.module
 files[] = smart_ip.rules.inc
