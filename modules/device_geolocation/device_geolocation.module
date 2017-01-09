@@ -215,7 +215,12 @@ function device_geolocation_detector_ajax() {
     foreach ($_POST as $label => $address) {
       if (!empty($address)) {
         $label = check_plain($label);
-        $smart_ip_session['location'][$label] = check_plain($address);
+        if (!is_array($address)) {
+          $smart_ip_session['location'][$label] = check_plain($address);
+        }
+        else {
+          $smart_ip_session['location'][$label] = $address;
+        }
         smart_ip_session_set('device_geolocation', TRUE);
       }
     }
