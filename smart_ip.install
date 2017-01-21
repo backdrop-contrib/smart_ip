@@ -4,6 +4,7 @@
  * @file
  * Installation callback for Smart IP.
  */
+define('SMART_IP_MINIMUM_PHP', '5.4');
 
 /**
  * Implements hook_requirements().
