@@ -567,14 +567,14 @@ function smart_ip_maxmind_bin_db_up_to_date($version, $last_update_time) {
   if ($version == SMART_IP_MAXMIND_BIN_LICENSED_VERSION) {
     $wednesday = strtotime('first Wednesday', $time_now);
     if ($wednesday <= $time_now && $wednesday > $last_update_time) {
-      return TRUE;
+      return FALSE;
     }
   }
   elseif ($version == SMART_IP_MAXMIND_BIN_LITE_VERSION) {
     $first_wed = strtotime('first Wednesday of this month', $time_now);
     if ($first_wed <= $time_now && $first_wed > $last_update_time) {
-      return TRUE;
+      return FALSE;
     }
   }
-  return FALSE;  
+  return TRUE;  
 }
