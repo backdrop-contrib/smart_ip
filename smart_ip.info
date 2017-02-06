@@ -10,7 +10,6 @@ files[] = includes/smart_ip.utility.inc
 files[] = includes/smart_ip.admin.inc
 files[] = includes/smart_ip.region_lookup.inc
 files[] = includes/smart_ip.tokens.inc
-files[] = includes/IP2Location.inc
 files[] = includes/geoip.inc
 files[] = includes/geoipcity.inc
 files[] = includes/geoipregionvars.php
