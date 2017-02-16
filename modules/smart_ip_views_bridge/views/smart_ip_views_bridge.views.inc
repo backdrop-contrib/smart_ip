@@ -10,11 +10,13 @@
  * Implements hook_views_query_alter().
  */
 function smart_ip_views_bridge_views_query_alter(&$view, &$query) {
+  $smart_ip_session = smart_ip_session_get('smart_ip');
   foreach ($query->where as $where_index => $items) {
     foreach ($items as $item_index => $conditions) {
       if (is_array($conditions)) {
         foreach ($conditions as $condition_index => $condition) {
           $condition_value = $condition['value'];
+          
           if (is_array($condition_value)) {
             foreach ($condition_value as $value) {
               $smart_ip_index_count = 0;
@@ -26,8 +28,8 @@ function smart_ip_views_bridge_views_query_alter(&$view, &$query) {
                 $smart_ip_index = explode('.', $value);
                 $smart_ip_index_count = count($smart_ip_index);
               }
-              elseif ($smart_ip_index_count == 3 && isset($_SESSION[$smart_ip_index[0]][$smart_ip_index[1]][$smart_ip_index[2]])) {
-                $values[] = $_SESSION[$smart_ip_index[0]][$smart_ip_index[1]][$smart_ip_index[2]];
+              elseif ($smart_ip_index_count == 3 && $smart_ip_index[0] == 'smart_ip' && isset($smart_ip_session[$smart_ip_index[1]][$smart_ip_index[2]])) {
+                $values[] = $smart_ip_session[$smart_ip_index[1]][$smart_ip_index[2]];
               }
             }
             if (isset($values)) {
@@ -41,14 +43,23 @@ function smart_ip_views_bridge_views_query_alter(&$view, &$query) {
               $smart_ip_index = explode('.', $condition_value);
               $smart_ip_index_count = count($smart_ip_index);
             }
-            if ($smart_ip_index_count == 3 && isset($_SESSION[$smart_ip_index[0]][$smart_ip_index[1]][$smart_ip_index[2]])) {
-              $view->query->where[$where_index][$item_index][$condition_index]['value'] = $_SESSION[$smart_ip_index[0]][$smart_ip_index[1]][$smart_ip_index[2]];
+            if ($smart_ip_index_count == 3 && $smart_ip_index[0] == 'smart_ip' && isset($smart_ip_session[$smart_ip_index[1]][$smart_ip_index[2]])) {
+              $view->query->where[$where_index][$item_index][$condition_index]['value'] = $smart_ip_session[$smart_ip_index[1]][$smart_ip_index[2]];
             }
           }
         }
       }
     }
   }
+}
+
+/**
+ * Implements hook_views_data_alter().
+ */
+function smart_ip_views_data_alter(&$data) {
+  // Override Location module's country filter and argument handlers
+  $data['location']['country']['filter']['handler'] = 'smart_ip_views_bridge_handler_filter_location_country';
+  $data['location']['country']['argument']['handler'] = 'smart_ip_views_bridge_handler_argument_location_country';
 }
 
 /**
