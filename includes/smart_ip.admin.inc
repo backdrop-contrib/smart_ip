@@ -606,13 +606,14 @@ function _smart_ip_bin_database_update_submit($form, &$form_state) {
     // Utility functions for loading database from external sources
     module_load_include('inc', 'smart_ip', 'includes/smart_ip.utility');
     // Force the update even if the database is up-to-date
-    if ($form_state['values']['smart_ip_source'] == 'maxmind_bin') {
+    if ($form_state['values']['smart_ip_source'] == 'maxmind_bin' && $form_state['values']['smart_ip_maxmind_bin_db_auto_update']) {
       smart_ip_maxmind_bin_db_update($form_state['values']['smart_ip_maxmind_license'], FALSE, TRUE);
+      $form_state['storage']['smart_ip_db_message'] = t('The MaxMind binary database has been updated.');
     }
-    elseif ($form_state['values']['smart_ip_source'] == 'maxmindgeoip2_bin') {
+    elseif ($form_state['values']['smart_ip_source'] == 'maxmindgeoip2_bin' && $form_state['values']['smart_ip_maxmind_geoip2_bin_db_auto_update']) {
       smart_ip_maxmind_bin_db_update($form_state['values']['smart_ip_maxmind_geoip2_license'], FALSE, TRUE);
+      $form_state['storage']['smart_ip_db_message'] = t('The MaxMind binary database has been updated.');
     }
-    $form_state['storage']['smart_ip_db_message'] = t('The MaxMind binary database has been updated.');
     $form_state['rebuild'] = TRUE;
   }
 }
