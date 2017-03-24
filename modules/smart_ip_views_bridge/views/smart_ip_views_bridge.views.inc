@@ -3,8 +3,15 @@
 
 /**
 * @file
-* Views hooks implemention.
+* Views hooks implementation.
 */
+
+/**
+ * Implements hook_search_api_views_query_alter().
+ */
+function smart_ip_views_bridge_search_api_views_query_alter(view &$view, SearchApiViewsQuery &$query) {
+  smart_ip_views_bridge_views_query_alter($view, $query);
+}
 
 /**
  * Implements hook_views_query_alter().
@@ -15,8 +22,12 @@ function smart_ip_views_bridge_views_query_alter(&$view, &$query) {
     foreach ($items as $item_index => $conditions) {
       if (is_array($conditions)) {
         foreach ($conditions as $condition_index => $condition) {
-          $condition_value = $condition['value'];
-          
+          if ($query->plugin_name == 'search_api_views_query') {
+            $condition_value = $condition[1];
+          }
+          else {
+            $condition_value = $condition['value'];
+          }
           if (is_array($condition_value)) {
             foreach ($condition_value as $value) {
               $smart_ip_index_count = 0;
@@ -33,7 +44,12 @@ function smart_ip_views_bridge_views_query_alter(&$view, &$query) {
               }
             }
             if (isset($values)) {
-              $view->query->where[$where_index][$item_index][$condition_index]['value'] = $values;
+              if ($query->plugin_name == 'search_api_views_query') {
+                $view->query->where[$where_index][$item_index][$condition_index][1] = $values;
+              }
+              else {
+                $view->query->where[$where_index][$item_index][$condition_index]['value'] = $values;
+              }
             }
           }
           else {
@@ -44,7 +60,12 @@ function smart_ip_views_bridge_views_query_alter(&$view, &$query) {
               $smart_ip_index_count = count($smart_ip_index);
             }
             if ($smart_ip_index_count == 3 && $smart_ip_index[0] == 'smart_ip' && isset($smart_ip_session[$smart_ip_index[1]][$smart_ip_index[2]])) {
-              $view->query->where[$where_index][$item_index][$condition_index]['value'] = $smart_ip_session[$smart_ip_index[1]][$smart_ip_index[2]];
+              if ($query->plugin_name == 'search_api_views_query') {
+                $view->query->where[$where_index][$item_index][$condition_index][1] = $smart_ip_session[$smart_ip_index[1]][$smart_ip_index[2]];
+              }
+              else {
+                $view->query->where[$where_index][$item_index][$condition_index]['value'] = $smart_ip_session[$smart_ip_index[1]][$smart_ip_index[2]];
+              }
             }
           }
         }
