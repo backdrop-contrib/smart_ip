@@ -78,9 +78,11 @@ function smart_ip_views_bridge_views_query_alter(&$view, &$query) {
  * Implements hook_views_data_alter().
  */
 function smart_ip_views_data_alter(&$data) {
-  // Override Location module's country filter and argument handlers
+  // Override Location module's country/province filter and argument handlers
   $data['location']['country']['filter']['handler'] = 'smart_ip_views_bridge_handler_filter_location_country';
   $data['location']['country']['argument']['handler'] = 'smart_ip_views_bridge_handler_argument_location_country';
+  $data['location']['province']['filter']['handler'] = 'smart_ip_views_bridge_handler_filter_location_region';
+  $data['location']['province']['argument']['handler'] = 'smart_ip_views_bridge_handler_argument_location_region';
 }
 
 /**
