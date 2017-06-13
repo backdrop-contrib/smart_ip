@@ -27,7 +27,20 @@ function device_geolocation_init() {
     else {
       drupal_add_js(array('device_geolocation' => array('ask_geolocate' => TRUE)), 'setting');
     }
-    drupal_add_js('//maps.googleapis.com/maps/api/js?key=' . variable_get('device_geolocation_google_map_api', NULL), 'external');
+    $param = '';
+    $google_map_api = variable_get('device_geolocation_google_map_api', NULL);
+    $google_region  = variable_get('device_geolocation_google_map_region', NULL);
+    $google_map_language = variable_get('device_geolocation_google_map_language', NULL);
+    if ($google_map_api) {
+      $param .= "key=$google_map_api"; 
+    }
+    if ($google_region) {
+      $param .= "&region=$google_region"; 
+    }
+    if ($google_map_language) {
+      $param .= "&language=$google_map_language"; 
+    }
+    drupal_add_js("//maps.googleapis.com/maps/api/js?$param", 'external');
     drupal_add_js(drupal_get_path('module', 'device_geolocation') . '/js/device_geolocation.js', array('scope' => 'footer', 'weight' => 1));
   }
 }
@@ -150,6 +163,17 @@ function device_geolocation_form_alter(&$form, &$form_state, $form_id) {
       '#type'          => 'textfield',
       '#description'   => t('The use of Google map service requires API key. Get your API key !here.', array('!here' => l(t('here'), 'https://developers.google.com/maps/documentation/javascript/get-api-key'))),
       '#default_value' => variable_get('device_geolocation_google_map_api', NULL),
+    );
+    $form['device_geolocation_preferences']['device_geolocation_google_map_region'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Google map region'),
+      '#default_value' => variable_get('device_geolocation_google_map_region', NULL),
+    );
+    $form['device_geolocation_preferences']['device_geolocation_google_map_language'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Google map localization'),
+      '#default_value' => variable_get('device_geolocation_google_map_language', NULL),
+      '#description' => t('See !google_localization', array('!google_localization' => l(t('Google Maps API - Localizing the Map'), 'https://developers.google.com/maps/documentation/javascript/localization'))),
     );
     $form['#validate'][] = '_device_geolocation_check_frequency_validate';
   }
