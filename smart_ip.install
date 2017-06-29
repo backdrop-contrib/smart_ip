@@ -27,7 +27,7 @@ function smart_ip_requirements($phase = 'runtime') {
   }  
 
   if ($phase == 'runtime') {
-    $correct_key = variable_set('smart_ip_correct_ipinfodb_key', FALSE);
+    $correct_key = variable_get('smart_ip_correct_ipinfodb_key', FALSE);
     if (!$correct_key) {
       $smart_ip_source = variable_get('smart_ip_source', 'ipinfodb_service');
       if ($smart_ip_source == 'ipinfodb_service') {
