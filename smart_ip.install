@@ -46,9 +46,9 @@ function smart_ip_requirements($phase = 'runtime') {
           );
         }
         else {
-          $response = drupal_http_request(smart_ip_get_ipinfodb_url($ipinfodb_key, '127.0.0.1'));
+          $response = backdrop_http_request(smart_ip_get_ipinfodb_url($ipinfodb_key, '127.0.0.1'));
           if (isset($response->data)) {
-            $stat = drupal_json_decode($response->data);
+            $stat = backdrop_json_decode($response->data);
             if ((isset($stat['Status']) && ($stat['Status'] == 'MISSING API KEY' || $stat['Status'] == 'INVALID API KEY')) || (isset($stat['statusCode']) && ($stat['statusCode'] == 'ERROR'))) {
               $requirements['smart_ip'] = array(
                 'title'       => 'IPInfoDB API key',
@@ -142,7 +142,7 @@ function smart_ip_schema_definition_array() {
  */
 function smart_ip_schema() {
   $schema['smart_ip'] = smart_ip_schema_definition_array();
-  $schema['cache_smart_ip'] = drupal_get_schema_unprocessed('system', 'cache');
+  $schema['cache_smart_ip'] = backdrop_get_schema_unprocessed('system', 'cache');
   $schema['cache_smart_ip']['description'] = 'Cache table for storing temporary data during Smart IP database update.';
   return $schema;
 }

@@ -65,7 +65,7 @@ function smart_ip_rules_condition_info() {
  * Returns a list of countires from locale module.
  */
 function smart_ip_country_list() {
-  include_once DRUPAL_ROOT . '/includes/locale.inc';
+  include_once BACKDROP_ROOT . '/includes/locale.inc';
   return country_get_list();
 }
 

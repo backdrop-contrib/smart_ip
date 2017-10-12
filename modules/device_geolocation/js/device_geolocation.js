@@ -1,5 +1,5 @@
 (function ($) {
-  Drupal.behaviors.deviceGeolocationAutoDetect = {
+  Backdrop.behaviors.deviceGeolocationAutoDetect = {
     attach: function (context, settings) {
       var geolocation_source = settings.smart_ip_src.geocoded_smart_ip;
       var longitude = null;
@@ -87,7 +87,7 @@
                 address['latitude']  = latitude;
                 address['longitude'] = longitude;
                 $.ajax({
-                  url:  Drupal.settings.basePath + '?q=geolocate-user',
+                  url:  Backdrop.settings.basePath + '?q=geolocate-user',
                   type: 'POST',
                   dataType: 'json',
                   data: address
@@ -96,7 +96,7 @@
             }
             else {
               $.ajax({
-                url:  Drupal.settings.basePath + '?q=geolocate-user',
+                url:  Backdrop.settings.basePath + '?q=geolocate-user',
                 type: 'POST',
                 dataType: 'json',
                 data: ({

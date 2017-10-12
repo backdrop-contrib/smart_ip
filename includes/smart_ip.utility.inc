@@ -33,7 +33,7 @@ function smart_ip_update_db_batch($src = NULL) {
     'init_message'     => $recover ? t('Recovering...') : t('Starting...'),
     'progress_message' => t('Elapsed: @elapsed.'),
     'error_message'    => t('Downloading/extracting CSV has encountered an error.'),
-    'file'             => drupal_get_path('module', 'smart_ip') . '/includes/smart_ip.utility.inc',
+    'file'             => backdrop_get_path('module', 'smart_ip') . '/includes/smart_ip.utility.inc',
   );
   return $batch;
 }
@@ -54,7 +54,7 @@ function smart_ip_get_zip($src = NULL, &$context) {
   }
   $zip_files = file_scan_directory($path, '/\.zip$/');
   foreach ($zip_files as $zip_file) {
-    $context['results']['#zip_file'] = drupal_realpath($zip_file->uri);
+    $context['results']['#zip_file'] = backdrop_realpath($zip_file->uri);
   }
   if ($config->get('smart_ip_get_zip_done')) {
     // We are in recovery mode. Using previous downloaded zip.
@@ -74,7 +74,7 @@ function smart_ip_get_zip($src = NULL, &$context) {
     $context['message']  = t('Using manually uploaded @zip file', array('@zip' => $context['results']['#zip_file']));
   }
   else {
-    $context['results']['#zip_file'] = drupal_realpath($path . '/geoip_db.zip');
+    $context['results']['#zip_file'] = backdrop_realpath($path . '/geoip_db.zip');
     $context['finished'] = 50 / 100; 
     if (@copy($src, $context['results']['#zip_file'])) {
       // Update our progress information.
@@ -136,10 +136,10 @@ function smart_ip_extract_zip(&$context) {
     foreach ($csv_files as $csv_file) {
       file_unmanaged_move($csv_file->uri, $path . '/' . $csv_file->filename, FILE_EXISTS_REPLACE);
       if (strpos($csv_file->filename, SMART_IP_MAXMIND_LOCATION_CSV) !== FALSE) {
-        $context['results']['#location_csv_file'] = drupal_realpath($path . '/' . $csv_file->filename);
+        $context['results']['#location_csv_file'] = backdrop_realpath($path . '/' . $csv_file->filename);
       }
       elseif (strpos($csv_file->filename, SMART_IP_MAXMIND_BLOCKS_CSV) !== FALSE) {
-        $context['results']['#blocks_csv_file'] = drupal_realpath($path . '/' . $csv_file->filename);
+        $context['results']['#blocks_csv_file'] = backdrop_realpath($path . '/' . $csv_file->filename);
       }
     }
     file_unmanaged_delete_recursive(str_replace($csv_file->filename, '', $csv_file->uri));
@@ -395,17 +395,17 @@ function smart_ip_update_db_batch_finished($success, $results, $operations, $ela
       // Set busy indicator to FALSE so that it can continue the 
       // process for the next try
       config_set('smart_ip.settings', 'smart_ip_db_update_busy', FALSE);
-      drupal_set_message($results['#abort'], 'error');
+      backdrop_set_message($results['#abort'], 'error');
     }
     else {
-      drupal_set_message(t('Smart IP database sucessfully updated (elapsed time: %elapsed).', array('%elapsed' => $elapsed)));
+      backdrop_set_message(t('Smart IP database sucessfully updated (elapsed time: %elapsed).', array('%elapsed' => $elapsed)));
     }    
   }
   else {
     // An error occurred.
     // $operations contains the operations that remained unprocessed.
     $error_operation = reset($operations);
-    drupal_set_message(t('Error occurred while processing @operation with arguments : @args', array('@operation' => $error_operation[0], '@args' => print_r($error_operation[0], TRUE))), 'error');
+    backdrop_set_message(t('Error occurred while processing @operation with arguments : @args', array('@operation' => $error_operation[0], '@args' => print_r($error_operation[0], TRUE))), 'error');
   }
 }
 
@@ -441,7 +441,7 @@ function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force
   $path = file_stream_wrapper_uri_normalize('private://smart_ip');
   if (!file_prepare_directory($path, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS)) {
     // Private file system path not defined then stop the process
-    drupal_set_message(t('Private file system path not defined. Please define the private file system path !here.',  array('!here' => l('here', 'admin/config/media/file-system'))), 'error');
+    backdrop_set_message(t('Private file system path not defined. Please define the private file system path !here.',  array('!here' => l('here', 'admin/config/media/file-system'))), 'error');
     return FALSE;
   }
   if ($version == SMART_IP_MAXMIND_BIN_LICENSED_VERSION) {
@@ -484,21 +484,21 @@ function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force
 
   try {   
 		if (class_exists('PharData')) {
-			$p = new PharData(drupal_realpath($gz_name));
-			$p->extractTo(drupal_realpath("$path/db_tmp"));
+			$p = new PharData(backdrop_realpath($gz_name));
+			$p->extractTo(backdrop_realpath("$path/db_tmp"));
 		}
 		else {
       throw new Exception('Server does not have Phar extension installed');
 		}
   }
   catch (Exception $e) {
-    drupal_mkdir('private://smart_ip/db_tmp');
-    $source_fp = gzopen(drupal_realpath($gz_name), 'rb');
+    backdrop_mkdir('private://smart_ip/db_tmp');
+    $source_fp = gzopen(backdrop_realpath($gz_name), 'rb');
     if ($data_source == 'maxmind_bin') {
-      $target_fp = fopen(drupal_realpath("$path/db_tmp/$filename.dat"), 'w');
+      $target_fp = fopen(backdrop_realpath("$path/db_tmp/$filename.dat"), 'w');
     }
     elseif ($data_source == 'maxmindgeoip2_bin') {
-      $target_fp = fopen(drupal_realpath("$path/db_tmp/$filename"), 'w');
+      $target_fp = fopen(backdrop_realpath("$path/db_tmp/$filename"), 'w');
     }
     while (!gzeof($source_fp)) {
       $string = gzread($source_fp, 4096);
@@ -521,7 +521,7 @@ function smart_ip_maxmind_bin_db_update($license = '', $cron_run = FALSE, $force
       throw new Exception("Unable to determine the contents of the db_tmp directory ($path/db_tmp)");
     }
     foreach ($files as $file) {
-      if (rename(drupal_realpath($file->uri), drupal_realpath("$path/$target_filename")) === FALSE) {
+      if (rename(backdrop_realpath($file->uri), backdrop_realpath("$path/$target_filename")) === FALSE) {
         throw new Exception('Failed to activate the downloaded database');
       }
     }

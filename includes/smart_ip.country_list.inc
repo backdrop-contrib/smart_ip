@@ -14,11 +14,11 @@
  *   An array of all country code => country name pairs.
  */
 function country_get_predefined_list() {
-  include_once DRUPAL_ROOT . '/includes/locale.inc';
+  include_once BACKDROP_ROOT . '/includes/locale.inc';
   $countries = country_get_list();
 
   // Allow other modules to modify country list via hook_smart_ip_country_predefined_list_alter()
-  drupal_alter('smart_ip_country_predefined_list', $countries);
+  backdrop_alter('smart_ip_country_predefined_list', $countries);
 
   return $countries;
 }

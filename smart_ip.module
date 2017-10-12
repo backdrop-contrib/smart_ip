@@ -40,7 +40,7 @@ define('SMART_IP_MAXMIND_GEOIP2_FILENAME_LINCENSED_COUNTRY', 'GeoIP2-Country.mmd
 
 
 /******************************************************************************
- * Drupal Hooks                                                               *
+ * Backdrop Hooks                                                               *
  ******************************************************************************/
 /**
  * Implements hook_help().
@@ -52,7 +52,7 @@ function smart_ip_help($path, $arg) {
       '<p>' . 
       t("Smart IP identify visitor's geographical location (longitude/latitude), country, 
       region, city and postal code based on the IP address of the user. These information 
-      will be stored at session variable (&#36;_SESSION) with array key 'smart_ip' and Drupal 
+      will be stored at session variable (&#36;_SESSION) with array key 'smart_ip' and Backdrop 
       &#36;user->data object with array key 'geoip_location' of the user but optionally it can 
       be disabled (by role) at Smart IP admin page. Other modules can use the function 
       smart_ip_get_location(&#36;ip_address) that returns an array containing the visitor's 
@@ -121,7 +121,7 @@ function smart_ip_init() {
   $smart_ip_session = smart_ip_session_get('smart_ip', FALSE);
   if (empty($smart_ip_session['location'])) {
     $roles_to_geo_locate = $config->get('smart_ip_roles_to_geolocate');
-    if(in_array(DRUPAL_ANONYMOUS_RID, $roles_to_geo_locate) ){
+    if(in_array(BACKDROP_ANONYMOUS_ROLE, $roles_to_geo_locate) ){
       global $user;
       $location = smart_ip_get_current_visitor_location_data();
       smart_ip_set_location_data($user, $location);
@@ -130,7 +130,7 @@ function smart_ip_init() {
   }
   if (isset($smart_ip_session['location'])) {
     // Make user geolocation available to javascript
-    drupal_add_js(array(
+    backdrop_add_js(array(
       'smart_ip' => $smart_ip_session,
       'smart_ip_src' => array(
         'smart_ip' => SMART_IP_SOURCE_SMART_IP,
@@ -171,7 +171,7 @@ function smart_ip_cron() {
           'data'    => 'smart_ip_cron_key=' . rawurlencode(trim(state_get('cron_key'))),
           'timeout' => 30,
         );
-        drupal_http_request($base_root . '/?q=smart_ip_batch', $options);
+        backdrop_http_request($base_root . '/?q=smart_ip_batch', $options);
       }
     }
   }
@@ -202,11 +202,11 @@ function smart_ip_run_batch() {
       ),
     );
     // Set the db update access flag to allow cron to execute db update
-    $_smart_ip_db_update_access = TRUE; 
-    drupal_form_submit('smart_ip_cron_db_update', $form_state);
+    $_smart_ip_db_update_access = TRUE;
+    backdrop_form_submit('smart_ip_cron_db_update', $form_state);
   }
   else {
-    drupal_access_denied();
+    backdrop_access_denied();
   }
 }
 
@@ -225,8 +225,8 @@ function smart_ip_forms($form_id, $args) {
 /**
  * Implements hook_menu().
  *
- * Called when Drupal is building menus.  Cache parameter lets module know
- * if Drupal intends to cache menu or not - different results may be
+ * Called when Backdrop is building menus.  Cache parameter lets module know
+ * if Backdrop intends to cache menu or not - different results may be
  * returned for either case.
  *
  * @return
@@ -239,7 +239,7 @@ function smart_ip_menu() {
     'title'            => 'Smart IP',
     'description'      => 'Configure the Smart IP settings',
     'access arguments' => array('administer smart_ip'),
-    'page callback'    => 'drupal_get_form',
+    'page callback'    => 'backdrop_get_form',
     'page arguments'   => array('smart_ip_admin_settings'),
     'file'             => 'includes/smart_ip.admin.inc',
   );
@@ -282,7 +282,7 @@ function smart_ip_user_login(&$edit, $account) {
     $ip = !empty($config->get('smart_ip_test_ip_address')) ? $config->get('smart_ip_test_ip_address') : ip_address();
     $location = smart_ip_get_location($ip);
     if ($location) {
-      drupal_set_message(t('Using debug IP: %ip / Country: %country / Region: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat / Time zone: %time_zone', array(
+      backdrop_set_message(t('Using debug IP: %ip / Country: %country / Region: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat / Time zone: %time_zone', array(
         '%ip'        => $location['ip_address'], 
         '%country'   => $location['country'],
         '%region'    => $location['region'],
@@ -445,7 +445,7 @@ function smart_ip_get_location($ip_address = NULL) {
   }  
   // Use a static cache if this function is called more often
   // for the same ip on the same page.
-  $results = &drupal_static(__FUNCTION__);
+  $results = &backdrop_static(__FUNCTION__);
   if (isset($results[$ip_address])) {
     return $results[$ip_address];
   }
@@ -499,7 +499,7 @@ function smart_ip_get_location($ip_address = NULL) {
     // MaxMind GeoIP Legacy Web Services
     module_load_include('inc', 'smart_ip', 'includes/smart_ip.country_list');
     $countries = country_get_predefined_list();
-    $request = drupal_http_request(smart_ip_get_maxmindgeoip_url($ip_address));
+    $request = backdrop_http_request(smart_ip_get_maxmindgeoip_url($ip_address));
     if (!empty($request->code) && $request->code == 200 && !empty($request->data)) {
       switch (config_get('smart_ip_maxmind_service')) {
         case 'country':
@@ -589,8 +589,8 @@ function smart_ip_get_location($ip_address = NULL) {
     // MaxMind GeoIP2 Precision Web Services
     global $language;
     $lang = $language->language;
-    $request  = drupal_http_request(smart_ip_get_maxmindgeoip2_url($ip_address));
-    $response = drupal_json_decode($request->data);
+    $request  = backdrop_http_request(smart_ip_get_maxmindgeoip2_url($ip_address));
+    $response = backdrop_json_decode($request->data);
     if (!empty($request->code) && $request->code == 200 && !empty($request->data)) {
       $result['country_code'] = isset($response['country']['iso_code']) ? $response['country']['iso_code'] : '';
       if (isset($response['country']['names']['en'])) {
@@ -686,7 +686,7 @@ function smart_ip_get_location($ip_address = NULL) {
     module_load_include('inc', 'smart_ip', 'includes/geoipcity');
     $db_path = $config->get('smart_ip_maxmind_bin_custom_path');
     if (empty($db_path) || $config->get('smart_ip_maxmind_bin_db_auto_update')) {
-      $db_path = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
+      $db_path = backdrop_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
     }
     $version  = $config->get('smart_ip_maxmind_bin_version');
     $edition  = $config->get('smart_ip_maxmind_bin_edition');
@@ -743,7 +743,7 @@ function smart_ip_get_location($ip_address = NULL) {
     $filename = smart_ip_get_geoip2_bin_source_filename($version, $edition);
     $db_path  = $config->get('smart_ip_maxmind_geoip2_bin_custom_path');
     if (empty($db_path)) {
-      $db_path = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
+      $db_path = backdrop_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
     }
     $db_path  = "$db_path/$filename";
     if (file_exists($db_path)) {
@@ -824,8 +824,8 @@ function smart_ip_get_location($ip_address = NULL) {
     // IPInfoDB.com service
     $ipinfodb_key = $config->get('smart_ip_ipinfodb_key');
     $version = $config->get('smart_ip_use_ipinfodb_api_version');
-    $request = drupal_http_request(smart_ip_get_ipinfodb_url($ipinfodb_key, $ip_address, $version));
-    $request_data = isset($request->data) ? drupal_json_decode($request->data) : '';
+    $request = backdrop_http_request(smart_ip_get_ipinfodb_url($ipinfodb_key, $ip_address, $version));
+    $request_data = isset($request->data) ? backdrop_json_decode($request->data) : '';
     if (!empty($request_data)) {
       foreach ($request_data as &$datum) {
         if ($datum == '-') {
@@ -913,7 +913,7 @@ function smart_ip_get_location($ip_address = NULL) {
     }
   }
   // Allow other modules to modify result via hook_smart_ip_get_location_alter()
-  drupal_alter('smart_ip_get_location', $result);
+  backdrop_alter('smart_ip_get_location', $result);
   $results[$ip_address] = $result;
   return $result;
 }
@@ -1046,7 +1046,7 @@ function smart_ip_set_session_data($location) {
 function smart_ip_set_user_data($account, $location) {
   if ($account->uid != 0) {
     $user_obj = user_load($account->uid);
-    drupal_alter('smart_ip_user_save', $user_obj, $location);
+    backdrop_alter('smart_ip_user_save', $user_obj, $location);
     user_save($user_obj, array('data' => array('geoip_location' => $location)));
   }
 }
@@ -1117,16 +1117,16 @@ function smart_ip_check_allowed_page() {
     else {
       $url = $_GET['q'];
     }
-    // Convert the Drupal path to lowercase
-    $path = drupal_strtolower(drupal_get_path_alias($url));
+    // Convert the Backdrop path to lowercase
+    $path = backdrop_strtolower(backdrop_get_path_alias($url));
     // Compare the lowercase internal and lowercase path alias (if any).
-    $page_match = drupal_match_path($path, $pages);
+    $page_match = backdrop_match_path($path, $pages);
     if ($path != $url) {
-      $page_match = $page_match || drupal_match_path($url, $pages);
+      $page_match = $page_match || backdrop_match_path($url, $pages);
     }
     elseif ($path == $url) {
-      $url = drupal_get_normal_path($url);
-      $page_match = $page_match || drupal_match_path($url, $pages);
+      $url = backdrop_get_normal_path($url);
+      $page_match = $page_match || backdrop_match_path($url, $pages);
     }
     return $page_match;
   }
@@ -1195,7 +1195,7 @@ function smart_ip_get_maxmindgeoip2_url($ip_address) {
  * Helper function for grabbing Maxmind's CSV archive filename.
  */
 function smart_ip_get_csv_source_filename() {
-  $maxmind_csv = &drupal_static(__FUNCTION__);
+  $maxmind_csv = &backdrop_static(__FUNCTION__);
   
   if (!isset($maxmind_csv)) {
     // Get CSV list of zip files
@@ -1262,7 +1262,7 @@ function smart_ip_get_geoip2_bin_source_filename($version = SMART_IP_MAXMIND_BIN
  * Helper function for grabbing region name (FIPS).
  */
 function smart_ip_get_region_static($country_code, $region_code) {
-  $region = &drupal_static(__FUNCTION__);
+  $region = &backdrop_static(__FUNCTION__);
   
   if (!isset($region[$country_code][$region_code])) {
     module_load_include('inc', 'smart_ip', 'includes/smart_ip.region_lookup');

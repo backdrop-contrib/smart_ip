@@ -1,5 +1,5 @@
 (function ($) {
-  Drupal.behaviors.deviceGeolocationCheck = {
+  Backdrop.behaviors.deviceGeolocationCheck = {
     attach: function (context, settings) {
       var uri = location.pathname.substring(1, location.pathname.length);
       $.ajax({
@@ -9,7 +9,7 @@
         success: function(data) {
           if (data.ask_geolocate) {
             settings.device_geolocation.ask_geolocate = true;
-            Drupal.behaviors.deviceGeolocationAutoDetect.attach(context, settings);
+            Backdrop.behaviors.deviceGeolocationAutoDetect.attach(context, settings);
           }
         }
       });

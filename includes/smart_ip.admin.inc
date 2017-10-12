@@ -146,7 +146,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   );
   
   // Form for Smart IP source selection
-  $private_folder = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
+  $private_folder = backdrop_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
   $form['smart_ip_data_source_selection']['smart_ip_source'] = array(
     '#type'          => 'radios',
     '#title'         => t('Select Smart IP source'),
@@ -293,7 +293,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   $form['smart_ip_data_source_selection']['smart_ip_ip2location_bin_path'] = array(
     '#type'          => 'textfield',
     '#title'         => t('IP2Location binary database IPV4 file full path'),
-    '#description'   => t('Define the full path where the IP2Location IPV4 binary database file is located in your server (Note: it is your responsibility to add security on this path. See the online handbook for !security). Include the filename. Eg. /var/www/sites/default/private/smart_ip/IP2LOCATION-LITE-DB11.BIN', array('!security' => l(t('more information about securing private files'), 'https://www.drupal.org/documentation/modules/file'))),
+    '#description'   => t('Define the full path where the IP2Location IPV4 binary database file is located in your server (Note: it is your responsibility to add security on this path. See the online handbook for !security). Include the filename. Eg. /var/www/sites/default/private/smart_ip/IP2LOCATION-LITE-DB11.BIN', array('!security' => l(t('more information about securing private files'), 'https://backdropcms.org/user-guide/file-system'))),
     '#default_value' => $config->get('smart_ip_ip2location_bin_path'),
     '#states'        => array(
       'visible' => array(
@@ -306,7 +306,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   $form['smart_ip_data_source_selection']['smart_ip_ip2location_ipv6_bin_path'] = array(
     '#type'          => 'textfield',
     '#title'         => t('IP2Location binary database IPV6 file full path'),
-    '#description'   => t('Define the full path where the IP2Location IPV6 binary database file is located in your server (Note: it is your responsibility to add security on this path. See the online handbook for !security). Include the filename. Eg. /var/www/sites/default/private/smart_ip/IP2LOCATION-LITE-DB11.IPV6.BIN', array('!security' => l(t('more information about securing private files'), 'https://www.drupal.org/documentation/modules/file'))),
+    '#description'   => t('Define the full path where the IP2Location IPV6 binary database file is located in your server (Note: it is your responsibility to add security on this path. See the online handbook for !security). Include the filename. Eg. /var/www/sites/default/private/smart_ip/IP2LOCATION-LITE-DB11.IPV6.BIN', array('!security' => l(t('more information about securing private files'), 'https://backdropcms.org/user-guide/file-system'))),
     '#default_value' => $config->get('smart_ip_ip2location_ipv6_bin_path'),
     '#states'        => array(
       'visible' => array(
@@ -385,7 +385,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   $form['smart_ip_data_source_selection']['smart_ip_maxmind_bin_custom_path'] = array(
     '#type'          => 'textfield',
     '#title'         => t('MaxMind GeoIP Legacy binary database custom path'),
-    '#description'   => t('Define the path where the MaxMind GeoIP Legacy binary database file is located in your server (Note: it is your responsibility to add security on this path. See the online handbook for !security). Include preceding slash but do not include trailing slash. This is useful for multi Drupal sites with each of their Smart IP module looks to a common MaxMind GeoIP Legacy binary database and it can be also useful for server with installed GeoIPLookup CLI tool where its MaxMind GeoIP Legacy binary database file can be used here (usually its path is located at /usr/share/GeoIP). This path will be ignored if "Automatic MaxMind GeoIP Legacy binary database update" is enabled which uses the Drupal private file system path. Leave it blank if you prefer the default Drupal private file system path.', array('!security' => l(t('more information about securing private files'), 'https://www.drupal.org/documentation/modules/file'))),
+    '#description'   => t('Define the path where the MaxMind GeoIP Legacy binary database file is located in your server (Note: it is your responsibility to add security on this path. See the online handbook for !security). Include preceding slash but do not include trailing slash. This is useful for multi Backdrop sites with each of their Smart IP module looks to a common MaxMind GeoIP Legacy binary database and it can be also useful for server with installed GeoIPLookup CLI tool where its MaxMind GeoIP Legacy binary database file can be used here (usually its path is located at /usr/share/GeoIP). This path will be ignored if "Automatic MaxMind GeoIP Legacy binary database update" is enabled which uses the Backdrop private file system path. Leave it blank if you prefer the default Backdrop private file system path.', array('!security' => l(t('more information about securing private files'), 'https://backdropcms.org/user-guide/file-system'))),
     '#default_value' => $config->get('smart_ip_maxmind_bin_custom_path'),
     '#states'        => array(
       'visible' => array(
@@ -465,7 +465,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   $form['smart_ip_data_source_selection']['smart_ip_maxmind_geoip2_bin_custom_path'] = array(
     '#type'          => 'textfield',
     '#title'         => t('MaxMind GeoIP2 binary database custom path'),
-    '#description'   => t('Define the path where the MaxMind GeoIP2 binary database file is located in your server (Note: it is your responsibility to add security on this path. See the online handbook for !security). Include preceding slash but do not include trailing slash. This is useful for multi Drupal sites with each of their Smart IP module looks to a common Maxmind binary database and it can be also useful for server with installed GeoIPLookup CLI tool where its Maxmind binary database file can be used here (usually its path is located at /usr/share/GeoIP). This path will be ignored if "Automatic Maxmind binary database update" is enabled which uses the Drupal private file system path. Leave it blank if you prefer the default Drupal private file system path.', array('!security' => l(t('more information about securing private files'), 'https://www.drupal.org/documentation/modules/file'))),
+    '#description'   => t('Define the path where the MaxMind GeoIP2 binary database file is located in your server (Note: it is your responsibility to add security on this path. See the online handbook for !security). Include preceding slash but do not include trailing slash. This is useful for multi Backdrop sites with each of their Smart IP module looks to a common Maxmind binary database and it can be also useful for server with installed GeoIPLookup CLI tool where its Maxmind binary database file can be used here (usually its path is located at /usr/share/GeoIP). This path will be ignored if "Automatic Maxmind binary database update" is enabled which uses the Backdrop private file system path. Leave it blank if you prefer the default Backdrop private file system path.', array('!security' => l(t('more information about securing private files'), 'https://backdropcms.org/user-guide/file-system'))),
     '#default_value' => $config->get('smart_ip_maxmind_geoip2_bin_custom_path'),
     '#states'        => array(
       'visible' => array(
@@ -502,7 +502,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   );
   
   // Form to select user roles to geolocate
-  drupal_add_js(drupal_get_path('module', 'smart_ip') . '/js/smart_ip-admin.js');
+  backdrop_add_js(backdrop_get_path('module', 'smart_ip') . '/js/smart_ip-admin.js');
   $form['smart_ip_preferences']['smart_ip_roles_to_geolocate'] = array(
     '#type'          => 'checkboxes',
     '#title'         => t('Roles To Geolocate'),
@@ -520,7 +520,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   );
   
   $form['smart_ip_preferences']['smart_ip_allowed_pages'] = array(
-    '#title'         => t("Acquire/update user's geolocation on specific Drupal native pages"),
+    '#title'         => t("Acquire/update user's geolocation on specific Backdrop native pages"),
     '#type'          => 'textarea',
     '#rows'          => 5,
     '#description'   => t("Specify pages by using their paths (not the aliased path). Enter one path per line. The '*' character is a wildcard. Example paths are blog for the blog page and blog/* for every personal blog. &lt;front&gt; is the front page. Leave blank if all pages."),
@@ -597,7 +597,7 @@ function _smart_ip_database_update_submit($form, &$form_state) {
  */
 function _smart_ip_database_reset_update_submit($form, &$form_state) {
   smart_ip_reset_db_update_meta_data();
-  drupal_set_message(t('The Smart IP local database update process is now reset.'));
+  backdrop_set_message(t('The Smart IP local database update process is now reset.'));
 }
 
 /**
@@ -662,7 +662,7 @@ function smart_ip_admin_settings_validate($form, &$form_state) {
   $form_state['values']['smart_ip_allowed_pages'] = str_replace('&lt;front&gt;', '<front>', $list);
   
   if ($form_state['values']['smart_ip_source'] == 'local_db') {
-    $db_path = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
+    $db_path = backdrop_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
     if (empty($db_path)) {
       form_set_error('smart_ip_source', t('Please define the "Private file system path" !here.', array('!here' => l(t('here'), 'admin/config/media/file-system'))));
     }
@@ -752,7 +752,7 @@ function smart_ip_admin_settings_validate($form, &$form_state) {
   if ($form_state['values']['smart_ip_source'] == 'maxmind_bin') {
     $file = smart_ip_get_bin_source_filename($form_state['values']['smart_ip_maxmind_bin_version'], $form_state['values']['smart_ip_maxmind_bin_edition']) . '.dat';
     if (empty($form_state['values']['smart_ip_maxmind_bin_custom_path'])) {
-      $db_path = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
+      $db_path = backdrop_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
       if (empty($db_path)) {
         form_set_error('smart_ip_maxmind_bin_version', t('Please define the "Private file system path" !here.', array('!here' => l(t('here'), 'admin/config/media/file-system'))));
       }
@@ -764,7 +764,7 @@ function smart_ip_admin_settings_validate($form, &$form_state) {
       }
     }
     elseif ($form_state['values']['smart_ip_maxmind_bin_db_auto_update']) {
-      $db_path = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
+      $db_path = backdrop_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
       if (!file_exists("$db_path/$file")) {
         form_set_error('smart_ip_maxmind_bin_db_auto_update', t('Initially you need to manually download the @file and upload it to your server at !path. The next succeeding updates should be automatic.', array(
           '@file' => $file,
@@ -788,7 +788,7 @@ function smart_ip_admin_settings_validate($form, &$form_state) {
   if ($form_state['values']['smart_ip_source'] == 'maxmindgeoip2_bin') {
     $file = smart_ip_get_geoip2_bin_source_filename($form_state['values']['smart_ip_maxmind_geoip2_bin_version'], $form_state['values']['smart_ip_maxmind_geoip2_bin_edition']);
     if (empty($form_state['values']['smart_ip_maxmind_geoip2_bin_custom_path'])) {
-      $db_path = drupal_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
+      $db_path = backdrop_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
       if (empty($db_path)) {
         form_set_error('smart_ip_maxmind_geoip2_bin_version', t('Please define the "Private file system path" !here.', array('!here' => l(t('here'), 'admin/config/media/file-system'))));
       }
@@ -881,7 +881,7 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
     $type = t('actual');
   }
   if ($location) {
-    drupal_set_message(t('Using @type IP: %ip / Country: %country / Region: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat / Time zone: %time_zone', array(
+    backdrop_set_message(t('Using @type IP: %ip / Country: %country / Region: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat / Time zone: %time_zone', array(
       '@type'      => $type,
       '%ip'        => $ip, 
       '%country'   => isset($location['country']) ? $location['country'] : '',
@@ -921,7 +921,7 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
     }
   }
   else {
-    drupal_set_message(t('IP Address @ip is not assigned to any location.', array('@ip' => $ip)));
+    backdrop_set_message(t('IP Address @ip is not assigned to any location.', array('@ip' => $ip)));
   }
   $config->save();
 }

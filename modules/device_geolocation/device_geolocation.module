@@ -22,11 +22,11 @@ function device_geolocation_init() {
     device_geolocation_get_coordinates();
     if ($ajax_check) {
       // Add javascript app that checks if device geolocation needs refresh via ajax call
-      drupal_add_js(array('device_geolocation' => array('ask_geolocate' => FALSE)), 'setting');
-      drupal_add_js(drupal_get_path('module', 'device_geolocation') . '/js/device_geolocation_check.js', array('scope' => 'footer', 'weight' => 0));
+      backdrop_add_js(array('device_geolocation' => array('ask_geolocate' => FALSE)), 'setting');
+      backdrop_add_js(backdrop_get_path('module', 'device_geolocation') . '/js/device_geolocation_check.js', array('scope' => 'footer', 'weight' => 0));
     }
     else {
-      drupal_add_js(array('device_geolocation' => array('ask_geolocate' => TRUE)), 'setting');
+      backdrop_add_js(array('device_geolocation' => array('ask_geolocate' => TRUE)), 'setting');
     }
     $param = '';
     $google_map_api = $config->get('device_geolocation_google_map_api');
@@ -41,8 +41,8 @@ function device_geolocation_init() {
     if ($google_map_language) {
       $param .= "&language=$google_map_language"; 
     }
-    drupal_add_js("//maps.googleapis.com/maps/api/js?$param", 'external');
-    drupal_add_js(drupal_get_path('module', 'device_geolocation') . '/js/device_geolocation.js', array('scope' => 'footer', 'weight' => 1));
+    backdrop_add_js("//maps.googleapis.com/maps/api/js?$param", 'external');
+    backdrop_add_js(backdrop_get_path('module', 'device_geolocation') . '/js/device_geolocation.js', array('scope' => 'footer', 'weight' => 1));
   }
 }
 
@@ -100,7 +100,7 @@ function device_geolocation_theme() {
     'device_geolocation_visitor_info' => array(
       'render element' => 'location',
       'template'       => 'device-geolocation-visitor-info',
-      'path'           => drupal_get_path('module', 'device_geolocation') . '/theme',
+      'path'           => backdrop_get_path('module', 'device_geolocation') . '/theme',
     ),
   );
 }
@@ -124,7 +124,7 @@ function device_geolocation_help($path, $arg) {
       is available to show your visitor's geolocation information. Device Geolocation merges 
       its location data (collected at Google Geocoding service) with Smart IP visitor's 
       location data storage which is in session variable (@session) with array key 'smart_ip' 
-      and Drupal @user->data object with array key 'geoip_location'.", array(
+      and Backdrop @user->data object with array key 'geoip_location'.", array(
         '@session' => '$_SESSION',
         '@user'    => '$user',
       )) . '</p>';
@@ -252,7 +252,7 @@ function device_geolocation_detector_ajax() {
     }
     $smart_ip_session['location']['timestamp'] = REQUEST_TIME;
     // Allow other modules to modify result via hook_device_geolocation_detector_ajax_alter()
-    drupal_alter('device_geolocation_detector_ajax', $smart_ip_session['location']);
+    backdrop_alter('device_geolocation_detector_ajax', $smart_ip_session['location']);
 
     if (isset($smart_ip_session['location']) && $user->uid) {
       $user_obj = user_load($user->uid);
@@ -309,7 +309,7 @@ function device_geolocation_get_coordinates() {
     'debug_mode' => isset($smart_ip_session['debug_mode']) ? TRUE : FALSE,
   );
   // Send also to javascript
-  drupal_add_js(array('device_geolocation' => $coordinates), 'setting');
+  backdrop_add_js(array('device_geolocation' => $coordinates), 'setting');
   return $coordinates;
 }
 
@@ -318,10 +318,10 @@ function device_geolocation_get_coordinates() {
  */
 function device_geolocation_check_geolocation_attempt_ajax() {
   if (smart_ip_check_allowed_page() && device_geolocation_check_geolocation_attempt()) {
-    drupal_json_output(array('ask_geolocate' => TRUE));
+    backdrop_json_output(array('ask_geolocate' => TRUE));
     return;
   }
-  drupal_json_output(array('ask_geolocate' => FALSE));
+  backdrop_json_output(array('ask_geolocate' => FALSE));
 }
 
 /**

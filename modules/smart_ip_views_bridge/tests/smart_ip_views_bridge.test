@@ -11,7 +11,7 @@
 /**
  * Unit tests for Smart IP Views Bridge functions.
  */
-class SmartIPViewsBridgeUnitTestCase extends DrupalWebTestCase {
+class SmartIPViewsBridgeUnitTestCase extends BackdropWebTestCase {
   public static function getInfo() {
     return array(
       'name' => 'Smart IP Views Bridge unit tests',
@@ -29,7 +29,7 @@ class SmartIPViewsBridgeUnitTestCase extends DrupalWebTestCase {
 /**
  * Helper test class with some added functions for testing.
  */
-class SmartIPViewsBridgeTestHelper extends DrupalWebTestCase {
+class SmartIPViewsBridgeTestHelper extends BackdropWebTestCase {
   protected $admin_user;
 
   function setUp() {
@@ -46,7 +46,7 @@ class SmartIPViewsBridgeTestHelper extends DrupalWebTestCase {
 
     // Create and log in our user. The user has the arbitrary privilege
     // which the code uses to grant access.
-    $this->admin_user = $this->drupalCreateUser(array(
+    $this->admin_user = $this->backdropCreateUser(array(
       'administer blocks', 
       'administer content types',
       'create page content',
@@ -57,9 +57,9 @@ class SmartIPViewsBridgeTestHelper extends DrupalWebTestCase {
       'administer site configuration', 
       'administer views',
     ));
-    $this->drupalLogin($this->admin_user);
+    $this->backdropLogin($this->admin_user);
     // Create CCK fields at Page content type
-    $this->drupalGet('admin/structure/types/manage/page/fields');
+    $this->backdropGet('admin/structure/types/manage/page/fields');
     // Create singleton CCK text field for City
     $field_label = t('City');
     $edit = array (
@@ -68,16 +68,16 @@ class SmartIPViewsBridgeTestHelper extends DrupalWebTestCase {
       'fields[_add_new_field][type]'        => 'text',
       'fields[_add_new_field][widget_type]' => 'text_textfield',
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
     // There are no settings for this, so just press the button.
-    $this->drupalPost(NULL, array(), t('Save field settings'));
+    $this->backdropPost(NULL, array(), t('Save field settings'));
 
     // Using all the default settings, so press the button.
-    $this->drupalPost(NULL, array(), t('Save settings'));
+    $this->backdropPost(NULL, array(), t('Save settings'));
     $this->assertText(t('Saved @name configuration.', array('@name' => $field_label)));
     
     // Now we're back on the field-add page.
-    $this->drupalGet('admin/structure/types/manage/page/fields');
+    $this->backdropGet('admin/structure/types/manage/page/fields');
     // Create singleton CCK text field for Country
     $field_label = t('Country');
     $edit = array (
@@ -86,43 +86,43 @@ class SmartIPViewsBridgeTestHelper extends DrupalWebTestCase {
       'fields[_add_new_field][type]'        => 'list_text',
       'fields[_add_new_field][widget_type]' => 'options_select',
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
     // There are no settings for this, so just press the button.
-    $this->drupalPost(NULL, array(), t('Save field settings'));
+    $this->backdropPost(NULL, array(), t('Save field settings'));
 
     // Add some countries to the list for this settings, then press the button.
-    $this->drupalPost(NULL, array(
+    $this->backdropPost(NULL, array(
       'field[settings][allowed_values]' => "PH|Philippines\nUS|United States",
     ), t('Save settings'));
     $this->assertText(t('Saved @name configuration.', array('@name' => $field_label)));
     
     // Add some contents to be queried at Views
     // Content 1
-    $this->drupalGet('node/add/page');
+    $this->backdropGet('node/add/page');
     $content_items = array(
       'title' => 'Content 1',
       'field_city[und][0][value]' => 'Manila',
       'field_country[und]' => 'PH',
     );
-    $this->drupalPost(NULL, $content_items, t('Save'));
+    $this->backdropPost(NULL, $content_items, t('Save'));
     // Content 2
-    $this->drupalGet('node/add/page');
+    $this->backdropGet('node/add/page');
     $content_items = array(
       'title' => 'Content 2',
       'field_city[und][0][value]' => 'Manila',
       'field_country[und]' => 'PH',
     );
-    $this->drupalPost(NULL, $content_items, t('Save'));
+    $this->backdropPost(NULL, $content_items, t('Save'));
     // Content 3
-    $this->drupalGet('node/add/page');
+    $this->backdropGet('node/add/page');
     $content_items = array(
       'title' => 'Content 3',
       'field_city[und][0][value]' => 'Texas',
       'field_country[und]' => 'US',
     );
-    $this->drupalPost(NULL, $content_items, t('Save'));
+    $this->backdropPost(NULL, $content_items, t('Save'));
     // Check if the 3 contents stored
-    $this->drupalGet('admin/content');
+    $this->backdropGet('admin/content');
     $this->assertText('Content 1');
     $this->assertText('Content 2');
     $this->assertText('Content 3');
@@ -162,7 +162,7 @@ class SmartIPViewsBridgeFunctionalTestCase extends SmartIPViewsBridgeTestHelper 
    * Basic functional testing of Smart IP Views Bridge at Views edit page.
    */
   function testViewsEdit() {
-    $this->drupalGet('admin/structure/views/add');
+    $this->backdropGet('admin/structure/views/add');
     $new_views_info = array(
       'human_name' => t('Smart IP'),
       'name'       => 'smart_ip',
@@ -170,8 +170,8 @@ class SmartIPViewsBridgeFunctionalTestCase extends SmartIPViewsBridgeTestHelper 
       'block[create]' => TRUE,
       'block[title]'  => t('Sample Smart IP Views Block'),
     );
-    $this->drupalPost(NULL, $new_views_info, t('Continue & edit'));
-    $this->drupalGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
+    $this->backdropPost(NULL, $new_views_info, t('Continue & edit'));
+    $this->backdropGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
     $this->assertText(t('Smart IP: City'));
     $this->assertText(t('Smart IP: Coordinates'));
     $this->assertText(t('Smart IP: Country'));
@@ -187,83 +187,83 @@ class SmartIPViewsBridgeFunctionalTestCase extends SmartIPViewsBridgeTestHelper 
       'name[smartip.region]'      => TRUE,
     );
     // Add Smart IP Coordinates field
-    $this->drupalPost(NULL, array('name[smartip.coordinates]' => TRUE), t('Add and configure fields'));
+    $this->backdropPost(NULL, array('name[smartip.coordinates]' => TRUE), t('Add and configure fields'));
     $this->assertText(t('Decimal degrees format'));
     $this->assertText(t('Degrees, minutes, seconds format'));
-    $this->drupalPost(NULL, array('options[style]' => 'dms', 'options[label]' => t('Your Coordinates')), t('Apply'));
+    $this->backdropPost(NULL, array('options[style]' => 'dms', 'options[label]' => t('Your Coordinates')), t('Apply'));
     // Add Smart IP Latitude field
-    $this->drupalGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
-    $this->drupalPost(NULL, array('name[smartip.latitude]' => TRUE), t('Add and configure fields'));
+    $this->backdropGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
+    $this->backdropPost(NULL, array('name[smartip.latitude]' => TRUE), t('Add and configure fields'));
     $this->assertText(t('Decimal degrees format'));
     $this->assertText(t('Degrees, minutes, seconds format'));
-    $this->drupalPost(NULL, array('options[label]' => t('Your Latitude')), t('Apply'));
+    $this->backdropPost(NULL, array('options[label]' => t('Your Latitude')), t('Apply'));
     // Add Smart IP Longitude field
-    $this->drupalGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
-    $this->drupalPost(NULL, array('name[smartip.longitude]' => TRUE), t('Add and configure fields'));
+    $this->backdropGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
+    $this->backdropPost(NULL, array('name[smartip.longitude]' => TRUE), t('Add and configure fields'));
     $this->assertText(t('Decimal degrees format'));
     $this->assertText(t('Degrees, minutes, seconds format'));
-    $this->drupalPost(NULL, array('options[label]' => t('Your Longitude')), t('Apply'));
+    $this->backdropPost(NULL, array('options[label]' => t('Your Longitude')), t('Apply'));
     // Add Smart IP Country field
-    $this->drupalGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
-    $this->drupalPost(NULL, array('name[smartip.country]' => TRUE), t('Add and configure fields'));
+    $this->backdropGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
+    $this->backdropPost(NULL, array('name[smartip.country]' => TRUE), t('Add and configure fields'));
     $this->assertText(t('Country name'));
     $this->assertText(t('ISO 3166 2-character country code'));
-    $this->drupalPost(NULL, array('options[label]' => t('Your Country')), t('Apply'));
+    $this->backdropPost(NULL, array('options[label]' => t('Your Country')), t('Apply'));
     // Add Smart IP Country code field
-    $this->drupalGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
-    $this->drupalPost(NULL, array('name[smartip.country]' => TRUE), t('Add and configure fields'));
-    $this->drupalPost(NULL, array('options[style]' => 'code', 'options[label]' => t('Your Country code')), t('Apply'));
+    $this->backdropGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
+    $this->backdropPost(NULL, array('name[smartip.country]' => TRUE), t('Add and configure fields'));
+    $this->backdropPost(NULL, array('options[style]' => 'code', 'options[label]' => t('Your Country code')), t('Apply'));
     // Add Smart IP Region field
-    $this->drupalGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
-    $this->drupalPost(NULL, array('name[smartip.region]' => TRUE), t('Add and configure fields'));
+    $this->backdropGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
+    $this->backdropPost(NULL, array('name[smartip.region]' => TRUE), t('Add and configure fields'));
     $this->assertText(t('Region name'));
     $this->assertText(t('Region code (FIPS)'));
-    $this->drupalPost(NULL, array('options[label]' => t('Your Region')), t('Apply'));
+    $this->backdropPost(NULL, array('options[label]' => t('Your Region')), t('Apply'));
     // Add Smart IP Region code field
-    $this->drupalGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
-    $this->drupalPost(NULL, array('name[smartip.region]' => TRUE), t('Add and configure fields'));
-    $this->drupalPost(NULL, array('options[style]' => 'code', 'options[label]' => t('Your Region code')), t('Apply'));
+    $this->backdropGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
+    $this->backdropPost(NULL, array('name[smartip.region]' => TRUE), t('Add and configure fields'));
+    $this->backdropPost(NULL, array('options[style]' => 'code', 'options[label]' => t('Your Region code')), t('Apply'));
     // Add Smart IP City field
-    $this->drupalGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
-    $this->drupalPost(NULL, array('name[smartip.city]' => TRUE), t('Add and configure fields'));
-    $this->drupalPost(NULL, array('options[label]' => t('Your City')), t('Apply'));
+    $this->backdropGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
+    $this->backdropPost(NULL, array('name[smartip.city]' => TRUE), t('Add and configure fields'));
+    $this->backdropPost(NULL, array('options[label]' => t('Your City')), t('Apply'));
     // Add Smart IP ZIP code field
-    $this->drupalGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
-    $this->drupalPost(NULL, array('name[smartip.zip]' => TRUE), t('Add and configure fields'));
-    $this->drupalPost(NULL, array('options[label]' => t('Your ZIP code')), t('Apply'));
+    $this->backdropGet('admin/structure/views/nojs/add-item/smart_ip/block/field');
+    $this->backdropPost(NULL, array('name[smartip.zip]' => TRUE), t('Add and configure fields'));
+    $this->backdropPost(NULL, array('options[label]' => t('Your ZIP code')), t('Apply'));
     
     // Add Smart IP Country Views filters
-    $this->drupalGet('admin/structure/views/nojs/add-item/smart_ip/block/filter');
-    $this->drupalPost(NULL, array('name[field_data_field_country.field_country_value]' => TRUE), t('Add and configure filter criteria'));
+    $this->backdropGet('admin/structure/views/nojs/add-item/smart_ip/block/filter');
+    $this->backdropPost(NULL, array('name[field_data_field_country.field_country_value]' => TRUE), t('Add and configure filter criteria'));
     $this->assertText(t("Smart IP: visitor's country"));
     $this->assertText(t("Smart IP: visitor's country code"));
     $this->assertText(t("Smart IP: visitor's region"));
     $this->assertText(t("Smart IP: visitor's region code"));
     $this->assertText(t("Smart IP: visitor's city"));
     $this->assertText(t("Smart IP: visitor's zip"));
-    $this->drupalPost(NULL, array('options[operator]' => 'in', 'options[value][smart_ip.location.country_code]' => TRUE), t('Apply'));
+    $this->backdropPost(NULL, array('options[operator]' => 'in', 'options[value][smart_ip.location.country_code]' => TRUE), t('Apply'));
     // Add Smart IP City Views filters
-    $this->drupalGet('admin/structure/views/nojs/add-item/smart_ip/block/filter');
-    $this->drupalPost(NULL, array('name[field_data_field_city.field_city_value]' => TRUE), t('Add and configure filter criteria'));
+    $this->backdropGet('admin/structure/views/nojs/add-item/smart_ip/block/filter');
+    $this->backdropPost(NULL, array('name[field_data_field_city.field_city_value]' => TRUE), t('Add and configure filter criteria'));
     $this->assertText('smart_ip][location][country');
     $this->assertText('smart_ip][location][country_code');
     $this->assertText('smart_ip][location][region');
     $this->assertText('smart_ip][location][region_code');
     $this->assertText('smart_ip][location][city');
     $this->assertText('smart_ip][location][zip');
-    $this->drupalPost(NULL, array('options[operator]' => '=', 'options[value]' => 'smart_ip][location][city'), t('Apply'));
+    $this->backdropPost(NULL, array('options[operator]' => '=', 'options[value]' => 'smart_ip][location][city'), t('Apply'));
     
     // Save the Views block
-    $this->drupalGet('admin/structure/views/view/smart_ip/edit');
-    $this->drupalPost(NULL, array(), t('Save'));
+    $this->backdropGet('admin/structure/views/view/smart_ip/edit');
+    $this->backdropPost(NULL, array(), t('Save'));
     
     // Enable the Views block
-    $this->drupalGet('admin/structure/block');
-    $this->drupalPost(NULL, array(
+    $this->backdropGet('admin/structure/block');
+    $this->backdropPost(NULL, array(
       'blocks[views_smart_ip-block][region]' => 'sidebar_first',
       'blocks[device_geolocation_visitor_geolocation][region]' => 'sidebar_second',
     ), t('Save blocks'));
-    $this->drupalGet('node');
+    $this->backdropGet('node');
   }
 }
 

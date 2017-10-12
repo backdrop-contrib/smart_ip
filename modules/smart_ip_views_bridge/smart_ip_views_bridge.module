@@ -8,11 +8,11 @@
  * region, region code (FIPS), city and zip) and filter (country, ISO 3166 
  * 2-character country code, region, region code, city and zip).
  *
- * @author Roland Michael dela Peña.
+ * @author Roland Michael dela PeÃ±a.
  */
 
 /******************************************************************************
- * Drupal Hooks                                                               *
+ * Backdrop Hooks                                                               *
  ******************************************************************************/
 
 /**
@@ -121,7 +121,7 @@ function smart_ip_views_bridge_build_proximity_index($node) {
           $index[] = array($item['lat'], $item['lon']);
         }
       }
-      drupal_alter('parse_wkt', $index, $field);
+      backdrop_alter('parse_wkt', $index, $field);
     }
   }
   return $index;
@@ -134,7 +134,7 @@ function smart_ip_views_bridge_build_proximity_index($node) {
 function smart_ip_views_bridge_views_api() {
   return array(
     'api' => 3.0,
-    'path' => drupal_get_path('module', 'smart_ip_views_bridge') . '/views',
+    'path' => backdrop_get_path('module', 'smart_ip_views_bridge') . '/views',
   );
 }
 
