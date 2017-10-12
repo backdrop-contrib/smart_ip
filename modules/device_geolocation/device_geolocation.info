@@ -4,3 +4,4 @@ package = Geolocation
 backdrop = 1.x
 type = module
 dependencies[] = smart_ip
+configure = admin/config/people/smart_ip

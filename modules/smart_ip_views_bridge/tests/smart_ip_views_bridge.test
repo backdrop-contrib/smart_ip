@@ -39,8 +39,10 @@ class SmartIPViewsBridgeTestHelper extends DrupalWebTestCase {
     call_user_func_array(array('parent', 'setUp'), $modules);
     
     // Disable Smart IP auto update and use of IPinfodb service
-    variable_set('smart_ip_use_ipinfodb_service', FALSE);
-    variable_set('smart_ip_auto_update', FALSE);
+    $config = config('smart_ip.settings');
+    $config->set('smart_ip_use_ipinfodb_service', FALSE);
+    $config->set('smart_ip_auto_update', FALSE);
+    $config->save();
 
     // Create and log in our user. The user has the arbitrary privilege
     // which the code uses to grant access.

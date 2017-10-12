@@ -16,7 +16,8 @@ function device_geolocation_init() {
     // This page is not on the list to acquire/update user's geolocation
     return;
   }
-  $ajax_check = variable_get('device_geolocation_ajax_check', FALSE);
+  $config = config('smart_ip.settings');
+  $ajax_check = $config->get('device_geolocation_ajax_check');
   if ($ajax_check || device_geolocation_check_geolocation_attempt()) {
     device_geolocation_get_coordinates();
     if ($ajax_check) {
@@ -28,9 +29,9 @@ function device_geolocation_init() {
       drupal_add_js(array('device_geolocation' => array('ask_geolocate' => TRUE)), 'setting');
     }
     $param = '';
-    $google_map_api = variable_get('device_geolocation_google_map_api', NULL);
-    $google_region  = variable_get('device_geolocation_google_map_region', NULL);
-    $google_map_language = variable_get('device_geolocation_google_map_language', NULL);
+    $google_map_api = $config->get('device_geolocation_google_map_api');
+    $google_region  = $config->get('device_geolocation_google_map_region');
+    $google_map_language = $config->get('device_geolocation_google_map_language');
     if ($google_map_api) {
       $param .= "key=$google_map_api"; 
     }
@@ -135,6 +136,7 @@ function device_geolocation_help($path, $arg) {
  * Implements hook_form_alter()
  */
 function device_geolocation_form_alter(&$form, &$form_state, $form_id) {
+  $config = config('smart_ip.settings');
   if ($form_id == 'smart_ip_admin_settings') {
     // Container for Device Geolocation preference forms
     $form['device_geolocation_preferences'] = array(
@@ -147,9 +149,9 @@ function device_geolocation_form_alter(&$form, &$form_state, $form_id) {
     $form['device_geolocation_preferences']['device_geolocation_ajax_check'] = array(
       '#type'          => 'checkbox',
       '#title'         => t("Use AJAX in user's geolocation checking (useful if the site or pages listed above are cached)"),
-      '#default_value' => variable_get('device_geolocation_ajax_check', FALSE),
+      '#default_value' => $config->get('device_geolocation_ajax_check'),
     );
-    $device_geolocation_check_frequency = variable_get('device_geolocation_check_frequency', NULL);
+    $device_geolocation_check_frequency = $config->get('device_geolocation_check_frequency');
     $form['device_geolocation_preferences']['device_geolocation_check_frequency'] = array(
       '#title'         => t("Frequency of user's geolocation checking"),
       '#type'          => 'textfield',
@@ -162,17 +164,17 @@ function device_geolocation_form_alter(&$form, &$form_state, $form_id) {
       '#title'         => t('Google map API key'),
       '#type'          => 'textfield',
       '#description'   => t('The use of Google map service requires API key. Get your API key !here.', array('!here' => l(t('here'), 'https://developers.google.com/maps/documentation/javascript/get-api-key'))),
-      '#default_value' => variable_get('device_geolocation_google_map_api', NULL),
+      '#default_value' => $config->get('device_geolocation_google_map_api'),
     );
     $form['device_geolocation_preferences']['device_geolocation_google_map_region'] = array(
       '#type' => 'textfield',
       '#title' => t('Google map region'),
-      '#default_value' => variable_get('device_geolocation_google_map_region', NULL),
+      '#default_value' => $config->get('device_geolocation_google_map_region'),
     );
     $form['device_geolocation_preferences']['device_geolocation_google_map_language'] = array(
       '#type' => 'textfield',
       '#title' => t('Google map localization'),
-      '#default_value' => variable_get('device_geolocation_google_map_language', NULL),
+      '#default_value' => $config->get('device_geolocation_google_map_language'),
       '#description' => t('See !google_localization', array('!google_localization' => l(t('Google Maps API - Localizing the Map'), 'https://developers.google.com/maps/documentation/javascript/localization'))),
     );
     $form['#validate'][] = '_device_geolocation_check_frequency_validate';
@@ -326,7 +328,8 @@ function device_geolocation_check_geolocation_attempt_ajax() {
  * Check for Geolocation attempt.
  */
 function device_geolocation_check_geolocation_attempt() {
-  $device_geolocation_check_frequency = variable_get('device_geolocation_check_frequency', NULL);
+  $config = config('smart_ip.settings');
+  $device_geolocation_check_frequency = $config->get('device_geolocation_check_frequency');
   $timestamp = smart_ip_session_get('device_geolocation_attempt');
   if ($device_geolocation_check_frequency === NULL) {
     // User's device geolocation checking is set disabled

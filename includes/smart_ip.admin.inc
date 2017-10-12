@@ -12,7 +12,8 @@
  *   Forms for store administrator to set configuration options.
  */
 function smart_ip_admin_settings($form, &$form_state) {
-  $smart_ip_source = variable_get('smart_ip_source', 'ipinfodb_service');
+  $config = config('smart_ip.settings');
+  $smart_ip_source = $config->get('smart_ip_source');
   
   // MaxMind's Apache module mod_geoip, X-GeoIP-Country: XX header and Cloudflare IP Geolocation don't support manual lookup and admin debug
   if ($smart_ip_source == 'mod_geoip' || $smart_ip_source == 'x_header' || $smart_ip_source == 'cf_header') {
@@ -23,7 +24,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   }
 
   if ($smart_ip_source == 'local_db') {
-    $recover = !variable_get('smart_ip_db_update_busy', FALSE) & (variable_get('smart_ip_get_zip_done', FALSE) | variable_get('smart_ip_extract_zip_done', FALSE) | variable_get('smart_ip_store_location_csv_done', FALSE));
+    $recover = !$config->get('smart_ip_db_update_busy') & ($config->get('smart_ip_get_zip_done') | $config->get('smart_ip_extract_zip_done') | $config->get('smart_ip_store_location_csv_done'));
     // Container for database update preference forms 
     $form['smart_ip_database_update'] = array(
       '#type'        => 'fieldset',
@@ -37,7 +38,7 @@ function smart_ip_admin_settings($form, &$form_state) {
         ),
       ),
     );
-    $update_time = variable_get('smart_ip_last_update', 0);
+    $update_time = $config->get('smart_ip_last_update');
     // Form for message markup
     $form['smart_ip_database_update']['smart_ip_update_message'] = array(
       '#type'   => 'item',
@@ -70,12 +71,12 @@ function smart_ip_admin_settings($form, &$form_state) {
   }
   if ($smart_ip_source == 'maxmind_bin' || $smart_ip_source == 'maxmindgeoip2_bin') {
     if ($smart_ip_source == 'maxmind_bin') {
-      $bin_update_error = variable_get('smart_ip_maxmind_bin_db_update_error', FALSE);
-      $update_time = variable_get('smart_ip_maxmind_bin_db_last_update', 0);
+      $bin_update_error = $config->get('smart_ip_maxmind_bin_db_update_error');
+      $update_time = $config->get('smart_ip_maxmind_bin_db_last_update');
     }
     elseif ($smart_ip_source == 'maxmindgeoip2_bin') {
-      $bin_update_error = variable_get('smart_ip_maxmind_geoip2_bin_db_update_error', FALSE);
-      $update_time = variable_get('smart_ip_maxmind_geoip2_bin_db_last_update', 0);
+      $bin_update_error = $config->get('smart_ip_maxmind_geoip2_bin_db_update_error');
+      $update_time = $config->get('smart_ip_maxmind_geoip2_bin_db_last_update');
     }
     $last_updated = $update_time ? t('Database last updated on ') . format_date($update_time, 'custom', 'n/j/Y') . t(' at ') . format_date($update_time, 'custom', 'H:i:s T') : t('Database has not been updated');
     // Container for Maxmind bin database update status and manual update
@@ -162,14 +163,14 @@ function smart_ip_admin_settings($form, &$form_state) {
       'x_header'              => t('Use the X-GeoIP-Country: XX header, set by e.g. nginx'),
       'cf_header'             => t('Use Cloudflare IP Geolocation: your website must be using Cloudflare CDN and "IP Geolocation" option must be enabled at your !settings.', array('!settings' => l(t('Cloudflare settings'), 'https://www.cloudflare.com/cloudflare-settings'))),
     ),
-    '#default_value' => variable_get('smart_ip_source', 'ipinfodb_service'),
+    '#default_value' => $config->get('smart_ip_source'),
   );
   
   // Form to select IPInfoDB API version
   $form['smart_ip_data_source_selection']['smart_ip_use_ipinfodb_api_version'] = array(
     '#type'          => 'select',
     '#title'         => t('IPInfoDB API version'),
-    '#default_value' => variable_get('smart_ip_use_ipinfodb_api_version', 3),
+    '#default_value' => $config->get('smart_ip_use_ipinfodb_api_version'),
     '#options'       => array(2 => 2, 3 => 3),
     '#description'   => t('IPInfoDB.com version 2 do have region code, in version 3 it was removed.'),
     '#states'        => array(
@@ -184,7 +185,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#type'          => 'textfield',
     '#title'         => t('IPInfoDB key'),
     '#description'   => t('The use of IPInfoDB.com service requires API key. Registration for the new API key is free, sign up !here.', array('!here' => l(t('here'), 'http://www.ipinfodb.com/register.php'))),
-    '#default_value' => variable_get('smart_ip_ipinfodb_key', ''),
+    '#default_value' => $config->get('smart_ip_ipinfodb_key'),
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'ipinfodb_service'),
@@ -203,7 +204,7 @@ function smart_ip_admin_settings($form, &$form_state) {
         'city_isp_org' => t('City/ISP/Organization'),
         'omni'         => t('Insights (formerly Omni)'),
     ),
-    '#default_value' => variable_get('smart_ip_maxmind_service', 'country'),
+    '#default_value' => $config->get('smart_ip_maxmind_service'),
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmindgeoip_service'),
@@ -216,7 +217,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#type'          => 'textfield',
     '#title'         => t('MaxMind GeoIP Legacy Web Services developer key'),
     '#description'   => t('The use of geoip.maxmind.com service requires developer key.'),
-    '#default_value' => variable_get('smart_ip_maxmind_key', ''),
+    '#default_value' => $config->get('smart_ip_maxmind_key'),
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmindgeoip_service'),
@@ -234,7 +235,7 @@ function smart_ip_admin_settings($form, &$form_state) {
       'city'     => t('City'),
       'insights' => t('Insights'),
     ),
-    '#default_value' => variable_get('smart_ip_maxmind_geoip_service', 'country'),
+    '#default_value' => $config->get('smart_ip_maxmind_geoip_service'),
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmindgeoip2_service'),
@@ -247,7 +248,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#type'          => 'textfield',
     '#title'         => t('MaxMind GeoIP2 Precision user ID'),
     '#description'   => t("Enter your MaxMind GeoIP2 Precision account's user ID (view your user ID !here).", array('!here' => l(t('here'), 'https://www.maxmind.com/en/my_license_key'))),
-    '#default_value' => variable_get('smart_ip_maxmind_geoip_uid', ''),
+    '#default_value' => $config->get('smart_ip_maxmind_geoip_uid'),
     '#size'          => 30,
     '#states'        => array(
       'visible' => array(
@@ -260,7 +261,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   $form['smart_ip_data_source_selection']['smart_ip_maxmind_geoip_license'] = array(
     '#type'          => 'textfield',
     '#title'         => t('MaxMind GeoIP2 Precision license key'),
-    '#default_value' => variable_get('smart_ip_maxmind_geoip_license', ''),
+    '#default_value' => $config->get('smart_ip_maxmind_geoip_license'),
     '#description'   => t("Enter your MaxMind GeoIP2 Precision account's license key (view your license key !here).", array('!here' => l(t('here'), 'https://www.maxmind.com/en/my_license_key'))),
     '#size'          => 30,
     '#states'      => array(
@@ -280,7 +281,7 @@ function smart_ip_admin_settings($form, &$form_state) {
       'memory_cache'  => t('Memory cache'),
       'shared_memory' => t('Shared memory'),
     ),
-    '#default_value' => variable_get('smart_ip_ip2location_bin_cache', 'no_cache'),
+    '#default_value' => $config->get('smart_ip_ip2location_bin_cache'),
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'ip2location_bin'),
@@ -293,7 +294,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#type'          => 'textfield',
     '#title'         => t('IP2Location binary database IPV4 file full path'),
     '#description'   => t('Define the full path where the IP2Location IPV4 binary database file is located in your server (Note: it is your responsibility to add security on this path. See the online handbook for !security). Include the filename. Eg. /var/www/sites/default/private/smart_ip/IP2LOCATION-LITE-DB11.BIN', array('!security' => l(t('more information about securing private files'), 'https://www.drupal.org/documentation/modules/file'))),
-    '#default_value' => variable_get('smart_ip_ip2location_bin_path', ''),
+    '#default_value' => $config->get('smart_ip_ip2location_bin_path'),
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'ip2location_bin'),
@@ -306,7 +307,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#type'          => 'textfield',
     '#title'         => t('IP2Location binary database IPV6 file full path'),
     '#description'   => t('Define the full path where the IP2Location IPV6 binary database file is located in your server (Note: it is your responsibility to add security on this path. See the online handbook for !security). Include the filename. Eg. /var/www/sites/default/private/smart_ip/IP2LOCATION-LITE-DB11.IPV6.BIN', array('!security' => l(t('more information about securing private files'), 'https://www.drupal.org/documentation/modules/file'))),
-    '#default_value' => variable_get('smart_ip_ip2location_ipv6_bin_path', ''),
+    '#default_value' => $config->get('smart_ip_ip2location_ipv6_bin_path'),
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'ip2location_bin'),
@@ -323,7 +324,7 @@ function smart_ip_admin_settings($form, &$form_state) {
        SMART_IP_MAXMIND_BIN_LICENSED_VERSION => t('Licensed'),
        SMART_IP_MAXMIND_BIN_LITE_VERSION => t('Lite'),
      ),
-    '#default_value' => variable_get('smart_ip_maxmind_bin_version', SMART_IP_MAXMIND_BIN_LICENSED_VERSION),
+    '#default_value' => $config->get('smart_ip_maxmind_bin_version'),
     '#states'      => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmind_bin'),
@@ -340,7 +341,7 @@ function smart_ip_admin_settings($form, &$form_state) {
       SMART_IP_MAXMIND_BIN_EDITION_CITY => t('City'),
       SMART_IP_MAXMIND_BIN_EDITION_COUNTRY => t('Country'),
     ),
-    '#default_value' => variable_get('smart_ip_maxmind_bin_edition', SMART_IP_MAXMIND_BIN_EDITION_CITY),
+    '#default_value' => $config->get('smart_ip_maxmind_bin_edition'),
     '#states'      => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmind_bin'),
@@ -352,7 +353,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   $form['smart_ip_data_source_selection']['smart_ip_maxmind_license'] = array(
     '#type'          => 'textfield',
     '#title'         => t('MaxMind GeoIP Legacy license key'),
-    '#default_value' => variable_get('smart_ip_maxmind_license', ''),
+    '#default_value' => $config->get('smart_ip_maxmind_license'),
     '#description'   => t("Enter your MaxMind GeoIP Legacy account's license key (view your license key !here). This is required for licensed version.", array('!here' => l(t('here'), 'https://www.maxmind.com/en/my_license_key'))),
     '#size'          => 30,
     '#states'      => array(
@@ -372,7 +373,7 @@ function smart_ip_admin_settings($form, &$form_state) {
        TRUE  => t('Yes'),
        FALSE => t('No'),
      ),
-    '#default_value' => variable_get('smart_ip_maxmind_bin_db_auto_update', TRUE),
+    '#default_value' => $config->get('smart_ip_maxmind_bin_db_auto_update'),
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmind_bin'),
@@ -385,7 +386,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#type'          => 'textfield',
     '#title'         => t('MaxMind GeoIP Legacy binary database custom path'),
     '#description'   => t('Define the path where the MaxMind GeoIP Legacy binary database file is located in your server (Note: it is your responsibility to add security on this path. See the online handbook for !security). Include preceding slash but do not include trailing slash. This is useful for multi Drupal sites with each of their Smart IP module looks to a common MaxMind GeoIP Legacy binary database and it can be also useful for server with installed GeoIPLookup CLI tool where its MaxMind GeoIP Legacy binary database file can be used here (usually its path is located at /usr/share/GeoIP). This path will be ignored if "Automatic MaxMind GeoIP Legacy binary database update" is enabled which uses the Drupal private file system path. Leave it blank if you prefer the default Drupal private file system path.', array('!security' => l(t('more information about securing private files'), 'https://www.drupal.org/documentation/modules/file'))),
-    '#default_value' => variable_get('smart_ip_maxmind_bin_custom_path', ''),
+    '#default_value' => $config->get('smart_ip_maxmind_bin_custom_path'),
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmind_bin'),
@@ -403,7 +404,7 @@ function smart_ip_admin_settings($form, &$form_state) {
        SMART_IP_MAXMIND_BIN_LICENSED_VERSION => t('Licensed'),
        SMART_IP_MAXMIND_BIN_LITE_VERSION => t('Lite'),
      ),
-    '#default_value' => variable_get('smart_ip_maxmind_geoip2_bin_version', SMART_IP_MAXMIND_BIN_LICENSED_VERSION),
+    '#default_value' => $config->get('smart_ip_maxmind_geoip2_bin_version'),
     '#states' => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmindgeoip2_bin'),
@@ -420,7 +421,7 @@ function smart_ip_admin_settings($form, &$form_state) {
       SMART_IP_MAXMIND_GEOIP2_BIN_EDITION_CITY => t('City'),
       SMART_IP_MAXMIND_GEOIP2_BIN_EDITION_COUNTRY => t('Country'),
     ),
-    '#default_value' => variable_get('smart_ip_maxmind_geoip2_bin_edition', SMART_IP_MAXMIND_GEOIP2_BIN_EDITION_CITY),
+    '#default_value' => $config->get('smart_ip_maxmind_geoip2_bin_edition'),
     '#states' => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmindgeoip2_bin'),
@@ -432,7 +433,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   $form['smart_ip_data_source_selection']['smart_ip_maxmind_geoip2_license'] = array(
     '#type'          => 'textfield',
     '#title'         => t('MaxMind GeoIP2 license key'),
-    '#default_value' => variable_get('smart_ip_maxmind_geoip2_license', ''),
+    '#default_value' => $config->get('smart_ip_maxmind_geoip2_license'),
     '#description'   => t("Enter your MaxMind GeoIP2 account's license key (view your license key !here). This is required for licensed version.", array('!here' => l(t('here'), 'https://www.maxmind.com/en/my_license_key'))),
     '#size'          => 30,
     '#states'        => array(
@@ -452,7 +453,7 @@ function smart_ip_admin_settings($form, &$form_state) {
        TRUE  => t('Yes'),
        FALSE => t('No'),
      ),
-    '#default_value' => variable_get('smart_ip_maxmind_geoip2_bin_db_auto_update', TRUE),
+    '#default_value' => $config->get('smart_ip_maxmind_geoip2_bin_db_auto_update'),
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmindgeoip2_bin'),
@@ -465,7 +466,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#type'          => 'textfield',
     '#title'         => t('MaxMind GeoIP2 binary database custom path'),
     '#description'   => t('Define the path where the MaxMind GeoIP2 binary database file is located in your server (Note: it is your responsibility to add security on this path. See the online handbook for !security). Include preceding slash but do not include trailing slash. This is useful for multi Drupal sites with each of their Smart IP module looks to a common Maxmind binary database and it can be also useful for server with installed GeoIPLookup CLI tool where its Maxmind binary database file can be used here (usually its path is located at /usr/share/GeoIP). This path will be ignored if "Automatic Maxmind binary database update" is enabled which uses the Drupal private file system path. Leave it blank if you prefer the default Drupal private file system path.', array('!security' => l(t('more information about securing private files'), 'https://www.drupal.org/documentation/modules/file'))),
-    '#default_value' => variable_get('smart_ip_maxmind_geoip2_bin_custom_path', ''),
+    '#default_value' => $config->get('smart_ip_maxmind_geoip2_bin_custom_path'),
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'maxmindgeoip2_bin'),
@@ -483,7 +484,7 @@ function smart_ip_admin_settings($form, &$form_state) {
        TRUE  => t('Yes'),
        FALSE => t('No'),
      ),
-    '#default_value' => variable_get('smart_ip_auto_update', TRUE),
+    '#default_value' => $config->get('smart_ip_auto_update'),
     '#states'        => array(
       'visible' => array(
         ':input[name="smart_ip_source"]' => array('value' => 'local_db'),
@@ -505,7 +506,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   $form['smart_ip_preferences']['smart_ip_roles_to_geolocate'] = array(
     '#type'          => 'checkboxes',
     '#title'         => t('Roles To Geolocate'),
-    '#default_value' => variable_get('smart_ip_roles_to_geolocate', array(DRUPAL_AUTHENTICATED_RID)),
+    '#default_value' => $config->get('smart_ip_roles_to_geolocate'),
     '#options'       => user_roles(),
     '#description'   => t('Select the roles you wish to geolocate. Note that selecting the anonymous role will add substantial overhead.'),
   );
@@ -514,7 +515,7 @@ function smart_ip_admin_settings($form, &$form_state) {
   $form['smart_ip_preferences']['smart_ip_save_user_location_creation'] = array(
     '#type'          => 'checkbox',
     '#title'         => t("Save user's location details upon creation"),
-    '#default_value' => variable_get('smart_ip_save_user_location_creation', TRUE),
+    '#default_value' => $config->get('smart_ip_save_user_location_creation'),
     '#description'   => t("One time storing of user's location details upon registration."),
   );
   
@@ -523,7 +524,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#type'          => 'textarea',
     '#rows'          => 5,
     '#description'   => t("Specify pages by using their paths (not the aliased path). Enter one path per line. The '*' character is a wildcard. Example paths are blog for the blog page and blog/* for every personal blog. &lt;front&gt; is the front page. Leave blank if all pages."),
-    '#default_value' => variable_get('smart_ip_allowed_pages', ''),
+    '#default_value' => $config->get('smart_ip_allowed_pages'),
   );
 
   // Container for Smart IP debug tool
@@ -540,15 +541,17 @@ function smart_ip_admin_settings($form, &$form_state) {
   $form['smart_ip_debug_tool']['smart_ip_debug'] = array(
     '#type'          => 'checkbox',
     '#title'         => t('Admin debug'),
-    '#default_value' => variable_get('smart_ip_debug', FALSE),
+    '#default_value' => $config->get('smart_ip_debug'),
     '#description'   => t('Enables administrator to spoof an IP Address for debugging purposes.'),
   );
 
   $form['smart_ip_debug_tool']['smart_ip_test_ip_address'] = array(
     '#type'          => 'textfield',
     '#title'         => t('IP address to use for testing'),
-    '#default_value' => variable_get('smart_ip_test_ip_address', ip_address()),
+    '#default_value' => !empty($config->get('smart_ip_test_ip_address')) ? $config->get('smart_ip_test_ip_address') : ip_address(),
   );
+
+  $form['#config'] = 'smart_ip.settings';
   $form = system_settings_form($form);
   $form['actions']['#weight'] = 100;
 
@@ -564,7 +567,7 @@ function smart_ip_admin_settings($form, &$form_state) {
  */
 function _smart_ip_database_update_validate($form, &$form_state) {
   global $_smart_ip_db_update_access;
-  if (variable_get('smart_ip_db_update_busy', FALSE) && !$_smart_ip_db_update_access) {
+  if (config_get('smart_ip.settings', 'smart_ip_db_update_busy') && !$_smart_ip_db_update_access) {
     form_set_error('smart_ip_update_database', t('Smart IP database update has already been initiated by cron'));
   }
 }
@@ -676,9 +679,11 @@ function smart_ip_admin_settings_validate($form, &$form_state) {
   if ($form_state['values']['smart_ip_source'] == 'ipinfodb_service' && empty($form_state['values']['smart_ip_ipinfodb_key'])) {
     form_set_error('smart_ip_ipinfodb_key', t('Please provide IPInfoDB API key.'));
   }
-  $ipinfodb_key = variable_get('smart_ip_ipinfodb_key', '');
+  $ipinfodb_key = config_get('smart_ip.settings', 'smart_ip_ipinfodb_key');
   if ($form_state['values']['smart_ip_ipinfodb_key'] != $ipinfodb_key) {
-    variable_set('smart_ip_correct_ipinfodb_key', FALSE);
+    $config = config('smart_ip.settings');
+    $config->set('smart_ip_correct_ipinfodb_key', FALSE);
+    $config->save();
   }
   if ($form_state['values']['smart_ip_source'] == 'ip2location_bin') {
     if (empty($form_state['values']['smart_ip_ip2location_bin_path'])) {
@@ -835,7 +840,9 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
       $roles_to_geolocate[] = $rid;
     }
   }
-  variable_set('smart_ip_roles_to_geolocate', $roles_to_geolocate);
+  $config = config('smart_ip.settings');
+  $config->set('smart_ip_roles_to_geolocate', $roles_to_geolocate);
+
   // Exclude unnecessary elements from being saved in variable table
   unset(
     $form_state['values']['smart_ip_lookup'], 
@@ -864,7 +871,7 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
     smart_ip_session_set('smart_ip', $smart_ip_session);
     $location = smart_ip_get_location($ip);
     // Immediately set the debug mode
-    variable_set('smart_ip_debug', TRUE);
+    $config->set('smart_ip_debug', TRUE);
     $type = t('debug');
   }
   else {
@@ -916,4 +923,5 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
   else {
     drupal_set_message(t('IP Address @ip is not assigned to any location.', array('@ip' => $ip)));
   }
+  $config->save();
 }
