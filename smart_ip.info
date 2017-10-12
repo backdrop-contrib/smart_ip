@@ -1,6 +1,6 @@
 name = Smart IP
 description = Smart IP identify visitor's geographical location (longitude/latitude), country, region, city and postal code based on the IP address of the visitor
-package = Location
+package = Geolocation
 backdrop = 1.x
 type = module
 php = 5.4

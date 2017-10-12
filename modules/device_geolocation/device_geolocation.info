@@ -1,6 +1,6 @@
 name = Device Geolocation
 description = Provides visitor's geographical location using client device location source that implements W3C Geolocation API and Google Geocoding service.
-package = Location
+package = Geolocation
 backdrop = 1.x
 type = module
 dependencies[] = smart_ip
