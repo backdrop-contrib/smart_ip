@@ -1,0 +1,11 @@
+[SmartIPViewsBridgeUnitTestCase]
+name = Smart IP Views Bridge unit tests
+description = Unit tests for Smart IP Views Bridge functions.
+group  = Smart IP Views Bridge
+file = tests/smart_ip_views_bridge.test
+
+[SmartIPViewsBridgeFunctionalTestCase]
+name = Smart IP Views Bridge basic tests
+description = Test basic Smart IP Views Bridge functionality.
+group = Smart IP Views Bridge
+file = tests/smart_ip_views_bridge.test

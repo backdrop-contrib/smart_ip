@@ -12,13 +12,6 @@
  * Unit tests for Smart IP Views Bridge functions.
  */
 class SmartIPViewsBridgeUnitTestCase extends BackdropWebTestCase {
-  public static function getInfo() {
-    return array(
-      'name' => 'Smart IP Views Bridge unit tests',
-      'description' => 'Unit tests for Smart IP Views Bridge functions.',
-      'group'  => 'Smart IP Views Bridge',
-    );
-  }
 
   public function setUp() {
     // Enable required modules for the test
@@ -146,13 +139,6 @@ class SmartIPViewsBridgeTestHelper extends BackdropWebTestCase {
  * Test basic Smart IP Views Bridge functionality.
  */
 class SmartIPViewsBridgeFunctionalTestCase extends SmartIPViewsBridgeTestHelper {
-  public static function getInfo() {
-    return array(
-      'name' => 'Smart IP Views Bridge basic tests',
-      'description' => 'Test basic Smart IP Views Bridge functionality.',
-      'group' => 'Smart IP Views Bridge',
-    );
-  }
 
   function setUp() {
     parent::setUp('views_ui', 'device_geolocation');
@@ -266,20 +252,3 @@ class SmartIPViewsBridgeFunctionalTestCase extends SmartIPViewsBridgeTestHelper 
     $this->backdropGet('node');
   }
 }
-
-/*
- * Unit tests for the Views Proximity for Smart IP Views Bridge.
- */
-/* class SmartIPViewsBridgeProximityViewsTestCase extends SmartIPViewsBridgeTestHelper {
-  public static function getInfo() {
-    return array(
-      'name' => 'Smart IP Views Bridge Proximity Views',
-      'description' => 'Unit tests for the Views Proximity for Smart IP Views Bridge.',
-      'group' => 'Smart IP Views Bridge',
-    );
-  }
-
-  function testViewsProximity() {
-    
-  }
-} */
