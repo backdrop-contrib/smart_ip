@@ -1,7 +1,7 @@
 Smart IP
 ========
 
-Backdrop CMS port of the Drupal 7 module [Smart API](https://www.drupal.org/project/smart_ip)
+Backdrop CMS port of the Drupal 7 module [Smart IP](https://www.drupal.org/project/smart_ip)
 
 Smart IP identify visitor's geographical location (longitude/latitude), country, 
 region, city and postal code based on the IP address of the user. These information 
