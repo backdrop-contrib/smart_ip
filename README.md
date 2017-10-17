@@ -118,4 +118,4 @@ Credits
 -------
 - Drupal project maintained by [arpeggio](https://www.drupal.org/u/arpeggio).
 - Drupal project also maintained by [mertres](https://www.drupal.org/u/mertres).
-- Ported to Backdrop CMS by [Juan Olalla](https://github.com/jenlampton).
+- Ported to Backdrop CMS by [Juan Olalla](https://github.com/juanolalla).
