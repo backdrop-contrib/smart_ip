@@ -402,7 +402,7 @@ function smart_ip_theme() {
 function theme_smart_ip_latitude_dms($variable) {
   $output = '';
   list($degrees, $minutes, $seconds, $negative) = coordinates_dd_to_dms($variable['latitude']);
-  $output .= "${degrees}&deg; ${minutes}' ${seconds}\" ";
+  $output .= "$degrees&deg; $minutes' $seconds\" ";
   if (!$negative) {
     $output .= 'N';
   }
@@ -418,7 +418,7 @@ function theme_smart_ip_latitude_dms($variable) {
 function theme_smart_ip_longitude_dms($variable) {
   $output = '';
   list($degrees, $minutes, $seconds, $negative) = coordinates_dd_to_dms($variable['longitude']);
-  $output .= "${degrees}&deg; ${minutes}' ${seconds}\" ";
+  $output .= "$degrees&deg; $minutes' $seconds\" ";
   if (!$negative) {
     $output .= 'E';
   }
