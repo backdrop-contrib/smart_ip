@@ -258,7 +258,7 @@ function smart_ip_menu() {
  * Save new user's geolocation upon registration.
  */
 function smart_ip_user_presave($account) {
-  if ($account->is_new == TRUE && config_get('smart_ip.settings','smart_ip_save_user_location_creation')) {
+  if (($account->is_new ?? NULL) == TRUE && config_get('smart_ip.settings','smart_ip_save_user_location_creation')) {
     // Successful registration. First determine user's location based on IP
     $location = smart_ip_get_current_visitor_location_data();
     // Store the location information in the $user object
@@ -442,7 +442,11 @@ function theme_smart_ip_longitude_dms($variable) {
  */
 function smart_ip_get_location($ip_address = NULL) {
   $config = config('smart_ip.settings');
-  $ip_address = trim($ip_address);
+  
+  if ($ip_address) {
+    $ip_address = trim($ip_address);
+  }
+  
   if (empty($ip_address)) {
     $ip_address = ip_address();
   }
