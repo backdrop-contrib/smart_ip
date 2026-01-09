@@ -279,7 +279,10 @@ function smart_ip_user_login(&$edit, $account) {
   // instead of real information
   $config = config('smart_ip.settings');
   if (user_access('administer smart_ip') && $config->get('smart_ip_debug')) {
-    $ip = !empty($config->get('smart_ip_test_ip_address')) ? $config->get('smart_ip_test_ip_address') : ip_address();
+    $test_ip = $config->get('smart_ip_test_ip_address');
+    if (!empty($test_ip)) {
+      $ip = ip_address();
+    }
     $location = smart_ip_get_location($ip);
     if ($location) {
       backdrop_set_message(t('Using debug IP: %ip / Country: %country / Region: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat / Time zone: %time_zone', array(
