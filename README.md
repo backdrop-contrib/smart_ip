@@ -1,16 +1,14 @@
 Smart IP
 ========
 
-Backdrop CMS port of the Drupal 7 module [Smart IP](https://www.drupal.org/project/smart_ip)
-
-Smart IP identify visitor's geographical location (longitude/latitude), country, 
-region, city and postal code based on the IP address of the user. These information 
-will be stored at session variable ($_SESSION) with array key 'smart_ip' and  Backdrop 
-$user->data object with array key 'geoip_location' of the user but optionally it can  
-be disabled (by role) at Smart IP admin page. Other modules can use the function 
-smart_ip_get_location($ip_address) that returns an array containing the visitor's 
-ISO 3166 2-character country code, longitude, latitude, region, city and postal code. It 
-provides a feature for you to perform your own IP lookup and admin spoofing of an arbitrary 
+Smart IP can identify a visitor's geographical location (longitude/latitude), country, 
+region, city, and postal code based on the IP address of the user. This information 
+will be stored in the session variable ($_SESSION) with array key 'smart_ip' and in
+$user->data object with array key 'geoip_location'. Optionally, it can  
+be disabled (by role) on the Smart IP admin page. Other modules can use the function 
+smart_ip_get_location($ip_address) which returns an array containing the visitor's 
+ISO 3166 2-character country code, longitude, latitude, region, city, and postal code. You 
+can also perform your own IP lookup and admin spoofing of an arbitrary 
 IP for testing purposes.
 
 Maxmind's database is the source of Smart IP database that makes the association between IP 
@@ -34,7 +32,7 @@ this case IPInfoDB.com will handle database resource load instead of your server
 By default the use of IPInfoDB.com service as source is enabled. If IPInfoDB.com is desired to  
 handle database resource load, it can be configured at Smart IP admin page settings.
 
-Note: The Smart IP database is empty upon initial installation of this module. Either manually 
+**Important:** The Smart IP database is empty upon initial installation of this module. Either manually 
 update the Smart IP database at admin page or wait for the cron to run and update Smart IP 
 database automatically for you.
 
@@ -110,7 +108,8 @@ complete text.
 Current Maintainers
 -------------------
 
-- Juan Olalla (https://github.com/juanolalla)
+- [Juan Olalla](https://github.com/juanolalla)
+- [Richard Peacock](https://github.com/swampopus)
 - Seeking additional maintainers.
 
 
