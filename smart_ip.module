@@ -257,8 +257,8 @@ function smart_ip_menu() {
  *
  * Save new user's geolocation upon registration.
  */
-function smart_ip_user_presave(&$edit, $account, $category) {
-  if (property_exists($account, 'is_new') && $account->is_new == TRUE && config_get('smart_ip.settings','smart_ip_save_user_location_creation')) {
+function smart_ip_user_presave($account) {
+  if ($account->is_new == TRUE && config_get('smart_ip.settings','smart_ip_save_user_location_creation')) {
     // Successful registration. First determine user's location based on IP
     $location = smart_ip_get_current_visitor_location_data();
     // Store the location information in the $user object
