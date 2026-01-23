@@ -108,6 +108,11 @@ function smart_ip_permission() {
  * Allows geo location of anonymous users
  */
 function smart_ip_init() {
+  
+  
+  // DEV:
+  return;
+  
   // Check to see if the page is one of those allowed for geolocation
   if (!smart_ip_check_allowed_page()) {
     // This page is not on the list to acquire/update user's geolocation
@@ -147,6 +152,18 @@ function smart_ip_init() {
  * Updates the Smart IP database automatically on one month periodic basis.
  */
 function smart_ip_cron() {
+  
+  
+
+  // TODO:  Download ip2location bin files. If successful, set a time for when we will try again (eg, NOW +1 MONTH)
+  
+  /*
+   * $bin_path = 'private://smart_ip/ip2location/ipv4.bin';
+    }
+    elseif ($ip_ver == 6) {
+      $bin_path = 'private://smart_ip/ip2location/ipv6.bin';
+   */
+  
   $time = REQUEST_TIME;
   $config = config('smart_ip.settings');
   $data_source = $config->get('smart_ip_source', 'ipinfodb_service');
@@ -174,7 +191,7 @@ function smart_ip_cron() {
         backdrop_http_request($base_root . '/?q=smart_ip_batch', $options);
       }
     }
-  }
+  }  
   if ($data_source == 'maxmind_bin' && $config->get('smart_ip_maxmind_bin_db_auto_update')) {
     module_load_include('inc', 'smart_ip', 'includes/smart_ip.utility');
     smart_ip_maxmind_bin_db_update($config->get('smart_ip_maxmind_license'), TRUE);
@@ -183,6 +200,130 @@ function smart_ip_cron() {
     module_load_include('inc', 'smart_ip', 'includes/smart_ip.utility');
     smart_ip_maxmind_bin_db_update($config->get('smart_ip_maxmind_geoip2_license'), TRUE);
   }
+  if ($data_source == 'ip2location_bin') {
+     
+    // Is it past time to retrieve the ip2location bin files again? Also, do the bin files NOT exist?  If true to either, then go get 'em.       
+    $bool_should_download = FALSE;
+
+    if (time() >= intval($config->get('smart_ip_ip2location_redownload_ts') ?? 0)) {
+      $bool_should_download = TRUE;
+    }
+
+    // Do the files not exist?  If that's the case, redownload regardless of the redownload_ts time.
+    if (!$bool_should_download) {
+      foreach (array('ipv4.bin', 'ipv6.bin') as $bin_file) {
+        // Convert to actual filesystem paths
+        $real_path = backdrop_realpath("private://smart_ip/ip2location/$bin_file");
+        if (!$real_path || !file_exists($real_path)) {
+          $bool_should_download = TRUE;
+        }
+        
+      }
+    }
+    
+    if ($bool_should_download) {
+      // If we made it here, then we should try to download the files.
+      // First, make sure our private directories are set up correctly.
+      $p = "private://smart_ip";  // must be passed by reference
+      $test1 = file_prepare_directory($p, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
+      $p = "private://smart_ip/ip2location";
+      $test2 = file_prepare_directory($p, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
+      
+      $success = array();
+      
+      if ($test1 && $test2) {
+        // Our directories are prepared; we can proceed.
+        foreach (array('ipv4.bin', 'ipv6.bin') as $bin_file) {
+          // Convert to actual filesystem paths
+          $dir_path = backdrop_realpath("private://smart_ip/ip2location") . "/";          
+          $real_path = backdrop_realpath("private://smart_ip/ip2location/$bin_file");          
+          $url = $config->get("smart_ip_ip2location_bin_download");
+          if ($bin_file == 'ipv6.bin') {
+            $url = $config->get("smart_ip_ip2location_ipv6_bin_download");
+          }
+
+          $success[$bin_file] = FALSE;
+          if ($url) {            
+            $data = backdrop_http_request($url);            
+            if ($data) {
+              $result = file_put_contents($real_path . ".zip", $data->data);
+              if ($result) {
+                // We have just download zip files. We need to unzip them and rename the .bin to the expected
+                // filename.
+                
+                
+                // PHP's zip extension...
+                if (class_exists('ZipArchive')) {
+                  $zip = new ZipArchive();
+                  $zipfile = $real_path . ".zip";
+                  $extract_to = $dir_path;
+                  
+                  if ($zip->open($zipfile) === TRUE) {
+                    $zip->extractTo($extract_to);
+                    $zip->close();
+                    
+                    // Delete our old bin_file (if it exists)
+                    if (file_exists($real_path)) {
+                      unlink($real_path); 
+                    }
+                    
+                    // Rename the newly extracted bin file to the name we expect
+                    $gfiles =  glob($dir_path . "IP2LOCATION*.BIN");
+                    $success[$bin_file] = rename($gfiles[0], $real_path);
+                    
+                    
+                  }
+                  else {
+                    // TODO: handle can't open zip file
+                  }
+                  
+                } // class exists ZipArchive
+                else {
+                  // TODO: handle ZipArchive doesn't exist
+                }
+                
+              }
+              else {
+                // TODO: handle can't save file contents
+              }
+              
+            }
+            else {
+              // TODO: handle that nothing was downloaded.
+            }
+          }
+          else {
+            // TODO: handle that URL was empty
+          }
+          
+          // TODO: handle if $success[$bin_file] == 0 (for 0 bytes) or FALSE for failed.
+          
+        } // foreach bin_files
+        
+        
+      } // if test1 && test2
+      else {
+        // One or both of our directories were not able to be created!
+        // TODO: handle this (watchdog?)
+      }
+      
+      
+      if ($success['ipv4.bin'] && $success['ipv6.bin']) {
+        // We successfully downloaded these files and extracted them.  
+        
+        // Set our smart_ip_ip2location_redownload_ts to +1 month
+        $config->set('smart_ip_ip2location_redownload_ts', strtotime("NOW + 1 MONTH"));
+        $config->save();
+      }
+      
+      
+    } // bool_should_download
+    
+    
+    
+  } // if ip2location_bin
+  
+  
 }
 
 /**
@@ -795,36 +936,57 @@ function smart_ip_get_location($ip_address = NULL) {
     // IP2Location binary database
     module_load_include('php', 'smart_ip', 'includes/vendor/autoload');
     $ip_ver = smart_ip_get_ip_address_version($ip_address);
+    $bin_path = '';
     if ($ip_ver == 4) {
-      $custom_path = $config->get('smart_ip_ip2location_bin_path');
+      $bin_path = 'private://smart_ip/ip2location/ipv4.bin';
     }
     elseif ($ip_ver == 6) {
-      $custom_path = $config->get('smart_ip_ip2location_ipv6_bin_path');
-    }
-    if (!empty($custom_path)) {
-      switch ($config->get('smart_ip_ip2location_bin_cache')) {
-        case 'shared_memory':
-          $location_data = new IP2Location\Database($custom_path, IP2Location\Database::SHARED_MEMORY);
-          break;
-        case 'memory_cache':
-          $location_data = new IP2Location\Database($custom_path, IP2Location\Database::MEMORY_CACHE);
-          break;
-        case 'no_cache':
-        default:
-          $location_data = new IP2Location\Database($custom_path, IP2Location\Database::FILE_IO);
-          break;
+      $bin_path = 'private://smart_ip/ip2location/ipv6.bin';
+    }   
+    
+    // Convert to actual filesystem path
+    $bin_path = backdrop_realpath($bin_path);    
+    if ($bin_path && file_exists($bin_path)) {
+      
+      try {
+      
+        switch ($config->get('smart_ip_ip2location_bin_cache')) {
+          case 'shared_memory':
+            $location_data = new IP2Location\Database($bin_path, IP2Location\Database::SHARED_MEMORY);
+            break;
+          case 'memory_cache':
+            $location_data = new IP2Location\Database($bin_path, IP2Location\Database::MEMORY_CACHE);
+            break;
+          case 'no_cache':
+          default:
+            $location_data = new IP2Location\Database($bin_path, IP2Location\Database::FILE_IO);
+            break;
+        } // switch
+      
+        $record = $location_data->lookup($ip_address, IP2Location\Database::ALL);
+        $result['original_data'] = $record;
+        $result['country_code']  = isset($record['countryCode']) ? strtoupper($record['countryCode']) : '';
+        $result['country']       = isset($record['countryName']) ? $record['countryName'] : '';
+        $result['region']        = isset($record['regionName']) ? $record['regionName'] : '';
+        $result['region_code']   = '';
+        $result['city']          = isset($record['cityName']) ? $record['cityName'] : '';
+        $result['zip']           = isset($record['zipCode']) ? $record['zipCode'] : '';
+        $result['latitude']      = isset($record['latitude']) ? $record['latitude'] : '';
+        $result['longitude']     = isset($record['longitude']) ? $record['longitude'] : '';
+        $result['time_zone']     = isset($record['timeZone']) ? $record['timeZone'] : '';
+      
+      } catch (Exception $e) {
+        backdrop_set_message("Exception: " . $e->getMessage(), 'error');
+        backdrop_set_message(t("You may need to run cron (to download the bin files), or double-check
+                              that your URLs to the bin files are accurate, and result in downloading
+                              to your server correctly."), 'error');
       }
-      $record = $location_data->lookup($ip_address, IP2Location\Database::ALL);
-      $result['original_data'] = $record;
-      $result['country_code']  = isset($record['countryCode']) ? strtoupper($record['countryCode']) : '';
-      $result['country']       = isset($record['countryName']) ? $record['countryName'] : '';
-      $result['region']        = isset($record['regionName']) ? $record['regionName'] : '';
-      $result['region_code']   = '';
-      $result['city']          = isset($record['cityName']) ? $record['cityName'] : '';
-      $result['zip']           = isset($record['zipCode']) ? $record['zipCode'] : '';
-      $result['latitude']      = isset($record['latitude']) ? $record['latitude'] : '';
-      $result['longitude']     = isset($record['longitude']) ? $record['longitude'] : '';
-      $result['time_zone']     = isset($record['timeZone']) ? $record['timeZone'] : '';
+      
+    } // if bin_path and file_exists
+    else {
+      backdrop_set_message(t("It appears that your ip2location bin files have not been downloaded to private://smart_ip/ip2location/.  
+                              Manually run cron (to download the bin files), and double-check
+                              that your URLs to the bin files are correct."), 'error');
     }
   }
   elseif ($smart_ip_source == 'ipinfodb_service') {

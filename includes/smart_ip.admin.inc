@@ -145,6 +145,11 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#weight'      => 2,
   );
   
+  $zip_msg = " &#9989; <em>" . t("You have the zip extension enabled in PHP.") . "</em>";
+  if (!class_exists('ZipArchive')) {
+    $zip_msg = ' &#10060; ' . t("<strong>You do not have the zip extension enabled in PHP.</strong> The IP2Location source will not function without this extension enabled.");
+  }
+  
   // Form for Smart IP source selection
   $private_folder = backdrop_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
   $form['smart_ip_data_source_selection']['smart_ip_source'] = array(
@@ -152,10 +157,18 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#title'         => t('Select Smart IP source'),
     '#description'   => t('Please populate the appropriate fields below according to your selected Smart IP source.'),
     '#options' => array(
+      'ip2location_bin'       => t("Use IP2Location binary files (easiest and fastest; free option).
+                                    <br><strong>Requirement:</strong> The PHP zip extension is required, as .zip files are downloaded.") . $zip_msg . t(" 
+                                    <br>- This method uses two binary database files (IPV4 and IPV6). 
+                                          Enter your download links below, they will be refreshed at least once per month.
+                                    <br>- For the free 'lite' version, register for an account !here, and retrieve your download details !here4.
+                                    <br>- For the paid, commercial version, you need to buy their product and they will provide you the 
+                                          login details and use it to login !here3, and retrieve download information !here5.
+                                    <br>- <strong>Recommended</strong> product IDs are DB1 (only provides country level; very fast query) 
+                                          or DB11 (much more details but much slower than DB1).", array('!here' => l(t('here'), 'http://lite.ip2location.com/sign-up'), '!here2' => l(t('here'), 'http://lite.ip2location.com/login'), '!here3' => l(t('here'), 'https://www.ip2location.com/login'), '!here4' => l(t('here'), 'http://lite.ip2location.com/database'), '!here5' => l(t('here'), 'https://www.ip2location.com/download'))),
       'ipinfodb_service'      => t("Use !ipinfodb web service. The !ip2location free version database is used by !ipinfodb in their web service. You will need an API key to use this and you must be !login to get it. Note: if !ipinfodb respond too slow to geolocation request, your site's performance will be affected specially if Smart IP is configured to geolocate anonymous users.", array('!ipinfodb' => l(t('IPInfoDB.com'), 'http://www.ipinfodb.com'), '!ip2location' => l(t('IP2Location'), 'http://ip2location.com'), '!login' => l(t('logged in'), 'http://ipinfodb.com/login.php'))),
       'maxmindgeoip_service' => t('Use !maxmind web service. A license key is required here. You will need to !buy one of their services and they will provide you the login details. You can view your license key inside your !account.', array('!maxmind' => l(t('GeoIP Legacy'), 'http://dev.maxmind.com/geoip/legacy/web-services'), '!buy' => l(t('buy'), 'https://www.maxmind.com/en/geoip2-precision-services'), '!account' => l(t('MaxMind account'), 'https://www.maxmind.com/en/my_license_key'))),
       'maxmindgeoip2_service' => t('Use !maxmind web service. A user ID and license key is required here. You will need to !buy one of their services and they will provide you the login details. You can view your user ID and license key inside your !account.', array('!maxmind' => l(t('MaxMind GeoIP2 Precision'), 'http://dev.maxmind.com/geoip/geoip2/web-services'), '!buy' => l(t('buy'), 'https://www.maxmind.com/en/geoip2-precision-services'), '!account' => l(t('MaxMind account'), 'https://www.maxmind.com/en/my_license_key'))),
-      'ip2location_bin'       => t("Use IP2Location binary database. It uses two binary database files; one is for IPV4 address support and the other is for IPV6 address support. You will manually download these two binary database files and upload them to your server. Automatic update is not yet supported here and its your responsibility to update them manually every month. Paid and free versions are available. You need to register first for an account !here for lite version and login !here2 in able to download the two binary database files. For licensed version, you need to buy their product and they will provide you the login details and use it to login !here3. You can download the files !here4 for lite version and !here5 for licensed version. Recommended product ID are DB1 (if you need country level only and more faster query) or DB11 (if you need more details but this is less faster than DB1).", array('!here' => l(t('here'), 'http://lite.ip2location.com/sign-up'), '!here2' => l(t('here'), 'http://lite.ip2location.com/login'), '!here3' => l(t('here'), 'https://www.ip2location.com/login'), '!here4' => l(t('here'), 'http://lite.ip2location.com/database'), '!here5' => l(t('here'), 'https://www.ip2location.com/download'))),
       'local_db'              => t("Use Smart IP database, the site's local database populated from Maxmind's CSV will be used to query Geo IP information. Note: this option is very expensive to run and it requires about 450MB database and 600MB additional database space for temporary working table."),
       'maxmind_bin'           => t("Use MaxMind GeoIP Legacy binary database. Licensed purchased from maxmind.com; you will need to enter your license below. MaxMind GeoIP Legacy's binary database uses \"a custom binary format to maximize lookup speed\", made accessible via their !api. The binary database is roughly 40MB, and will be downloaded and extracted automatically. Lite version binary database can be downloaded !here. The downloaded GeoLiteCity.dat must be uploaded to your server at !path (default) or to your defined custom path.", array('!api' => l(t('custom API'), 'https://github.com/maxmind/geoip-api-php/blob/master/README.md'), '!here' => l(t('here'), 'http://dev.maxmind.com/geoip/legacy/geolite'), '!path' => $private_folder)),
       'maxmindgeoip2_bin'     => t("Use MaxMind GeoIP2 binary database. It is the evolution of MaxMind's original GeoIP binary database or now called GeoIP Legacy. This MaxMind's binary database uses a custom binary format to maximize lookup speed and accessible via two available APIs: !maxmind_db_reader_api which includes an optional C extension that you may install to dramatically increase the performance of lookups in GeoIP2 binary database and the default !geoip2_api. Lite version binary database can be downloaded !here. For licensed version, you will need to enter your license below and the binary database file can be downloaded !here2 (you will need to login to your MaxMind account first). The binary database is roughly 130MB, and there's an option below to enable the automatic download/extraction of it. The downloaded file %file_lite_city (if Lite version City edition) or %file_licensed_city (if Licensed version City edition) or %file_lite_country (if Lite version Country edition) or %file_licensed_country (if Licensed version Country edition) must be uploaded to your server at !path or to your defined custom path.", array('!maxmind_db_reader_api' => l(t('MaxMind DB Reader PHP API'), 'https://github.com/maxmind/MaxMind-DB-Reader-php'), '!geoip2_api' => l(t('GeoIP2 PHP API'), 'http://maxmind.github.io/GeoIP2-php'), '!here' => l(t('here'), 'https://dev.maxmind.com/geoip/geoip2/geolite2'), '!here2'      => l(t('here'), 'https://www.maxmind.com/en/download_files'), '%file_lite_city' => SMART_IP_MAXMIND_GEOIP2_FILENAME_LITE_CITY, '%file_licensed_city' => SMART_IP_MAXMIND_GEOIP2_FILENAME_LINCENSED_CITY, '%file_lite_country' => SMART_IP_MAXMIND_GEOIP2_FILENAME_LITE_COUNTRY, '%file_licensed_country' => SMART_IP_MAXMIND_GEOIP2_FILENAME_LINCENSED_COUNTRY, '!path' => $private_folder,)),
@@ -166,6 +179,128 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#default_value' => $config->get('smart_ip_source'),
   );
   
+  
+
+  ////////////////////////////////////////
+  // Form for choosing IP2Location
+
+  $form['smart_ip_data_source_selection']['smart_ip_ip2location_bin_cache'] = array(
+    '#type'        => 'select',
+    '#title'       => t('IP2Location caching method'),
+    '#description' => t('<ul><li>No cache - standard lookup; reads directly from the binary database file (uses least amount of RAM).</li>
+                             <li>Memory cache - cache the database into memory to accelerate lookup speed and read the whole database into a variable for caching.</li>
+                             <li>Shared memory - cache whole database into system memory and share among other scripts and websites.</li>
+                          </ul>'),
+    '#options' => array(
+      'no_cache'      => t('No cache'),
+      'memory_cache'  => t('Memory cache'),
+      'shared_memory' => t('Shared memory'),
+    ),
+    '#default_value' => $config->get('smart_ip_ip2location_bin_cache'),
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="smart_ip_source"]' => array('value' => 'ip2location_bin'),
+      ),
+    ),
+  );
+  
+  $form['smart_ip_data_source_selection']['smart_ip_ip2location_bin_download'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('URL for the IPv4 IP2Location binary (BIN) database'),
+    '#description'   => t('Eg, https://www.ip2location.com/download/?token=x91Bbrz...lY&file=DB1LITEBIN
+                           <br>This is found on https://lite.ip2location.com/database-download (if using free/lite source). The page will include your custom token.
+                           <br>Hover over the BIN links to see the file code.
+                           <br>If unsure what to select, use <em>DB1LITEBIN</em>'),
+    '#default_value' => $config->get('smart_ip_ip2location_bin_download'),
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="smart_ip_source"]' => array('value' => 'ip2location_bin'),
+      ),
+    ),
+  );
+  
+  $form['smart_ip_data_source_selection']['smart_ip_ip2location_ipv6_bin_download'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('URL for the IPv6 IP2Location binary (BIN) database'),
+    '#description'   => t('Eg, https://www.ip2location.com/download/?token=x91Bbrz...lY&file=DB1LITEBINIPV6
+                           <br>This is found on https://lite.ip2location.com/database-download (if using free/lite source). The page will include your custom token.
+                           <br>Hover over the BIN links to see the file code.
+                           <br>If unsure what to select, use <em>DB1LITEBINIPV6</em>'),
+    '#default_value' => $config->get('smart_ip_ip2location_ipv6_bin_download'),
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="smart_ip_source"]' => array('value' => 'ip2location_bin'),
+      ),
+    ),
+  );
+  
+    
+  $form['smart_ip_data_source_selection']['markup_container'] = array(
+    '#type' => 'container',
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="smart_ip_source"]' => array('value' => 'ip2location_bin'),
+      ),
+    ),    
+  );
+  
+  
+  
+  $form['smart_ip_data_source_selection']['markup_container']['smart_ip_ip2location_bin_path_markup'] = array(
+    '#type'          => 'markup',
+    '#markup'        => '<p><strong>File download location:</strong> Files will be automatically downloaded to <em>private://smart_ip/ip2location/</em>. Please
+                         ensure you have your private folder set up correctly at ' . l('admin/config/media/file-system', 'admin/config/media/file-system') . '.
+                        <br><strong>Required:</strong> Make sure you have the PHP "zip" extension enabled.' . $zip_msg . '</p>',
+  );
+  
+  
+  
+  // TODO: hard-code for the time being 
+  $form['smart_ip_data_source_selection']['smart_ip_ip2location_bin_path'] = array(
+    '#type' => 'value',
+    '#value' => 'private://smart_ip/ip2location',
+  );
+
+  $form['smart_ip_data_source_selection']['smart_ip_ip2location_ipv6_bin_path'] = array(
+    '#type' => 'value',
+    '#value' => 'private://smart_ip/ip2location',
+  );
+    
+  
+  /*
+   * 
+   * // We are no longer manually setting the bin file location
+   * 
+  // Form for entering IP2Location IPV4 binary database file path
+  $form['smart_ip_data_source_selection']['smart_ip_ip2location_bin_path'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('IP2Location binary database IPV4 file full path'),
+    '#description'   => t('Enter the full path OR the Backdrop path (eg, private://smart_ip/) where the IP2Location IPV4 binary database file is located in your server.
+                           <br>If unsure what to type, enter <em>private://smart_ip/</em>'),
+    '#default_value' => $config->get('smart_ip_ip2location_bin_path'),
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="smart_ip_source"]' => array('value' => 'ip2location_bin'),
+      ),
+    ),
+  );
+  
+  // Form for entering IP2Location IPV6 binary database file path
+  $form['smart_ip_data_source_selection']['smart_ip_ip2location_ipv6_bin_path'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('IP2Location binary database IPV6 file full path'),
+    '#description'   => t('Define the full path where the IP2Location IPV6 binary database file is located in your server (Note: it is your responsibility to add security on this path. See the online handbook for !security). Include the filename. Eg. /var/www/sites/default/private/smart_ip/IP2LOCATION-LITE-DB11.IPV6.BIN', array('!security' => l(t('more information about securing private files'), 'https://backdropcms.org/user-guide/file-system'))),
+    '#default_value' => $config->get('smart_ip_ip2location_ipv6_bin_path'),
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="smart_ip_source"]' => array('value' => 'ip2location_bin'),
+      ),
+    ),
+  );
+  */
+    
+  
+  ///////////////////////////////////////
   // Form to select IPInfoDB API version
   $form['smart_ip_data_source_selection']['smart_ip_use_ipinfodb_api_version'] = array(
     '#type'          => 'select',
@@ -271,50 +406,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     ),
   );
 
-  // Form for choosing IP2Location cache
-  $form['smart_ip_data_source_selection']['smart_ip_ip2location_bin_cache'] = array(
-    '#type'        => 'select',
-    '#title'       => t('IP2Location caching method'),
-    '#description' => t('"No cache" - standard lookup with no cache and directly reads from the database file. "Memory cache" - cache the database into memory to accelerate lookup speed and read the whole database into a variable for caching. "Shared memory" - cache whole database into system memory and share among other scripts and websites. Please make sure your system have sufficient RAM if enabling "Memory cache" or "Shared memory".'),
-    '#options' => array(
-      'no_cache'      => t('No cache'),
-      'memory_cache'  => t('Memory cache'),
-      'shared_memory' => t('Shared memory'),
-    ),
-    '#default_value' => $config->get('smart_ip_ip2location_bin_cache'),
-    '#states'        => array(
-      'visible' => array(
-        ':input[name="smart_ip_source"]' => array('value' => 'ip2location_bin'),
-      ),
-    ),
-  );
-  
-  // Form for entering IP2Location IPV4 binary database file path
-  $form['smart_ip_data_source_selection']['smart_ip_ip2location_bin_path'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('IP2Location binary database IPV4 file full path'),
-    '#description'   => t('Define the full path where the IP2Location IPV4 binary database file is located in your server (Note: it is your responsibility to add security on this path. See the online handbook for !security). Include the filename. Eg. /var/www/sites/default/private/smart_ip/IP2LOCATION-LITE-DB11.BIN', array('!security' => l(t('more information about securing private files'), 'https://backdropcms.org/user-guide/file-system'))),
-    '#default_value' => $config->get('smart_ip_ip2location_bin_path'),
-    '#states'        => array(
-      'visible' => array(
-        ':input[name="smart_ip_source"]' => array('value' => 'ip2location_bin'),
-      ),
-    ),
-  );
-  
-  // Form for entering IP2Location IPV6 binary database file path
-  $form['smart_ip_data_source_selection']['smart_ip_ip2location_ipv6_bin_path'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('IP2Location binary database IPV6 file full path'),
-    '#description'   => t('Define the full path where the IP2Location IPV6 binary database file is located in your server (Note: it is your responsibility to add security on this path. See the online handbook for !security). Include the filename. Eg. /var/www/sites/default/private/smart_ip/IP2LOCATION-LITE-DB11.IPV6.BIN', array('!security' => l(t('more information about securing private files'), 'https://backdropcms.org/user-guide/file-system'))),
-    '#default_value' => $config->get('smart_ip_ip2location_ipv6_bin_path'),
-    '#states'        => array(
-      'visible' => array(
-        ':input[name="smart_ip_source"]' => array('value' => 'ip2location_bin'),
-      ),
-    ),
-  );
-  
+ 
   // Form selection for MaxMind GeoIP Legacy binary database lite or paid version
   $form['smart_ip_data_source_selection']['smart_ip_maxmind_bin_version'] = array(
     '#type'          => 'select',
@@ -544,11 +636,16 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#default_value' => $config->get('smart_ip_debug'),
     '#description'   => t('Enables administrator to spoof an IP Address for debugging purposes.'),
   );
-
+  
   $form['smart_ip_debug_tool']['smart_ip_test_ip_address'] = array(
     '#type'          => 'textfield',
     '#title'         => t('IP address to use for testing'),
     '#default_value' => !empty($config->get('smart_ip_test_ip_address')) ? $config->get('smart_ip_test_ip_address') : ip_address(),
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="smart_ip_debug"]' => array('checked' => TRUE),
+      ),
+    ),    
   );
 
   $form['#config'] = 'smart_ip.settings';
@@ -686,12 +783,16 @@ function smart_ip_admin_settings_validate($form, &$form_state) {
     $config->save();
   }
   if ($form_state['values']['smart_ip_source'] == 'ip2location_bin') {
-    if (empty($form_state['values']['smart_ip_ip2location_bin_path'])) {
-      form_set_error('smart_ip_ip2location_bin_path', t('lease provide the IP2Location binary database IPV4 file full path.'));
+    
+    
+    if (empty($form_state['values']['smart_ip_ip2location_bin_download'])) {
+      form_set_error('smart_ip_ip2location_bin_download', t('Please provide the URL for the IP2Location binary database IPv4 file'));
     }
-    if (empty($form_state['values']['smart_ip_ip2location_ipv6_bin_path'])) {
-      form_set_error('smart_ip_ip2location_ipv6_bin_path', t('lease provide the IP2Location binary database IPV6 file full path.'));
+    if (empty($form_state['values']['smart_ip_ip2location_ipv6_bin_download'])) {
+      form_set_error('smart_ip_ip2location_ipv6_bin_download', t('Please provide the URL for the IP2Location binary database IPv6 file'));
     }
+    
+    /*
     if (!empty($form_state['values']['smart_ip_ip2location_bin_path'])) {
       // Check IP2Location binary database IPV4 file path if valid
       if (!file_exists($form_state['values']['smart_ip_ip2location_bin_path'])) {
@@ -736,7 +837,12 @@ function smart_ip_admin_settings_validate($form, &$form_state) {
         }
       }
     }
-  }
+    */
+    
+    
+    
+  } // ip2location_bin
+  
   if ($form_state['values']['smart_ip_source'] == 'maxmindgeoip_service' && empty($form_state['values']['smart_ip_maxmind_key'])) {
     form_set_error('smart_ip_maxmind_key', t('Please provide Maxmind GeoIP Legacy Web Services developer key.'));
   }
@@ -862,8 +968,10 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
     smart_ip_maxmind_bin_db_update($form_state['values']['smart_ip_maxmind_geoip2_license']);
   }
 
+  $location = $ip = '';
   // Check to see if debug set
-  if ($form_state['values']['smart_ip_debug']) {
+  if (intval($form_state['values']['smart_ip_debug'] ?? 0) == 1) {
+    
     // Debug on
     $ip = $form_state['values']['smart_ip_test_ip_address'];
     $smart_ip_session = smart_ip_session_get('smart_ip');
@@ -874,12 +982,14 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
     $config->set('smart_ip_debug', TRUE);
     $type = t('debug');
   }
-  else {
+  
+  //else {
     // Debug off - make sure we set/reset to their real values
-    $location = smart_ip_get_current_visitor_location_data();
-    $ip   = $location['ip_address'];
-    $type = t('actual');
-  }
+  //  $location = smart_ip_get_current_visitor_location_data();
+  //  $ip   = $location['ip_address'];
+  //  $type = t('actual');
+  //}
+  
   if ($location) {
     backdrop_set_message(t('Using @type IP: %ip / Country: %country / Region: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat / Time zone: %time_zone', array(
       '@type'      => $type,
@@ -920,8 +1030,10 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
       }
     }
   }
-  else {
-    backdrop_set_message(t('IP Address @ip is not assigned to any location.', array('@ip' => $ip)));
-  }
+  //else {
+  //  backdrop_set_message(t('IP Address @ip is not assigned to any location.', array('@ip' => $ip)));
+  //}
+  
+  
   $config->save();
 }
