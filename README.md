@@ -1,56 +1,47 @@
 Smart IP
 ========
 
-Smart IP can identify a visitor's geographical location (longitude/latitude), country, 
-region, city, and postal code based on the IP address of the user. This information 
-will be stored in the session variable ($_SESSION) with array key 'smart_ip' and in
-$user->data object with array key 'geoip_location'. Optionally, it can  
-be disabled (by role) on the Smart IP admin page. Other modules can use the function 
-smart_ip_get_location($ip_address) which returns an array containing the visitor's 
-ISO 3166 2-character country code, longitude, latitude, region, city, and postal code. You 
-can also perform your own IP lookup and admin spoofing of an arbitrary 
-IP for testing purposes.
+Smart IP can identify a visitor's geographical country, location (longitude/latitude), 
+region, city, and postal code based on the IP address of the visitor.  
 
-Maxmind's database is the source of Smart IP database that makes the association between IP 
-address and geographical location (longitude/latitude), region, city and postal code. It can 
-be found at http://www.maxmind.com/app/geolitecountry it has two versions: a very accurate 
-and up to date payable version and a not quite accurate free lite version. Smart IP downloads 
-and process the CSV files (GeoLiteCity-Location.csv and GeoLiteCity-Blocks.csv) to store to 
-Smart IP database. An optional once a month (Maxmind updates its database every first day of 
-a month) automatic update of the Smart IP database is provided or it can be manually updated 
-at Smart IP admin page. The database of Maxmind is very huge, the two CSV files size is about 
-150MB and the size when stored to SQL database is about 450MB with almost 5 million rows and 
-about 600MB additional database space for temporary working table for Smart IP database 
-update. The process of downloading the archived CSV files from Maxmind's server, extracting 
-the downloaded zip file, parsing the CSV files and storing to the database will took more or 
-less eight hours (depends on server's speed). It uses the batch system process. If interrupted 
-by an unexpected error, it can recover from where it stopped or the administrator can manually 
-continue the broken process at Smart IP admin page.
+Depending on the "data source" used (see below), the visitor's country code may be the only data provided.
 
-Another source of Smart IP is the IPInfoDB.com service which also uses Maxmind's database, in 
-this case IPInfoDB.com will handle database resource load instead of your server's database. 
-By default the use of IPInfoDB.com service as source is enabled. If IPInfoDB.com is desired to  
-handle database resource load, it can be configured at Smart IP admin page settings.
+
+Usage
+-----
+
+Visitor location information will be stored in the $_SESSION variable with array key 'smart_ip', 
+and in $user->data object with array key 'geoip_location'. Optionally, it can  
+be disabled (by role) on the Smart IP admin page. 
+
+Developers can use the function `smart_ip_get_location($ip_address)` which returns an 
+array containing the visitor's location information. 
+
+Administrators can also perform an arbitrary IP lookup and spoofing for testing purposes.
+
 
 **Important:** The Smart IP database is empty upon initial installation of this module. Either manually 
 update the Smart IP database at admin page or wait for the cron to run and update Smart IP 
 database automatically for you.
 
 
-Features
+Features 
 --------
 
-- Ten data source options available: local database with data from parsed MaxMind CSV, paid [MaxMind GeoIP Legacy Web Services](http://dev.maxmind.com/geoip/legacy/web-services/), paid [MaxMind GeoIP2 Precision Web Services](http://dev.maxmind.com/geoip/geoip2/web-services/), [MaxMind GeoIP Legacy](http://dev.maxmind.com/geoip/legacy/geolite/) binary file database (thanks to [jbulcher](https://www.drupal.org/user/1727252)), [MaxMind GeoIP2](http://dev.maxmind.com/geoip/legacy/geolite/) binary database, MaxMind's Apache module [mod_geoip](http://dev.maxmind.com/geoip/legacy/mod_geoip2/), [IP2Location](https://www.ip2location.com/) binary database, [IPInfoDB.com](https://www.ipinfodb.com/) web service, X-GeoIP-Country: XX header (thanks to [jp.stacey](https://www.drupal.org/user/130486)) and [Cloudflare](https://www.cloudflare.com/) IP Geolocation.
-
+- Multiple data source options available: 
+    - free or paid [IP2Location](https://www.ip2location.com/) binary database (free only returns country code) **tested and recommended by [maintainer swampopus](https://github.com/swampopus)**
+    - local database with data from parsed MaxMind CSV
+    - [MaxMind GeoIP Services](http://dev.maxmind.com/geoip) - CSV, binary files, Apache module mod_geoip
+        - special thanks to [jbulcher] https://www.drupal.org/user/1727252)
+    - [IPInfoDB.com](https://www.ipinfodb.com/) web service
+    - X-GeoIP-Country: XX header (thanks to [jp.stacey](https://www.drupal.org/user/130486)) 
+    - [Cloudflare](https://www.cloudflare.com/) IP Geolocation.
+    
 - Maxmind's Apache module mod_geoip, Cloudflare IP Geolocation and X-GeoIP-Country as fallback for the current visitor's geolocation info if the data source of Smart IP returns empty.
 
-- IPV4 and IPV6 support by the following Smart IP data sources: MaxMind GeoIP Legacy Web Services, GeoIP2 Precision Web Services, MaxMind GeoIP2 binary database, IP2Location binary database and IPInfoDB.com web service.
+- Both IPV4 and IPV6 support, depending on data source.
 
-- Monthly auto-update of MaxMind CSV database format file for local database source.
-
-- Weekly auto-update of MaxMind GeoIP Legacy and MaxMind GeoIP2 binary database format file for licensed version.
-
-- Monthly auto-update of MaxMind GeoIP Legacy and MaxMind GeoIP2 binary database format file for lite version.
+- Monthly or Weekly auto-updates, depending on data source.
 
 - Visitor’s geolocation block available (Device Geolocation module).
 
@@ -82,11 +73,7 @@ Device Geolocation is integrated into this module which gives more detailed visi
 Requirements
 ------------
 
-- PHP 5.4 and up
-
-- geoip2/geoip2 library (if using MaxMind as data source. [Setup instructions](https://www.webfoobar.com/node/71))
- 
-- ip2location/ip2location-php library (if using IP2Location as data source. [Setup instructions](https://www.webfoobar.com/node/68))
+- "zip" PHP extension is required if using IP2Location as data source.
 
 
 Installation
@@ -96,6 +83,33 @@ Installation
   https://backdropcms.org/guide/modules
 
 - Configure Smart IP settings at /admin/config/people/smart_ip.
+
+
+
+Extra Notes
+-----------
+This module has been tested in Backdrop using IP2Location as a source, utilizing the free "lite" version, which
+only provides the country of an IP address.  It also requires the "zip" extention in PHP be enabled, as
+IP2Location delivers its bin files in a zip file which must be extracted.
+
+MaxMind has two versions: a very accurate and up to date payable version and a 
+not quite accurate free lite version. Smart IP downloads and process the 
+CSV files (GeoLiteCity-Location.csv and GeoLiteCity-Blocks.csv) to store to 
+Smart IP database. An optional once a month (Maxmind updates its database every first day of 
+a month) automatic update of the Smart IP database is provided or it can be manually updated 
+at Smart IP admin page. The database of Maxmind is very huge, the two CSV files size is about 
+150MB and the size when stored to SQL database is about 450MB with almost 5 million rows and 
+about 600MB additional database space for temporary working table for Smart IP database 
+update. The process of downloading the archived CSV files from Maxmind's server, extracting 
+the downloaded zip file, parsing the CSV files and storing to the database will took more or 
+less eight hours (depends on server's speed). It uses the batch system process. If interrupted 
+by an unexpected error, it can recover from where it stopped or the administrator can manually 
+continue the broken process at Smart IP admin page.
+
+Note that IPInfoDB.com service which also uses Maxmind's database, in 
+this case IPInfoDB.com will handle database resource load instead of your server's database. 
+By default the use of IPInfoDB.com service as source is enabled. If IPInfoDB.com is desired to  
+handle database resource load, it can be configured at Smart IP admin page settings.
 
 
 License
@@ -109,7 +123,7 @@ Current Maintainers
 -------------------
 
 - [Juan Olalla](https://github.com/juanolalla)
-- [Richard Peacock](https://github.com/swampopus)
+- [Richard Peacock (swampopus)](https://github.com/swampopus)
 - Seeking additional maintainers.
 
 
