@@ -32,7 +32,7 @@ Features
     - free or paid [IP2Location](https://www.ip2location.com/) binary database (free only returns country code) **tested and recommended by [maintainer swampopus](https://github.com/swampopus)**
     - local database with data from parsed MaxMind CSV
     - [MaxMind GeoIP Services](http://dev.maxmind.com/geoip) - CSV, binary files, Apache module mod_geoip
-        - special thanks to [jbulcher] https://www.drupal.org/user/1727252)
+        - special thanks to [jbulcher](https://www.drupal.org/user/1727252)
     - [IPInfoDB.com](https://www.ipinfodb.com/) web service
     - X-GeoIP-Country: XX header (thanks to [jp.stacey](https://www.drupal.org/user/130486)) 
     - [Cloudflare](https://www.cloudflare.com/) IP Geolocation.
