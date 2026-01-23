@@ -201,15 +201,15 @@ function smart_ip_cron() {
     smart_ip_maxmind_bin_db_update($config->get('smart_ip_maxmind_geoip2_license'), TRUE);
   }
   if ($data_source == 'ip2location_bin') {
-    // Is it past time to retrieve the ip2location bin files again? Also, do the bin files NOT exist?  If true to either, then go get 'em.
-    //$bin_paths = array('private://smart_ip/ip2location/ipv4.bin', 'private://smart_ip/ip2location/ipv6.bin');
-   
+     
+    // Is it past time to retrieve the ip2location bin files again? Also, do the bin files NOT exist?  If true to either, then go get 'em.       
     $bool_should_download = FALSE;
 
     if (time() >= intval($config->get('smart_ip_ip2location_redownload_ts') ?? 0)) {
       $bool_should_download = TRUE;
     }
-    
+
+    // Do the files not exist?  If that's the case, redownload regardless of the redownload_ts time.
     if (!$bool_should_download) {
       foreach (array('ipv4.bin', 'ipv6.bin') as $bin_file) {
         // Convert to actual filesystem paths
@@ -235,7 +235,7 @@ function smart_ip_cron() {
         // Our directories are prepared; we can proceed.
         foreach (array('ipv4.bin', 'ipv6.bin') as $bin_file) {
           // Convert to actual filesystem paths
-          $dir_path = backdrop_realpath("private://smart_ip/ip2location/");          
+          $dir_path = backdrop_realpath("private://smart_ip/ip2location") . "/";          
           $real_path = backdrop_realpath("private://smart_ip/ip2location/$bin_file");          
           $url = $config->get("smart_ip_ip2location_bin_download");
           if ($bin_file == 'ipv6.bin') {
@@ -243,20 +243,14 @@ function smart_ip_cron() {
           }
 
           $success[$bin_file] = FALSE;
-          if ($url) {
-            
+          if ($url) {            
             $data = backdrop_http_request($url);            
             if ($data) {
               $result = file_put_contents($real_path . ".zip", $data->data);
               if ($result) {
-                // TODO: We have just download zip files. We need to unzip them and rename the .bin to the expected
+                // We have just download zip files. We need to unzip them and rename the .bin to the expected
                 // filename.
                 
-                // TODO: attempt the unzip method we have in our settings.
-                // Ex:  PHP's zip extension                
-                // TODO: maybe exec unzip archive.zip
-                // TODO: maybe exec python -m zipfile -e archive.zip .
-                // TODO: maybe exec tar -xf archive.zip
                 
                 // PHP's zip extension...
                 if (class_exists('ZipArchive')) {
@@ -269,10 +263,14 @@ function smart_ip_cron() {
                     $zip->close();
                     
                     // Delete our old bin_file (if it exists)
-                    unlink($real_path); 
-
+                    if (file_exists($real_path)) {
+                      unlink($real_path); 
+                    }
+                    
                     // Rename the newly extracted bin file to the name we expect
-                    $success[$bin_file] = rename($dir_path . "IP2LOCATION*.BIN", $real_path);
+                    $gfiles =  glob($dir_path . "IP2LOCATION*.BIN");
+                    $success[$bin_file] = rename($gfiles[0], $real_path);
+                    
                     
                   }
                   else {
@@ -315,6 +313,7 @@ function smart_ip_cron() {
         
         // Set our smart_ip_ip2location_redownload_ts to +1 month
         $config->set('smart_ip_ip2location_redownload_ts', strtotime("NOW + 1 MONTH"));
+        $config->save();
       }
       
       

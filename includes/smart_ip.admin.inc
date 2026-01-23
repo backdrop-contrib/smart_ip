@@ -145,6 +145,11 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#weight'      => 2,
   );
   
+  $zip_msg = " &#9989; <em>" . t("You have the zip extension enabled in PHP.") . "</em>";
+  if (!class_exists('ZipArchive')) {
+    $zip_msg = ' &#10060; ' . t("<strong>You do not have the zip extension enabled in PHP.</strong> The IP2Location source will not function without this extension enabled.");
+  }
+  
   // Form for Smart IP source selection
   $private_folder = backdrop_realpath(file_stream_wrapper_uri_normalize('private://smart_ip'));
   $form['smart_ip_data_source_selection']['smart_ip_source'] = array(
@@ -153,7 +158,7 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#description'   => t('Please populate the appropriate fields below according to your selected Smart IP source.'),
     '#options' => array(
       'ip2location_bin'       => t("Use IP2Location binary files (easiest and fastest; free option).
-                                    <br><strong>The PHP zip extension is REQUIRED, as .zip files are downloaded.</strong>
+                                    <br><strong>Requirement:</strong> The PHP zip extension is required, as .zip files are downloaded.") . $zip_msg . t(" 
                                     <br>- This method uses two binary database files (IPV4 and IPV6). 
                                           Enter your download links below, they will be refreshed at least once per month.
                                     <br>- For the free 'lite' version, register for an account !here, and retrieve your download details !here4.
@@ -239,11 +244,13 @@ function smart_ip_admin_settings($form, &$form_state) {
     ),    
   );
   
+  
+  
   $form['smart_ip_data_source_selection']['markup_container']['smart_ip_ip2location_bin_path_markup'] = array(
     '#type'          => 'markup',
     '#markup'        => '<p><strong>File download location:</strong> Files will be automatically downloaded to <em>private://smart_ip/ip2location/</em>. Please
                          ensure you have your private folder set up correctly at ' . l('admin/config/media/file-system', 'admin/config/media/file-system') . '.
-                        <br><strong>Required:</strong> Make sure you have the PHP "zip" extension enabled.</p>',
+                        <br><strong>Required:</strong> Make sure you have the PHP "zip" extension enabled.' . $zip_msg . '</p>',
   );
   
   
@@ -629,11 +636,16 @@ function smart_ip_admin_settings($form, &$form_state) {
     '#default_value' => $config->get('smart_ip_debug'),
     '#description'   => t('Enables administrator to spoof an IP Address for debugging purposes.'),
   );
-
+  
   $form['smart_ip_debug_tool']['smart_ip_test_ip_address'] = array(
     '#type'          => 'textfield',
     '#title'         => t('IP address to use for testing'),
     '#default_value' => !empty($config->get('smart_ip_test_ip_address')) ? $config->get('smart_ip_test_ip_address') : ip_address(),
+    '#states'        => array(
+      'visible' => array(
+        ':input[name="smart_ip_debug"]' => array('checked' => TRUE),
+      ),
+    ),    
   );
 
   $form['#config'] = 'smart_ip.settings';
@@ -956,8 +968,10 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
     smart_ip_maxmind_bin_db_update($form_state['values']['smart_ip_maxmind_geoip2_license']);
   }
 
+  $location = $ip = '';
   // Check to see if debug set
-  if ($form_state['values']['smart_ip_debug']) {
+  if (intval($form_state['values']['smart_ip_debug'] ?? 0) == 1) {
+    
     // Debug on
     $ip = $form_state['values']['smart_ip_test_ip_address'];
     $smart_ip_session = smart_ip_session_get('smart_ip');
@@ -968,12 +982,14 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
     $config->set('smart_ip_debug', TRUE);
     $type = t('debug');
   }
-  else {
+  
+  //else {
     // Debug off - make sure we set/reset to their real values
-    $location = smart_ip_get_current_visitor_location_data();
-    $ip   = $location['ip_address'];
-    $type = t('actual');
-  }
+  //  $location = smart_ip_get_current_visitor_location_data();
+  //  $ip   = $location['ip_address'];
+  //  $type = t('actual');
+  //}
+  
   if ($location) {
     backdrop_set_message(t('Using @type IP: %ip / Country: %country / Region: %region / City: %city / Postal code: %zip / Longitude: %long / Latitude: %lat / Time zone: %time_zone', array(
       '@type'      => $type,
@@ -1014,8 +1030,10 @@ function smart_ip_admin_settings_submit($form, &$form_state) {
       }
     }
   }
-  else {
-    backdrop_set_message(t('IP Address @ip is not assigned to any location.', array('@ip' => $ip)));
-  }
+  //else {
+  //  backdrop_set_message(t('IP Address @ip is not assigned to any location.', array('@ip' => $ip)));
+  //}
+  
+  
   $config->save();
 }
