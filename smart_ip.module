@@ -109,10 +109,6 @@ function smart_ip_permission() {
  */
 function smart_ip_init() {
   
-  
-  // DEV:
-  return;
-  
   // Check to see if the page is one of those allowed for geolocation
   if (!smart_ip_check_allowed_page()) {
     // This page is not on the list to acquire/update user's geolocation
